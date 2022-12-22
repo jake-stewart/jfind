@@ -1,6 +1,8 @@
 #include "../include/source_matcher_v2.hpp"
 #include "../include/util.hpp"
 
+#include <climits>
+
 int SourceMatcherV2::calc(const char *text, const char **queries, int n_queries) {
     int total = 0;
     for (int i = 0; i < n_queries; i++) {
