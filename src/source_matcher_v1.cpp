@@ -51,6 +51,8 @@ void SourceMatcherV1::nextWord() {
                 tp++;
             }
             break;
+        default:
+            break;
     }
 
     while (*tp && !is_alnum(*tp)) {
