@@ -1,9 +1,6 @@
 #include "../include/source_matcher_v2.hpp"
 #include "../include/util.hpp"
 
-#include <ctype.h>
-#include <stdlib.h>
-
 int SourceMatcherV2::calc(const char *text, const char **queries, int n_queries) {
     int total = 0;
     for (int i = 0; i < n_queries; i++) {
@@ -75,7 +72,7 @@ LetterCasing SourceMatcherV2::parseCase(const char *tp) {
     if (islower(*tp)) {
         return LOWER_CASE;
     }
-    else if (isnumber(*tp)) {
+    else if (isdigit(*tp)) {
         return NUMBER_CASE;
     }
     else if (isupper(*tp)) {
@@ -135,10 +132,10 @@ int SourceMatcherV2::matchWord(const char **tpp, const char **qpp) {
             break;
 
         case NUMBER_CASE:
-            while (isnumber(*tp) && *tp == *qp) {
+            while (isdigit(*tp) && *tp == *qp) {
                 i++; tp++; qp++;
             }
-            while (isnumber(*tp)) {
+            while (isdigit(*tp)) {
                 tp++;
             }
             break;
