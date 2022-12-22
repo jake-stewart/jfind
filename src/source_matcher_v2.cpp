@@ -1,7 +1,7 @@
 #include "../include/source_matcher_v2.hpp"
 #include "../include/util.hpp"
 
-#include <stdlib.h>
+#include <ctype.h>
 
 int SourceMatcherV2::calc(const char *text, const char **queries, int n_queries) {
     int total = 0;
