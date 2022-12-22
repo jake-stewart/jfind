@@ -42,7 +42,6 @@ std::map<std::string, Key> create_key_lookup()
     lookup["[19~"] = K_F8;
     lookup["[20~"] = K_F9;
     lookup["[21~"] = K_F10;
-    lookup["[24~"] = K_F12;
 
     lookup["[3~"] = K_DELETE;
 
@@ -50,7 +49,7 @@ std::map<std::string, Key> create_key_lookup()
 }
 const std::map<std::string, Key> ESC_KEY_LOOKUP = create_key_lookup();
 
-int utf8CharLen(unsigned char ch) {
+inline int utf8CharLen(unsigned char ch) {
     if      (ch < 128)           return 1;
     else if (ch >> 5 == 0b110)   return 2;
     else if (ch >> 4 == 0b1110)  return 3;
@@ -63,6 +62,13 @@ bool isContinuationByte(unsigned char ch) {
 }
 
 int InputReader::getKey(Key *key) {
+    if (m_mouse_events.size()) {
+        m_mouse_event = m_mouse_events[0];
+        m_mouse_events.erase(m_mouse_events.begin());
+        *key = K_MOUSE;
+        return 0;
+    }
+
     char ch = getch();
     switch (ch) {
         case K_ESCAPE:
@@ -105,16 +111,112 @@ int InputReader::parseEsc(Key *key) {
     }
 
     std::stringstream ss;
-    while (hasKey()) {
+
+    do {
         ss << getch();
     }
+    while (hasKey());
 
     std::string seq = ss.str();
     if (seq.size() == 1) {
         return parseAltKey(seq[0], key);
     }
+    else if (seq.size() > 2 && seq[0] == '[' && seq[1] == '<') {
+        return parseMouse(seq, key);
+    }
     else {
         return parseEsqSeq(seq, key);
+    }
+}
+
+int InputReader::parseMouse(std::string& seq, Key *key) {
+    int length;
+    int idx = 0;
+
+    m_mouse_events.clear();
+
+    while (idx < seq.size()) {
+        MouseEvent event;
+        int button;
+        char pressed;
+        int results = sscanf(
+            seq.c_str() + idx,
+            "[<%d;%d;%d%c%n",
+            &button,
+            &event.x,
+            &event.y,
+            &pressed,
+            &length
+        );
+
+        idx += length + 1;
+
+        if (results != 4) {
+            continue;
+        }
+
+        switch (pressed) {
+            case 'm':
+                event.pressed = false;
+                break;
+            case 'M':
+                event.pressed = true;
+                break;
+            default:
+                continue;
+        }
+
+        event.dragged = false;
+        switch (button) {
+            case MB_LEFT:
+                event.button = MB_LEFT;
+                break;
+            case MB_MIDDLE:
+                event.button = MB_MIDDLE;
+                break;
+            case MB_RIGHT:
+                event.button = MB_RIGHT;
+                break;
+            case MB_LEFT + 32:
+                event.button = MB_LEFT;
+                event.dragged = true;
+                break;
+            case MB_MIDDLE + 32:
+                event.button = MB_MIDDLE;
+                event.dragged = true;
+                break;
+            case MB_RIGHT + 32:
+                event.button = MB_RIGHT;
+                event.dragged = true;
+                break;
+            case MB_SCROLL_UP:
+                event.button = MB_SCROLL_UP;
+                break;
+            case MB_SCROLL_DOWN:
+                event.button = MB_SCROLL_DOWN;
+                break;
+            case MB_SCROLL_LEFT:
+                event.button = MB_SCROLL_LEFT;
+                break;
+            case MB_SCROLL_RIGHT:
+                event.button = MB_SCROLL_RIGHT;
+                break;
+            default:
+                continue;
+        }
+
+        m_mouse_events.push_back(event);
+    }
+
+    if (m_mouse_events.size()) {
+        m_mouse_event = m_mouse_events[0];
+        m_mouse_events.erase(m_mouse_events.begin());
+        *key = K_MOUSE;
+        return 0;
+    }
+    else {
+        *key = K_UNKNOWN;
+        return 1;
     }
 }
 
@@ -176,4 +278,8 @@ int InputReader::parseUtf8(char ch, Key *key) {
 
 std::string InputReader::getWideChar() {
     return std::string(m_widechar);
+}
+
+MouseEvent InputReader::getMouseEvent() {
+    return m_mouse_event;
 }

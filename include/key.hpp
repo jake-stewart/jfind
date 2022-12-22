@@ -274,8 +274,9 @@ enum Key {
     K_F11,
     K_F12,
 
-    K_UNKNOWN,
-    K_UTF8
+    K_UTF8,
+    K_MOUSE,
+    K_UNKNOWN
 };
 
 std::string getKeyName(Key key);

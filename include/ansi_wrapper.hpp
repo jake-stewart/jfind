@@ -18,13 +18,32 @@ void useStderr(bool value);
 
 void register_resize_callback(void (*func)(int, int));
 
-void move(int x, int y);
+void move(unsigned int x, unsigned int y);
 void move_home();
 void move_up();
 
 void clear_term();
 void clear_til_eol();
+void clear_til_sof();
 void clear_til_eof();
+
+void move_up();
+void move_down();
+void move_left();
+void move_right();
+
+void move_up(unsigned int amount);
+void move_down(unsigned int amount);
+void move_left(unsigned int amount);
+void move_right(unsigned int amount);
+
+void move_up_or_scroll();
+void move_down_or_scroll();
+
+void refresh();
+
+void enable_mouse();
+void disable_mouse();
 
 void set_alternate_buffer(bool value);
 void set_cursor(bool value);

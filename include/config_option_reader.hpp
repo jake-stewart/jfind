@@ -5,8 +5,12 @@
 
 class ConfigOptionReader
 {
-    public:
-        bool read(int argc, const char **argv, Config *config);
+private:
+    Config *m_config;
+
+public:
+    ConfigOptionReader(Config *config);
+    bool read(int argc, const char **argv);
 };
 
 #endif

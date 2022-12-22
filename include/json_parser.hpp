@@ -1,3 +1,6 @@
+#ifndef JSON_PARSER_HPP
+#define JSON_PARSER_HPP
+
 #include <string>
 #include <map>
 #include <vector>
@@ -107,3 +110,5 @@ class JsonParser {
         bool parseString();
         bool parseKeyword();
 };
+
+#endif

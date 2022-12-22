@@ -13,7 +13,7 @@ namespace fs = std::filesystem;
 class HistoryManager
 {
     private:
-        std::map<std::string, int> m_history_lookup;
+        std::map<std::string_view, int> m_history_lookup;
         fs::path m_file;
         bool createHistoryLookup();
 

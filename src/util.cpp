@@ -1,9 +1,5 @@
 #include "../include/util.hpp"
 
-void printUsage() {
-    printf("usage: fcd <sources_file> <output_file>\n");
-}
-
 std::vector<std::string> split(std::string str, char delim) {
     std::vector<std::string> words;
     std::string word="";
@@ -55,9 +51,10 @@ std::vector<std::string> camelSplit(std::string& text) {
     bool upper = false;
     bool number = false;
      
-    for (char c : text) {
+    for (unsigned char c : text) {
         switch (c) {
             case 'a' ... 'z':
+            case 128 ... 255:
                 if ((upper || number) && size > 1) {
                     results.push_back(v.substr(idx, size - 1));
                     idx += (size - 1);
@@ -103,19 +100,20 @@ std::vector<std::string> camelSplit(std::string& text) {
     return results;
 }
 
-std::vector<std::string> camelSplitLower(std::string& text, std::string& lower) {
-    std::vector<std::string> results;
+std::vector<std::string_view> camelSplitLower(std::string_view text) {
+    std::vector<std::string_view> results;
 
-    std::string v(lower);
+    std::string_view v(text);
 
     int idx = 0;
     int size = 0;
     bool upper = false;
     bool number = false;
      
-    for (char c : text) {
+    for (unsigned char c : text) {
         switch (c) {
             case 'a' ... 'z':
+            case 128 ... 255:
                 if ((upper || number) && size > 1) {
                     results.push_back(v.substr(idx, size - 1));
                     idx += (size - 1);
@@ -173,66 +171,6 @@ bool getNonEmptyLine(std::istream& is, std::string& line) {
     }
 }
 
-void recursiveGetFiles(
-        fs::path               root,
-        std::vector<fs::path>& paths,
-        std::set<fs::path>&    ignores
-) {
-    if (!fs::is_directory(root)) {
-        paths.push_back(root);
-        return;
-    }
-
-    for (const fs::directory_entry& p : fs::directory_iterator(root)) {
-        if (ignores.contains(p.path())) {
-            continue;
-        }
-
-        if (fs::is_directory(p)) {
-            if (p.path().has_filename()) {
-                if (p.path().filename() == "node_modules"
-                 || p.path().filename() == "build"
-                 || p.path().filename() == "target"
-                ) {
-                    continue;
-                }
-            }
-            recursiveGetFiles(p, paths, ignores);
-        }
-        else {
-            if (p.path().has_extension()) {
-                if (p.path().extension() == ".class"
-                 || p.path().extension() == ".xml"
-                 || p.path().extension() == ".jar"
-                 || p.path().extension() == ".prefs"
-                 || p.path().extension() == ".cli"
-                ) {
-                    continue;
-                }
-            }
-            paths.push_back(p.path());
-        }
-    }
-}
-
-bool findPathRootInFile(
-        std::string target,
-        std::string& root,
-        std::istream& file
-) {
-    while (getNonEmptyLine(file, root)) {
-        while (root.ends_with('/')) {
-            root.resize(root.size() - 1);
-        }
-        if (target.starts_with(root)) {
-            if (target.starts_with(root + "/") || target == root) {
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
 fs::path expandUserPath(std::string user_path) {
     if (user_path.starts_with("~/")) {
         return getenv("HOME") / fs::path(user_path.substr(2));
@@ -242,4 +180,65 @@ fs::path expandUserPath(std::string user_path) {
 
 int mod(int n, int m) {
     return ((n % m) + m) % m;
+}
+
+bool isVowel(char c) {
+    switch (c) {
+        case 'a': case 'A':
+        case 'e': case 'E':
+        case 'i': case 'I':
+        case 'o': case 'O':
+        case 'u': case 'U':
+            return true;
+        default:
+            return false;
+    }
+}
+
+bool is_lower(char c) {
+    switch (c) {
+        case 'a' ... 'z':
+            return true;
+        default:
+            return false;
+    }
+}
+
+bool is_number(char c) {
+    switch (c) {
+        case '0' ... '9':
+            return true;
+        default:
+            return false;
+    }
+}
+
+bool is_upper(char c) {
+    switch (c) {
+        case 'A' ... 'Z':
+            return true;
+        default:
+            return false;
+    }
+}
+
+bool is_alnum(char c) {
+    switch (c) {
+        case 'a' ... 'z':
+        case 'A' ... 'Z':
+        case '0' ... '9':
+            return true;
+        default:
+            return false;
+    }
+}
+
+bool is_lower_alnum(char c) {
+    switch (c) {
+        case 'a' ... 'z':
+        case '0' ... '9':
+            return true;
+        default:
+            return false;
+    }
 }

@@ -11,10 +11,9 @@
 
 namespace fs = std::filesystem;
 
-std::vector<std::string> split(std::string str, char delim);
-std::vector<std::string> camelSplit(std::string& text);
-std::vector<std::string> camelSplitLower(std::string& text,
-                                         std::string& lower);
+std::vector<std::string>      split(std::string str, char delim);
+std::vector<std::string>      camelSplit(std::string& text);
+std::vector<std::string_view> camelSplitLower(std::string_view text);
 std::string              toLower(std::string s);
 std::string&             strip(std::string &str);
 void                     printUsage();
@@ -22,15 +21,14 @@ void                     printUsage();
 bool                     getNonEmptyLine(std::istream& is,
                                          std::string& line);
 
-void                     recursiveGetFiles(fs::path               root,
-                                           std::vector<fs::path>& paths,
-                                           std::set<fs::path>&    ignores);
-
-bool                     findPathRootInFile(std::string target,
-                                            std::string& root,
-                                            std::istream& file);
 fs::path                 expandUserPath(std::string user_path);
 
-int                      mod(int n, int m);
+int mod(int n, int m);
+bool isVowel(char c);
+bool is_lower(char c);
+bool is_number(char c);
+bool is_upper(char c);
+bool is_alnum(char c);
+bool is_lower_alnum(char c);
 
 #endif
