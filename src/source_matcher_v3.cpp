@@ -1,6 +1,8 @@
 #include "../include/source_matcher_v3.hpp"
 #include "../include/util.hpp"
 
+#include <climits>
+
 struct ScoreModifier {
     static const int history = 1;
     static const int consecutive = 2;
@@ -34,7 +36,7 @@ LetterCasing SourceMatcherV3::parseCase(const char *tp) {
     if (islower(*tp)) {
         return LOWER_CASE;
     }
-    else if (isnumber(*tp)) {
+    else if (isdigit(*tp)) {
         return NUMBER_CASE;
     }
     else if (isupper(*tp)) {
@@ -94,10 +96,10 @@ int SourceMatcherV3::matchWord(const char **tpp, const char **qpp) {
             break;
 
         case NUMBER_CASE:
-            while (isnumber(*tp) && *tp == *qp) {
+            while (isdigit(*tp) && *tp == *qp) {
                 i++; tp++; qp++;
             }
-            while (isnumber(*tp)) {
+            while (isdigit(*tp)) {
                 tp++;
             }
             break;
