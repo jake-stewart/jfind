@@ -3,7 +3,9 @@
 #include "../include/source_matcher_v1.hpp"
 #include "../include/source_matcher_v2.hpp"
 #include "../include/source_matcher_v3.hpp"
+
 #include <string.h>
+#include <climits>
 
 void Sources::readWithHints(FILE *fp) {
     m_max_text_w = 0;
