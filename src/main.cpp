@@ -13,7 +13,8 @@
 #include <iostream>
 #include <fstream>
 #include <chrono>
-
+#include <cstring>
+#include <climits>
 #include <thread>
 #include <condition_variable>
 #include <mutex>
