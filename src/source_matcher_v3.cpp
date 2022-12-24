@@ -23,13 +23,51 @@ int SourceMatcherV3::calc(const char *text, const char **queries, int n_queries)
 }
 
 int SourceMatcherV3::match(const char *tp, const char *qp, bool is_start) {
+    int score = strlen(tp) / 2;
+
     while (*tp && *qp) {
         if (tolower(*tp) == *qp) {
+            if (is_start) {
+                score -= 3;
+            }
+            else if (islower(*tp)) {
+                if (!isalpha(*(tp - 1))) {
+                    score -= 2;
+                }
+                else {
+                    score -= 1;
+                }
+            }
+            else if (isupper(*tp)) {
+                if (islower(*(tp + 1))) {
+                    score -= 2;
+                }
+                else if (!isalpha(*(tp - 1))) {
+                    score -= 2;
+                }
+                else {
+                    score -= 1;
+                }
+            }
+            else if (isnumber(*tp)) {
+                if (!isnumber(*(tp - 1))) {
+                    score -= 2;
+                }
+                else {
+                    score -= 1;
+                }
+            }
+            else {
+                score -= 1;
+            }
             qp++;
         }
+
+        is_start = false;
         tp++;
     }
-    return !*qp;
+
+    return *qp ? 0 : score;
 }
 
 LetterCasing SourceMatcherV3::parseCase(const char *tp) {
