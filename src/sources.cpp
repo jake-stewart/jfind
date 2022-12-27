@@ -3,6 +3,7 @@
 #include "../include/source_matcher_v1.hpp"
 #include "../include/source_matcher_v2.hpp"
 #include "../include/source_matcher_v3.hpp"
+#include "../include/source_matcher_v4.hpp"
 
 #include <string.h>
 #include <climits>
@@ -84,7 +85,7 @@ bool compareSources(Source& l, Source& r) {
 #include <thread>
 
 #define N_WORKERS 8
-SourceMatcherV3 matchers[N_WORKERS];
+SourceMatcherV4 matchers[N_WORKERS];
 
 void thread_func(Source *source, Source *end, bool skip_empty, int matcher, const char **words, int n_words) {
     while (source != end) {

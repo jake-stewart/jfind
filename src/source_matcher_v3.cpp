@@ -3,13 +3,6 @@
 
 #include <climits>
 
-struct ScoreModifier {
-    static const int history = 1;
-    static const int consecutive = 2;
-    static const int boundary = 3;
-    static const int distance = 1;
-};
-
 int SourceMatcherV3::calc(const char *text, const char **queries, int n_queries) {
     int total = 0;
     for (int i = 0; i < n_queries; i++) {
@@ -22,131 +15,119 @@ int SourceMatcherV3::calc(const char *text, const char **queries, int n_queries)
     return total;
 }
 
-int SourceMatcherV3::match(const char *tp, const char *qp, bool is_start) {
-    int score = strlen(tp) / 2;
+inline char fast_tolower(char c) {
+    switch (c) {
+        case 'A' ... 'Z':
+            return c + 32;
+        default:
+            return c;
+    }
+}
 
-    while (*tp && *qp) {
-        if (tolower(*tp) == *qp) {
-            if (is_start) {
-                score -= 3;
+inline bool fast_isalpha(char c) {
+    switch (c) {
+        case 'a' ... 'z':
+        case 'A' ... 'Z':
+            return true;
+        default:
+            return false;
+    }
+}
+
+inline bool fast_islower(char c) {
+    switch (c) {
+        case 'a' ... 'z':
+            return true;
+        default:
+            return false;
+    }
+}
+
+inline bool fast_isdigit(char c) {
+    switch (c) {
+        case '0' ... '9':
+            return true;
+        default:
+            return false;
+    }
+}
+
+const int SCORE_MODIFIER = -100;
+const int START_LINE_BONUS = 3 * SCORE_MODIFIER;
+const int START_WORD_BONUS = 2 * SCORE_MODIFIER;
+const int LETTER_MATCH_BONUS = 1 * SCORE_MODIFIER;
+const int CONSECUTIVE_BONUS = 1 * SCORE_MODIFIER;
+
+int SourceMatcherV3::match(const char *tp, const char *qp, bool is_start) {
+    int score = match_recurse(tp, qp, is_start);
+    if (score) {
+        return score + strlen(tp);
+    }
+    return 0;
+}
+
+int SourceMatcherV3::match_recurse(const char *tp, const char *qp, bool is_start) {
+    bool isConsecutive = false;
+    int score = 0;
+    int min_score = 0;
+
+    if (is_start) {
+        if (fast_tolower(*tp) == *qp) {
+            int ignore_score = score + match_recurse(tp + 1, qp, false);
+            if (ignore_score && ignore_score < min_score) {
+                min_score = ignore_score;
             }
-            else if (islower(*tp)) {
-                if (!isalpha(*(tp - 1))) {
-                    score -= 2;
-                }
-                else {
-                    score -= 1;
-                }
-            }
-            else if (isupper(*tp)) {
-                if (islower(*(tp + 1))) {
-                    score -= 2;
-                }
-                else if (!isalpha(*(tp - 1))) {
-                    score -= 2;
-                }
-                else {
-                    score -= 1;
-                }
-            }
-            else if (isnumber(*tp)) {
-                if (!isnumber(*(tp - 1))) {
-                    score -= 2;
-                }
-                else {
-                    score -= 1;
-                }
-            }
-            else {
-                score -= 1;
-            }
+            score += START_LINE_BONUS;
+            isConsecutive = true;
             qp++;
         }
-
-        is_start = false;
         tp++;
     }
 
-    return *qp ? 0 : score;
-}
+    while (*tp) {
+        if (fast_tolower(*tp) == *qp) {
+            int ignore_score = score + match_recurse(tp + 1, qp, false);
+            if (ignore_score && ignore_score < min_score) {
+                min_score = ignore_score;
+            }
 
-LetterCasing SourceMatcherV3::parseCase(const char *tp) {
-    if (islower(*tp)) {
-        return LOWER_CASE;
-    }
-    else if (isdigit(*tp)) {
-        return NUMBER_CASE;
-    }
-    else if (isupper(*tp)) {
-        if (islower(*(tp + 1))) {
-            return CAMEL_CASE;
+            switch (*tp) {
+                case 'a' ... 'z':
+                    score += fast_isalpha(*(tp - 1))
+                        ? LETTER_MATCH_BONUS
+                        : START_WORD_BONUS;
+                    break;
+                case 'A' ... 'Z':
+                    score += (fast_islower(*(tp + 1)) || !fast_isalpha(*(tp - 1)))
+                        ? START_WORD_BONUS
+                        : LETTER_MATCH_BONUS;
+                    break;
+                case '0' ... '9':
+                    score += fast_isdigit(*(tp - 1))
+                        ? LETTER_MATCH_BONUS
+                        : START_WORD_BONUS;
+                    break;
+                default:
+                    score += LETTER_MATCH_BONUS;
+                    break;
+            }
+
+            score += isConsecutive * CONSECUTIVE_BONUS;
+            qp++;
+            if (!(*qp)) {
+                break;
+            }
+            isConsecutive = true;
         }
         else {
-            return UPPER_CASE;
+            isConsecutive = false;
         }
-    }
-    else {
-        return NO_CASE;
-    }
-}
 
-int SourceMatcherV3::matchWord(const char **tpp, const char **qpp) {
-    int i = 0;
-    const char *tp = *tpp;
-    const char *qp = *qpp;
-
-    switch (parseCase(tp)) {
-        case LOWER_CASE:
-            while (islower(*tp) && *tp == *qp) {
-                i++; tp++; qp++;
-            }
-            while (*tp && islower(*tp)) {
-                tp++;
-            }
-            break;
-
-        case UPPER_CASE:
-            while (
-                    isupper(*tp)
-                    && !islower(*(tp + 1))
-                    && tolower(*tp) == *qp
-            ) {
-                i++; tp++; qp++;
-            }
-            while (isupper(*tp) && !islower(*(tp + 1))) {
-                tp++;
-            }
-            break;
-
-        case CAMEL_CASE:
-            if (tolower(*tp) == *qp) {
-                i++; tp++; qp++;
-                while (islower(*tp) && *tp == *qp) {
-                    i++; tp++; qp++;
-                }
-            }
-            else {
-                tp++;
-            }
-            while (islower(*tp)) {
-                tp++;
-            }
-            break;
-
-        case NUMBER_CASE:
-            while (isdigit(*tp) && *tp == *qp) {
-                i++; tp++; qp++;
-            }
-            while (isdigit(*tp)) {
-                tp++;
-            }
-            break;
-
-        default:
-            exit(1);
+        tp++;
     }
 
-    *qpp = qp;
-    *tpp = tp;
-    return i;
+    if (*qp) {
+        return 0;
+    }
+    return (!min_score || score < min_score) ? score : min_score;
 }

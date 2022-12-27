@@ -31,4 +31,9 @@ bool is_upper(char c);
 bool is_alnum(char c);
 bool is_lower_alnum(char c);
 
+char fast_tolower(char c);
+bool fast_isalpha(char c);
+bool fast_islower(char c);
+bool fast_isdigit(char c);
+
 #endif

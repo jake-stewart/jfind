@@ -19,6 +19,11 @@
 #include <condition_variable>
 #include <mutex>
 
+#include "../include/source_matcher_v4.hpp"
+#include "../include/source_matcher_v3.hpp"
+#include "../include/source_matcher_v2.hpp"
+
+
 std::mutex mut;
 std::condition_variable cv;
 bool sorter_thread_active = false;
@@ -72,7 +77,7 @@ void drawName(int i) {
         style_manager.set(config.sourceStyle);
     }
 
-    printf("%s", name.c_str());
+    printf("%s %d", name.c_str(), sources.get(i).heuristic);
 }
 
 void drawHint(int i) {
@@ -489,6 +494,7 @@ void sorter_thread_func() {
 }
 
 int main(int argc, const char **argv) {
+
     ConfigJsonReader configJsonReader(&config, &style_manager);
     ConfigOptionReader configOptionReader(&config);
 

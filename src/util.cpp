@@ -242,3 +242,40 @@ bool is_lower_alnum(char c) {
             return false;
     }
 }
+
+inline char fast_tolower(char c) {
+    switch (c) {
+        case 'A' ... 'Z':
+            return c + 32;
+        default:
+            return c;
+    }
+}
+
+inline bool fast_isalpha(char c) {
+    switch (c) {
+        case 'a' ... 'z':
+        case 'A' ... 'Z':
+            return true;
+        default:
+            return false;
+    }
+}
+
+inline bool fast_islower(char c) {
+    switch (c) {
+        case 'a' ... 'z':
+            return true;
+        default:
+            return false;
+    }
+}
+
+inline bool fast_isdigit(char c) {
+    switch (c) {
+        case '0' ... '9':
+            return true;
+        default:
+            return false;
+    }
+}
