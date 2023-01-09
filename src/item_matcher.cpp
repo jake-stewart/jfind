@@ -99,21 +99,24 @@ int ItemMatcher::match(const char *tp, const char *qp, int distance,
                 if (score > maxScore) {
                     maxScore = score;
                 }
+                break;
             }
-            else {
-                bool resetConsecutive = !consecutive && islower(*tp)
-                    && isalpha(*(tp - 1));
 
-                int score = match(tp + 1, qp + 1, distance + 1,
-                        resetConsecutive ? 0 : consecutive + 1);
+            bool resetConsecutive = !consecutive && islower(*tp)
+                && isalpha(*(tp - 1));
 
-                if (score != -INT_MAX) {
-                    score += letterScore(tp, consecutive)
-                        + distance * DISTANCE_PENALTY;
-                    if (score > maxScore) {
-                        maxScore = score;
-                    }
-                }
+            int score = match(tp + 1, qp + 1, distance + 1,
+                    resetConsecutive ? 0 : consecutive + 1);
+
+            if (score == -INT_MAX) {
+                break;
+            }
+
+            score += letterScore(tp, consecutive)
+                + distance * DISTANCE_PENALTY;
+
+            if (score > maxScore) {
+                maxScore = score;
             }
         }
 
