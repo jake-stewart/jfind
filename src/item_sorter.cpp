@@ -27,7 +27,7 @@ bool sortFunc(Item& l, Item &r) {
         }
         return strlen(l.text) < strlen(r.text);
     }
-    return l.heuristic < r.heuristic;
+    return l.heuristic > r.heuristic;
 }
 
 bool sortEmptyFunc(Item& l, Item &r) {
@@ -99,7 +99,7 @@ void ItemSorter::calcHeuristics(const char* m_query, bool skipEmpty, int start,
     if (m_isSorted) {
         f = [&] (Item *item, int n) {
             for (int i = 0; i < n; i++) {
-                if (skipEmpty && item->heuristic == INT_MAX) {
+                if (skipEmpty && item->heuristic == -INT_MAX) {
                     item++;
                     continue;
                 }

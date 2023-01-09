@@ -12,7 +12,7 @@ class ItemMatcher {
         int matchStart(const char *tp, const char *qp);
         int match(const char *tp, const char *qp, int distance,
                 int consecutive);
-        int getLetterScore(const char *tp, int consecutive);
+        int letterScore(const char *tp, int consecutive);
         bool isWordStart(const char *tp);
 };
 

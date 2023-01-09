@@ -11,6 +11,7 @@ struct Item {
     char *text;
 
     // heuristic: the score of the item based on the current query
+    // the heuristic is -INT_MAX if the text fails to match
     int heuristic;
 
     // index: the position of the item when it was read from stdin
