@@ -1,621 +1,262 @@
-#include "../include/util.hpp"
-#include "../include/sources.hpp"
+#include "../include/item_sorter.hpp"
+#include "../include/item_cache.hpp"
 #include "../include/config.hpp"
+#include "../include/util.hpp"
 #include "../include/history_manager.hpp"
 #include "../include/config_json_reader.hpp"
 #include "../include/config_option_reader.hpp"
 #include "../include/ansi_wrapper.hpp"
-#include "../include/key.hpp"
-#include "../include/input_reader.hpp"
 #include "../include/utf8_line_editor.hpp"
 #include "../include/style_manager.hpp"
+#include "../include/user_interface.hpp"
+#include "../include/thread_coordinator.hpp"
 
-#include <iostream>
-#include <fstream>
-#include <chrono>
-#include <cstring>
 #include <climits>
-#include <thread>
-#include <condition_variable>
-#include <mutex>
-
-#include "../include/source_matcher_v4.hpp"
-#include "../include/source_matcher_v3.hpp"
-#include "../include/source_matcher_v2.hpp"
-
-
-std::mutex mut;
-std::condition_variable cv;
-bool sorter_thread_active = false;
-bool deleted = false;
-
-namespace chrono = std::chrono;
+#include <fcntl.h>
 
 Config config;
-StyleManager style_manager;
+UserInterface userInterface;
+HistoryManager *historyManager = nullptr;
+ItemSorter sorter;
 
-int          width;
-int          height;
-Sources      sources;
-int          n_visible_sources;
-int          n_active_sources;
-
-Utf8LineEditor editor;
-InputReader reader;
-
-int offset = 0;
-int cursor = 0;
-bool active = true;
-bool selected = false;
-
-int hint_w;
-
-void drawName(int i) {
-    std::string name = std::string(sources.get(i).text);
-
-    if (name.size() > width) {
-        name = name.substr(0, width - 1) + "…";
-    }
-
-    move(0, height - i - 2 + offset);
-    if (i == cursor) {
-        style_manager.set(config.activeRowStyle);
-        clear_til_eol();
-        if (config.activeSelector.size()) {
-            style_manager.set(config.activeSelectorStyle);
-            printf("%s", config.activeSelector.c_str());
+void printResult(Item *selected) {
+    if (selected) {
+        if (historyManager) {
+            historyManager->writeHistory(selected);
         }
-        style_manager.set(config.activeSourceStyle);
-    }
-    else {
-        style_manager.set(config.rowStyle);
-        clear_til_eol();
-        if (config.selector.size()) {
-            style_manager.set(config.selectorStyle);
-            printf("%s", config.selector.c_str());
+        if (!config.selectHint || config.selectBoth) {
+            printf("%s\n", selected->text);
         }
-        style_manager.set(config.sourceStyle);
-    }
-
-    printf("%s %d", name.c_str(), sources.get(i).heuristic);
-}
-
-void drawHint(int i) {
-    char *text = sources.get(i).text;
-    std::string hint = std::string(text + strlen(text) + 1);
-
-    style_manager.set(i == cursor ? config.activeHintStyle : config.hintStyle);
-
-    if (hint.size() > hint_w) {
-        const char *str = hint.data();
-        int start_idx = hint.size() - hint_w + 1;
-        int idx = start_idx;
-        while (str[idx] != '/') {
-           idx++;
-           if (idx == hint.size()) {
-               idx = start_idx;
-               break;
-           }
-        }
-        move(
-            width - hint.size() + idx - 1,
-            height - i - 2 + offset
-        );
-        printf("…");
-        printf("%s", str + idx);
-    }
-    else {
-        move(
-            width - hint.size(),
-            height - i - 2 + offset
-        );
-        printf("%s", hint.data());
-    }
-}
-
-void drawSources() {
-    for (int i = offset; i < offset + n_visible_sources; i++) {
-        drawName(i);
-    }
-
-    if (hint_w >= config.minInfoWidth) {
-        for (int i = offset; i < n_visible_sources + offset; i++) {
-            drawHint(i);
+        if (config.selectHint || config.selectBoth) {
+            printf("%s\n", selected->text + strlen(selected->text) + 1);
         }
     }
-    if (height - n_visible_sources - 2 > 0) {
-        move(width - 1, height - n_visible_sources - 2);
-        style_manager.set(config.backgroundStyle);
-        clear_til_sof();
+    else if (config.acceptNonMatch) {
+        printf("%s\n", userInterface.getEditor()->getText().c_str());
     }
 }
 
-void drawPrompt() {
-    move(0, height - 1);
-    style_manager.set(config.searchRowStyle);
-    clear_til_eol();
-    style_manager.set(config.searchPromptStyle);
-    printf("%s", config.prompt.c_str());
-    move(config.prompt.size() + config.promptGap, height - 1);
-    style_manager.set(config.searchStyle);
-}
-
-void drawQuery() {
-    move(config.prompt.size() + config.promptGap, height - 1);
-    style_manager.set(config.searchRowStyle);
-    clear_til_eol();
-    style_manager.set(config.searchStyle);
-    editor.print();
-}
-
-void focusEditor() {
-    move(
-        config.prompt.size() + config.promptGap + editor.getCursorCol(),
-        height - 1
-    );
-}
-
-void onResize(int new_width, int new_height) {
-    width = new_width;
-    height = new_height;
-
-    n_visible_sources = n_active_sources > height - 1
-        ? height - 1
-        : n_active_sources;
-
-    if (height - 1 + offset > n_active_sources) {
-        offset = n_active_sources - (height - 1);
-        if (offset < 0) {
-            offset = 0;
-        }
-    }
-    else if (cursor - offset >= n_visible_sources) {
-        offset = cursor - n_visible_sources + 1;
-    }
-
-    int col_width = sources.getMaxWidth();
-    if (col_width > width) {
-        col_width = width;
-    }
-
-    int x = col_width + config.minInfoSpacing
-        + (config.selector.size() > config.activeSelector.size()
-                ? config.selector.size()
-                : config.activeSelector.size());
-    hint_w = width - x;
-
-    if (hint_w > config.maxInfoWidth) {
-        x += hint_w - config.maxInfoWidth;
-        hint_w = config.maxInfoWidth;
-    }
-
-    drawSources();
-    drawPrompt();
-    editor.setWidth(width - 1);
-    drawQuery();
-    focusEditor();
-    // refresh();
-}
-
-void moveCursorDown() {
-    if (cursor <= 0) {
-        return;
-    }
-    cursor -= 1;
-    if (cursor - offset < 0) {
-        offset -= 1;
-
-        move(0, height - 1);
-        move_down_or_scroll();
-
-        drawPrompt();
-        drawQuery();
-    }
-    drawName(cursor + 1);
-    drawName(cursor);
-    if (hint_w > config.minInfoWidth) {
-        drawHint(cursor + 1);
-        drawHint(cursor);
-    }
-}
-
-void moveCursorUp() {
-    if (cursor >= sources.size() - 1) {
-        return;
-    }
-    if (sources.get(cursor + 1).heuristic == INT_MAX) {
-        return;
-    }
-
-    cursor += 1;
-    if (cursor - offset >= n_visible_sources) {
-        offset += 1;
-        move_home();
-        move_up_or_scroll();
-        drawPrompt();
-        drawQuery();
-    }
-    drawName(cursor - 1);
-    drawName(cursor);
-    if (hint_w > config.minInfoWidth) {
-        drawHint(cursor - 1);
-        drawHint(cursor);
-    }
-}
-
-void scrollUp() {
-    if (offset + height > n_active_sources) {
-        return;
-    }
-    move_home();
-    move_up_or_scroll();
-    offset += 1;
-    if (cursor - offset < 0) {
-        cursor += 1;
-        drawName(offset);
-        if (hint_w > config.minInfoWidth) {
-            drawHint(offset);
-        }
-    }
-
-    drawName(offset + height - 2);
-    if (hint_w > config.minInfoWidth) {
-        drawHint(offset + height - 2);
-    }
-
-    drawPrompt();
-    drawQuery();
-}
-
-void scrollDown() {
-    if (offset <= 0) {
-        return;
-    }
-    move(0, height - 1);
-    move_down_or_scroll();
-    offset -= 1;
-    if (cursor - offset >= height - 1) {
-        cursor -= 1;
-        drawName(offset + height - 2);
-        if (hint_w > config.minInfoWidth) {
-            drawHint(offset + height - 2);
-        }
-    }
-
-    drawName(offset);
-    if (hint_w > config.minInfoWidth) {
-        drawHint(offset);
-    }
-
-    drawPrompt();
-    drawQuery();
-}
-
-chrono::time_point<chrono::system_clock> start;
-
-void handleClick(int x, int y) {
-    bool can_double_click = true;
-    int new_cursor = offset + (height - 1 - y);
-    if (new_cursor < 0) {
-        return;
-    }
-    if (new_cursor >= n_active_sources) {
-        new_cursor = n_active_sources - 1;
-        can_double_click = false;
-    }
-
-    if (cursor == new_cursor) {
-        chrono::time_point<chrono::system_clock> end;
-        end = chrono::system_clock::now();
-
-        chrono::milliseconds delta;
-        delta = chrono::duration_cast<chrono::milliseconds>(end - start);
-        if (can_double_click && delta.count() < 250) {
-            active = false;
-            selected = true;
-        }
-    }
-    else {
-        int old_cursor = cursor;
-        cursor = new_cursor;
-        drawName(old_cursor);
-        drawName(cursor);
-        if (hint_w > config.minInfoWidth) {
-            drawHint(old_cursor);
-            drawHint(cursor);
-        }
-    }
-    start = chrono::system_clock::now();
-}
-
-void handleMouse(MouseEvent event) {
-    switch (event.button) {
-        case MB_SCROLL_UP:
-            scrollUp();
-            break;
-        case MB_SCROLL_DOWN:
-            scrollDown();
-            break;
-        case MB_LEFT:
-            if (event.pressed && !event.dragged) {
-                if (event.y == height) {
-                    editor.handleClick(
-                        event.x - config.prompt.size() - config.promptGap
-                    );
-                }
-                else {
-                    handleClick(event.x, event.y);
-                }
-            }
-            break;
-        default:
-            break;
-    }
-}
-
-void handle_input() {
-    Key key;
-    do {
-        reader.getKey(&key);
-
-        switch (key) {
-            case K_ESCAPE:
-            case K_CTRL_C:
-                active = false;
-                break;
-
-            case 32 ... 126:
-                editor.input(key);
-                break;
-
-            case K_CTRL_A:
-                editor.input(editor.getText());
-                break;
-
-            case K_CTRL_H:
-            case K_BACKSPACE:
-                editor.backspace();
-                break;
-
-            case K_DELETE:
-                editor.del();
-                break;
-
-            case K_CTRL_U:
-                editor.clear();
-                break;
-
-            case K_UP:
-            case K_CTRL_K:
-                moveCursorUp();
-                break;
-
-            case K_DOWN:
-            case K_CTRL_J:
-                moveCursorDown();
-                break;
-
-            case K_LEFT:
-                editor.moveCursorLeft();
-                break;
-
-            case K_RIGHT:
-                editor.moveCursorRight();
-                break;
-
-            case K_ENTER:
-                selected = true;
-                active = false;
-                break;
-
-            case K_UTF8:
-                editor.input(reader.getWideChar());
-                break;
-
-            case K_MOUSE:
-                handleMouse(reader.getMouseEvent());
-                break;
-
-            default:
-                break;
-        }
-    }
-    while (reader.hasKey());
-}
-
-void sortSources(std::string& query) {
-    sources.sort(query.c_str(), false);
-
-    n_active_sources = sources.size();
-
-    for (int i = 0; i < sources.size(); i++) {
-        if (sources.get(i).heuristic == INT_MAX) {
-            n_active_sources = i;
-            break;
-        }
-        // if (sources.hasHeuristic() &&
-        //         sources.get(i).getHeuristic() == INT_MAX) {
-        //     n_active_sources = i;
-        //     break;
-        // }
-    }
-    n_visible_sources = n_active_sources > height - 1
-        ? height - 1
-        : n_active_sources;
-}
-
-void sorter_thread_func() {
-    std::string query = "";
-    bool skip_empty;
-    while (sorter_thread_active) {
-        while (true) {
-            if (!sorter_thread_active) {
-                return;
-            }
-
-            std::unique_lock lock(mut);
-            if (editor.getText() != query) {
-                query = editor.getText();
-                skip_empty = !deleted;
-                deleted = false;
-                break;
-            }
-            cv.wait(lock);
-        }
-
-        sources.sort(query.c_str(), skip_empty);
-        {
-            std::unique_lock lock(mut);
-            offset = 0;
-            cursor = 0;
-
-            n_active_sources = sources.size();
-
-            for (int i = 0; i < sources.size(); i++) {
-                if (sources.get(i).heuristic == INT_MAX) {
-                    n_active_sources = i;
-                    break;
-                }
-                // if (sources.hasHeuristic() &&
-                //         sources.get(i).getHeuristic() == INT_MAX) {
-                //     n_active_sources = i;
-                //     break;
-                // }
-            }
-            n_visible_sources = n_active_sources > height - 1
-                ? height - 1
-                : n_active_sources;
-
-            drawSources();
-            focusEditor();
-            // refresh();
-        }
-    }
-}
-
-int main(int argc, const char **argv) {
-
-    ConfigJsonReader configJsonReader(&config, &style_manager);
-    ConfigOptionReader configOptionReader(&config);
-
-    if (!configJsonReader.read("~/.config/jfind/config.json")) {
-        printf("Error in config.json on line %d: %s\n",
-            configJsonReader.getErrorLine(),
-            configJsonReader.getError().c_str()
-        );
-        return 1;
-    }
-
-    if (config.sourceStyle == NO_STYLE) {
-        config.sourceStyle = style_manager.add(AnsiStyle().fg(BLUE));
+void createStyles(StyleManager *styleManager) {
+    if (config.itemStyle == NO_STYLE) {
+        config.itemStyle = styleManager->add(AnsiStyle().fg(BLUE));
     }
     if (config.hintStyle == NO_STYLE) {
-        config.hintStyle = style_manager.add(AnsiStyle().fg(BRIGHT_BLACK));
+        config.hintStyle = styleManager->add(AnsiStyle().fg(BRIGHT_BLACK));
     }
-    if (config.activeSourceStyle == NO_STYLE) {
-        config.activeSourceStyle = style_manager.add(AnsiStyle().fg(WHITE));
+    if (config.activeItemStyle == NO_STYLE) {
+        config.activeItemStyle = styleManager->add(AnsiStyle().fg(WHITE));
     }
     if (config.activeHintStyle == NO_STYLE) {
-        config.activeHintStyle = style_manager.add(AnsiStyle().fg(WHITE));
+        config.activeHintStyle = styleManager->add(AnsiStyle().fg(WHITE));
+    }
+}
+
+bool readConfig(StyleManager *styleManager, int argc, const char **argv) {
+    ConfigJsonReader configJsonReader(&config, styleManager);
+    ConfigOptionReader configOptionReader(&config);
+
+    std::ifstream ifs(expandUserPath("~/.config/jfind/config.json"));
+    if (ifs.is_open()) {
+        if (!configJsonReader.read(ifs)) {
+            fprintf(stderr, "Error in config.json on line %d: %s\n",
+                configJsonReader.getErrorLine(),
+                configJsonReader.getError().c_str()
+            );
+            return false;
+        }
     }
 
     if (!configOptionReader.read(argc, argv)) {
+        return false;
+    }
+
+    createStyles(styleManager);
+
+    if (!config.historyFile.empty()) {
+        historyManager = new HistoryManager(config.historyFile);
+        historyManager->setHistoryLimit(config.historyLimit);
+        historyManager->readHistory();
+    }
+
+    return true;
+}
+
+void displayHelp(const char *name) {
+    printf("usage: %s [options]\n", name);
+    printf("\n");
+    printf("OPTIONS:\n");
+    printf("    --help                        Display this dialog\n");
+    printf("    --hints                       Read hints from stdin (every second line)\n");
+    printf("    --select-hint                 Print the hint to stdout\n");
+    printf("    --select-both                 Print both the item and hint to stdout\n");
+    printf("    --accept-non-match            Accept the user's query if nothing matches\n");
+    printf("    --history=FILE                Read and write match history to FILE\n");
+    printf("    --history-limit=INT           Number of items to store in the history file\n");
+    printf("    --prompt=PROMPT               Set the query prompt to PROMPT\n");
+    printf("    --query=QUERY                 Set the starting query to QUERY\n");
+    printf("\n");
+    printf("CONFIG (~/.config/jfind/config.json):\n");
+    printf("    selector: STRING              The selector of an unselected item\n");
+    printf("    active_selector: STRING       The selector of the selected item\n");
+    printf("    prompt: STRING                The default prompt\n");
+    printf("    prompt_gap: INT               The distance between the prompt and query\n");
+    printf("    history_limit: INT            Default number of items to store in the history file\n");
+    printf("    min_hint_spacing: INT         Minimum gap between an item and its hint\n");
+    printf("    min_hint_width: INT           Minimum width a hint should be before it is shown\n");
+    printf("    max_hint_width: INT           Maximum width a hint can grow to\n");
+    printf("    style: STYLE OBJECT           Custom styles. See STYLES for keys, and STYLE OBJECT for values\n");
+    printf("\n");
+    printf("STYLES:\n");
+    printf("    item                          An unselected item\n");
+    printf("    active_item                   A selected item\n");
+    printf("    hint                          The hint of an unselected item\n");
+    printf("    active_hint                   The hint of a selected item\n");
+    printf("    selector                      The selector of an unselected item\n");
+    printf("    active_selector               The selector of a selected item\n");
+    printf("    active_row                    The gap between a selected item and its hint\n");
+    printf("    row                           The gap between an unselected item and its hint\n");
+    printf("    search_prompt                 The query prompt\n");
+    printf("    search                        The query that the user enters\n");
+    printf("    search_row                    Everywhere else on the search row\n");
+    printf("    background                    Everywhere else on the screen\n");
+    printf("\n");
+    printf("STYLE OBJECT:\n");
+    printf("    fg: STRING                    Foreground color as one of COLOR NAMES or a hex string\n");
+    printf("    bg: STRING                    Background color as one of COLOR NAMES or a hex string\n");
+    printf("    attr: LIST                    A list of ATTRIBUTES\n");
+    printf("\n");
+    printf("COLOR NAMES:\n");
+    printf("    red, green, blue, cyan, yellow, magenta, black, white\n");
+    printf("    A color name may be prefixed with 'bright_' to use the bright variant\n");
+    printf("\n");
+    printf("ATTRIBUTES:\n");
+    printf("    bold, italic, blink, reverse,\n");
+    printf("    underline, curly_underline, double_underline, dotted_underline, dashed_underline\n");
+    printf("\n");
+    printf("Input should be piped into JFind for it to be useful. You can try the following example:\n");
+    printf("    seq 100 | %s\n", name);
+}
+
+// int nTests = 0;
+// int nPasses = 0;
+// void test(std::string one, std::string two, std::string query) {
+//     printf("START\n");
+//     ItemSorter items;
+//     Item *itemsBuf = new Item[2];
+//     char *oneBuf = new char[one.size()];
+//     char *twoBuf = new char[one.size()];
+//     strcpy(oneBuf, one.c_str());
+//     strcpy(twoBuf, two.c_str());
+//     itemsBuf[0] = Item(oneBuf);
+//     printf("brh\n");
+//     itemsBuf[1] = Item(twoBuf);
+//     items.add(itemsBuf, 2);
+//     items.setQuery(query.c_str());
+//     items.calcHeuristics();
+//     printf("wh\n");
+//     bool result = items.get(0).text == one;
+//     printf("OKAY\n");
+//     if (result) {
+//         printf("um\n");
+//         ItemSorter items;
+//         itemsBuf[0] = Item(twoBuf);
+//         itemsBuf[1] = Item(oneBuf);
+//         items.add(itemsBuf, 2);
+//         printf("dude\n");
+//         items.setQuery(query.c_str());
+//         items.calcHeuristics();
+//         bool result = items.get(0).text == one;
+//         printf("what\n");
+//     }
+//     std::string style = AnsiStyle().fg(result ? GREEN : RED).build();
+//     std::string clear = AnsiStyle().build();
+//     printf(
+//         "%s%s%s   %-40s%-40s%s\n",
+//         style.c_str(),
+//         result ? "PASS" : "\x1b[31mFAIL\x1b[0m",
+//         clear.c_str(),
+//         one.c_str(),
+//         two.c_str(),
+//         query.c_str()
+//     );
+//     nTests++;
+//     nPasses += result;
+// }
+
+int main(int argc, const char **argv) {
+
+    // test("app/app.tsx", "app/this.tsx", "ats");
+    // test("models/ProductDetails.ts", "Products/ProductDetailsPage.tsx", "proddetail");
+    // test("models/ProductDetails.ts", "Products/ProductDetailsPage.tsx", "prode");
+    // test("Product/ProductDetailsPage.tsx", "Product/EditProductPage.tsx", "prodepa");
+    // test("User/EditUserPage.tsx", "User/CreateUserPage.tsx", "euspa");
+    // test("core/CancelablePromise.ts", "core/ApiRequestOptions.ts", "capro");
+    // test("core/request.ts", "models/RenderRequest.ts", "req");
+    // test("Product/ProductsPage.tsx", "Product/EditProductPage.tsx", "propa");
+    // test("Product/ProductsPage.tsx", "Product/EditProductPage.tsx", "propage");
+    // test("ThisIsABigTest", "BigHugeTest", "bigte");
+    // test("12340", "12034", "1234");
+    // test("12340", "12034", "1234");
+    // test("models/ProductDetails.ts", "Product/EditProductPage.tsx", "prode");
+    // test("Organisation/EditOrganisationPage.tsx", "models/ErrorResponse.ts", "eor");
+    // test("core/request.ts", "models/RenderErrorResponse.ts", "re");
+    // printf("\n%d/%d tests passed\n", nPasses, nTests);
+    // return 0;
+
+    StyleManager *styleManager = userInterface.getStyleManager();
+
+    if (!readConfig(styleManager, argc, argv)) {
         return 1;
     }
 
-    HistoryManager::historyCount = config.historyCount;
-
-    if (config.sourceFile.empty()) {
-        sources.read(stdin, config.showHints);
-    }
-    else {
-        if (!sources.readFile(config.sourceFile.c_str(), config.showHints)) {
-            return 1;
-        }
-        std::cin.clear();
+    if (config.showHelp) {
+        displayHelp(argv[0]);
+        return 0;
     }
 
-    HistoryManager *historyManager = nullptr;
-    if (!config.historyFile.empty()) {
-        historyManager = new HistoryManager(config.historyFile);
-        historyManager->readHistory(sources);
-    }
+    ItemCache itemCache;
+    itemCache.setSorter(&sorter);
+    userInterface.setItemCache(itemCache);
+    userInterface.setConfig(&config);
 
-    // reopen stdin since reaching EOF breaks stdin
-    freopen("/dev/tty", "rw", stdin);
+    int fd = open("/dev/tty", O_RDONLY);
+    setInputFileNo(fd);
+    userInterface.getInputReader()->setFileDescriptor(fd);
 
     // enable unicode
     setlocale(LC_ALL, "en_US.UTF-8");
 
-    // std::string query = "ninini";
-    // sortSources(query);
-    // printf("%d intmax=%d\n", sources.get(0).heuristic, sources.get(0).heuristic == INT_MAX);
+    registerResizeCallback([] (int w, int h) {
+        userInterface.onResize(w, h);
+    });
 
-    // return 0;
+    styleManager->setOutputFile(stderr);
+    userInterface.setOutputFile(stderr);
+    setOutputFile(stderr);
+    initTerm();
+    enableMouse();
+    setCursor(true);
 
-    sortSources(config.query);
+    Utf8LineEditor *editor = userInterface.getEditor();
+    editor->input(config.query);
 
-    register_resize_callback(onResize);
-    useStderr(true);
-    init_term();
-    enable_mouse();
-    set_cursor(true);
+    userInterface.drawPrompt();
+    userInterface.drawQuery();
 
-    editor.input(config.query);
+    ItemReader itemReader;
+    itemReader.setFile(stdin);
+    itemReader.setReadHints(config.showHints);
 
-    drawQuery();
+    ThreadCoordinator coordinator;
+    coordinator.setItemSorter(&sorter);
+    coordinator.setItemReader(itemReader);
+    coordinator.setUserInterface(&userInterface);
+    coordinator.setHistoryManager(historyManager);
+    coordinator.start();
 
-    sorter_thread_active = true;
-    std::thread sorter_thread = std::thread(sorter_thread_func);
+    restoreTerm();
 
-    while (active) {
-        {
-            std::unique_lock lock(mut);
-            focusEditor();
-            // refresh();
-        }
-        int s = editor.getText().size();
-        handle_input();
-        {
-            std::unique_lock lock(mut);
-            if (editor.isModified()) {
-                if (editor.getText().size() < s) {
-                    deleted = true;
-                }
-                cv.notify_one();
-            }
-            if (editor.requiresRedraw()) {
-                drawQuery();
-            }
-        }
-    }
-
-    {
-        std::unique_lock lock(mut);
-        sorter_thread_active = false;
-        cv.notify_one();
-    }
-    sorter_thread.join();
-
-    restore_term();
-
-    if (selected && n_visible_sources) {
-        Source source = sources.get(cursor);
-        if (historyManager) {
-            historyManager->writeHistory(source, sources);
-        }
-        if (!config.selectHint || config.selectBoth) {
-            printf("%s\n", source.text);
-        }
-        if (config.selectHint || config.selectBoth) {
-            printf("%s\n", source.text + strlen(source.text) + 1);
-        }
-    }
-    else if (config.acceptNonMatch) {
-        for (int i = 0; i < config.selectBoth + 1; i++) {
-            printf("%s\n", editor.getText().c_str());
-        }
-    }
+    printResult(userInterface.getSelected());
 
     return 0;
 }

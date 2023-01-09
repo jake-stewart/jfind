@@ -8,11 +8,10 @@
 
 namespace fs = std::filesystem;
 
-struct Config
-{
-    int activeSourceStyle = NO_STYLE;
+struct Config {
+    int activeItemStyle = NO_STYLE;
     int activeHintStyle = NO_STYLE;
-    int sourceStyle = NO_STYLE;
+    int itemStyle = NO_STYLE;
     int hintStyle = NO_STYLE;
     int backgroundStyle = NO_STYLE;
     int rowStyle = NO_STYLE;
@@ -23,25 +22,24 @@ struct Config
     int searchStyle = NO_STYLE;
     int searchRowStyle = NO_STYLE;
 
-    std::string prompt             = ">";
-    int promptGap                  = 1;
-    std::string selector           = "  ";
-    std::string activeSelector     = "* ";
+    std::string prompt = ">";
+    int promptGap = 1;
+    std::string selector = "  ";
+    std::string activeSelector = "* ";
+    std::string query = "";
 
-    std::string query              = "";
+    bool showHelp = false;
+    bool showHints = false;
+    bool selectHint = false;
+    bool selectBoth = false;
+    bool acceptNonMatch = false;
 
-    bool        showHints          = false;
-    bool        selectHint         = false;
-    bool        selectBoth         = false;
-    bool        acceptNonMatch     = false;
-    fs::path    sourceFile;
+    fs::path historyFile;
+    int historyLimit = 50;
 
-    fs::path    historyFile;
-    int         historyCount = 50;
-
-    int minInfoWidth = 25;
-    int minInfoSpacing = 5;
-    int maxInfoWidth = 60;
+    int minHintWidth = 25;
+    int minHintSpacing = 5;
+    int maxHintWidth = 60;
 };
 
 #endif

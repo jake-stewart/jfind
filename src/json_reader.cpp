@@ -1,50 +1,49 @@
 #include "../include/util.hpp"
 #include "../include/json_reader.hpp"
 
-std::string error_msg = "None";
-int error_line = 0;
+std::string errorMsg;
+int errorLine = 0;
 
 void typeError(std::string name, std::string type) {
-    error_msg = "The datatype for '" + name + "' must be "
-        + (isVowel(type[0]) ? "an" : "a") + type;
+    errorMsg = "The datatype for '" + name + "' must be "
+        + (isVowel(type[0]) ? "an" : "a") + " " + type;
 }
 
 JsonStringReaderStrategy::JsonStringReaderStrategy(std::string *value) {
     m_value = value;
 }
 
-JsonStringReaderStrategy* JsonStringReaderStrategy::min(int length) {
-    m_min_len = length;
+JsonStringReaderStrategy* JsonStringReaderStrategy::min(int minLen) {
+    m_minLen = minLen;
     return this;
 }
 
-JsonStringReaderStrategy* JsonStringReaderStrategy::max(int length) {
-    m_max_len = length;
+JsonStringReaderStrategy* JsonStringReaderStrategy::max(int maxLen) {
+    m_maxLen = maxLen;
     return this;
 }
 
-bool JsonStringReaderStrategy::read(
-        const std::string& name,
-        JsonElement *element
-) {
+bool JsonStringReaderStrategy::read(const std::string& name,
+        JsonElement *element)
+{
     if (element->getType() != STRING) {
         typeError(name, "string");
-        error_line = element->getLine();
+        errorLine = element->getLine();
         return false;
     }
     *m_value = ((JsonString*)element)->getValue();
-    if (m_min_len.has_value() && m_value->length() < m_min_len.value()) {
-        error_msg = "The value for '" + name
+    if (m_minLen.has_value() && m_value->length() < m_minLen.value()) {
+        errorMsg = "The value for '" + name
             + "' cannot have a length less than "
-            + std::to_string(m_min_len.value());
-        error_line = element->getLine();
+            + std::to_string(m_minLen.value());
+        errorLine = element->getLine();
         return false;
     }
-    if (m_max_len.has_value() && m_value->length() > m_max_len.value()) {
-        error_msg = "The value for '" + name
+    if (m_maxLen.has_value() && m_value->length() > m_maxLen.value()) {
+        errorMsg = "The value for '" + name
             + "' cannot have a length greater than "
-            + std::to_string(m_max_len.value());
-        error_line = element->getLine();
+            + std::to_string(m_maxLen.value());
+        errorLine = element->getLine();
         return false;
     }
     return true;
@@ -54,64 +53,60 @@ JsonIntReaderStrategy::JsonIntReaderStrategy(int *value) {
     m_value = value;
 }
 
-JsonIntReaderStrategy* JsonIntReaderStrategy::min(int length) {
-    m_min_len = length;
+JsonIntReaderStrategy* JsonIntReaderStrategy::min(int min) {
+    m_min = min;
     return this;
 }
 
-JsonIntReaderStrategy* JsonIntReaderStrategy::max(int length) {
-    m_max_len = length;
+JsonIntReaderStrategy* JsonIntReaderStrategy::max(int max) {
+    m_max = max;
     return this;
 }
 
-bool JsonIntReaderStrategy::read(
-        const std::string& name,
-        JsonElement *element
-) {
+bool JsonIntReaderStrategy::read(const std::string& name, JsonElement *element)
+{
     if (element->getType() != INT) {
         typeError(name, "integer");
-        error_line = element->getLine();
+        errorLine = element->getLine();
         return false;
     }
     *m_value = ((JsonInt*)element)->getValue();
-    if (m_min_len.has_value() && *m_value < m_min_len.value()) {
-        error_msg = "The value for '" + name + "' cannot be less than "
-            + std::to_string(m_min_len.value());
-        error_line = element->getLine();
+    if (m_min.has_value() && *m_value < m_min.value()) {
+        errorMsg = "The value for '" + name + "' cannot be less than "
+            + std::to_string(m_min.value());
+        errorLine = element->getLine();
         return false;
     }
-    if (m_max_len.has_value() && *m_value > m_max_len.value()) {
-        error_msg = "The value for '" + name + "' cannot be greater than "
-            + std::to_string(m_min_len.value());
-        error_line = element->getLine();
+    if (m_max.has_value() && *m_value > m_max.value()) {
+        errorMsg = "The value for '" + name + "' cannot be greater than "
+            + std::to_string(m_max.value());
+        errorLine = element->getLine();
         return false;
     }
     return true;
 }
 
-JsonStylesReaderStrategy::JsonStylesReaderStrategy(
-        StyleManager *style_manager,
-        std::map<std::string, int*>& styles
-) {
-    m_style_manager = style_manager;
+JsonStylesReaderStrategy::JsonStylesReaderStrategy(StyleManager *styleManager,
+        std::map<std::string, int*>& styles)
+{
+    m_styleManager = styleManager;
     m_styles = styles;
 }
 
-bool JsonStylesReaderStrategy::read(
-        const std::string& name,
-        JsonElement *element
-) {
+bool JsonStylesReaderStrategy::read(const std::string& name,
+        JsonElement *element)
+{
     if (element->getType() != OBJECT) {
         typeError(name, "object");
-        error_line = element->getLine();
+        errorLine = element->getLine();
         return false;
     }
 
     for (auto it : ((JsonObject*)element)->getValue()) {
         auto find = m_styles.find(it.first);
         if (find == m_styles.end()) {
-            error_msg = "'" + it.first + "' is not a recognized style name";
-            error_line = it.second.value->getLine();
+            errorMsg = "'" + it.first + "' is not a recognized style name";
+            errorLine = it.second.value->getLine();
             return false;
         }
 
@@ -119,7 +114,7 @@ bool JsonStylesReaderStrategy::read(
         if (!readStyle(it.second.value, &style)) {
             return false;
         }
-        *find->second = m_style_manager->add(style);
+        *find->second = m_styleManager->add(style);
     }
     return true;
 }
@@ -129,8 +124,8 @@ bool JsonStylesReaderStrategy::readColorRGB(ColorRGB *color, JsonString *str) {
     if (parseHexColor(str->getValue(), color)) {
         return true;
     }
-    error_msg = "'" + str->getValue() + "' is not a valid hex color";
-    error_line = str->getLine();
+    errorMsg = "'" + str->getValue() + "' is not a valid hex color";
+    errorLine = str->getLine();
     return false;
 }
 
@@ -139,19 +134,17 @@ bool JsonStylesReaderStrategy::readColor16(Color16 *color, JsonString *str) {
     if (*color != UNKNOWN) {
         return true;
     }
-    error_msg = "'" + str->getValue() + "' is not a valid color";
-    error_line = str->getLine();
+    errorMsg = "'" + str->getValue() + "' is not a valid color";
+    errorLine = str->getLine();
     return false;
 }
 
-bool JsonStylesReaderStrategy::readColor(
-        JsonString *str,
-        AnsiStyle *style,
-        bool fg
-) {
+bool JsonStylesReaderStrategy::readColor(JsonString *str, AnsiStyle *style,
+        bool fg)
+{
     if (str->getType() != STRING) {
-        error_msg = "The datatype of a color must be a string";
-        error_line = str->getLine();
+        errorMsg = "The datatype of a color must be a string";
+        errorLine = str->getLine();
         return false;
     }
     if (str->getValue().starts_with("#")) {
@@ -171,13 +164,12 @@ bool JsonStylesReaderStrategy::readColor(
     return true;
 }
 
-bool JsonStylesReaderStrategy::readStyle(
-        JsonElement *element,
-        AnsiStyle *style
-) {
+bool JsonStylesReaderStrategy::readStyle(JsonElement *element,
+        AnsiStyle *style)
+{
     if (element->getType() != OBJECT) {
-        error_msg = "The datatype of a style must be an object";
-        error_line = element->getLine();
+        errorMsg = "The datatype of a style must be an object";
+        errorLine = element->getLine();
         return false;
     }
 
@@ -198,8 +190,8 @@ bool JsonStylesReaderStrategy::readStyle(
             valid = readAttr((JsonArray*)it->second.value, style);
         }
         else {
-            error_msg = "'" + it->first + "' is not a recognised style option";
-            error_line = it->second.key->getLine();
+            errorMsg = "'" + it->first + "' is not a recognised style option";
+            errorLine = it->second.key->getLine();
             valid = false;
         }
         if (!valid) {
@@ -218,8 +210,8 @@ bool JsonStylesReaderStrategy::readAttr(JsonArray *arr, AnsiStyle *style) {
 
     for (int i = 0; i < value.size(); i++) { 
         if (value[i]->getType() != STRING) {
-            error_msg = "The datatype of a color attr must be a string";
-            error_line = value[i]->getLine();
+            errorMsg = "The datatype of a color attr must be a string";
+            errorLine = value[i]->getLine();
             return false;
         }
         std::string attrName = ((JsonString*)value[i])->getValue();
@@ -252,8 +244,8 @@ bool JsonStylesReaderStrategy::readAttr(JsonArray *arr, AnsiStyle *style) {
             style->standout();
         }
         else {
-            error_msg = "'" + attrName + "' is not a valid attr name";
-            error_line = value[i]->getLine();
+            errorMsg = "'" + attrName + "' is not a valid attr name";
+            errorLine = value[i]->getLine();
             return false;
         }
     }
@@ -266,17 +258,17 @@ JsonReader::JsonReader(std::map<std::string, JsonReaderStrategy*>& options) {
 }
 
 std::string& JsonReader::getError() {
-    return error_msg;
+    return errorMsg;
 }
 
 int JsonReader::getErrorLine() {
-    return error_line;
+    return errorLine;
 }
 
 bool JsonReader::read(JsonElement *element) {
     if (element->getType() != OBJECT) {
-        error_msg = "Root config must be an object";
-        error_line = element->getLine();
+        errorMsg = "Root config must be an object";
+        errorLine = element->getLine();
         return false;
     }
 
@@ -288,9 +280,9 @@ bool JsonReader::read(JsonElement *element) {
     for (it = obj.begin(); it != obj.end(); it++) {
         auto find = m_options.find(it->first);
         if (find == m_options.end()) {
-            error_msg = "'" + it->first
+            errorMsg = "'" + it->first
                 + "' is not a recognized config option";
-            error_line = it->second.key->getLine();
+            errorLine = it->second.key->getLine();
             return false;
         }
 

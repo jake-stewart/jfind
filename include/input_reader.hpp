@@ -30,18 +30,20 @@ struct MouseEvent {
 
 class InputReader {
     public:
+        InputReader();
+
         int getKey(Key *key);
         bool hasKey();
+        void setFileDescriptor(int fileDescriptor);
         std::string getWideChar();
         MouseEvent getMouseEvent();
-        InputReader();
 
     private:
         fd_set m_set;
-        struct timeval m_timeout;
+        int m_fileDescriptor;
+        timeval m_timeout;
         char m_widechar[4];
-        std::vector<MouseEvent> m_mouse_events;
-        MouseEvent m_mouse_event;
+        std::vector<MouseEvent> m_mouseEvents;
 
         char getch();
         int parseEsc(Key *key);
@@ -49,7 +51,6 @@ class InputReader {
         int parseMouse(std::string& seq, Key *key);
         int parseEsqSeq(std::string& seq, Key *key);
         int parseUtf8(char ch, Key *key);
-
 };
 
 #endif

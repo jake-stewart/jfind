@@ -1,162 +1,160 @@
 #include "../include/ansi_wrapper.hpp"
 
+#include <sys/stat.h>
+#include <fcntl.h>
+
 #define ANSI_ESC "\x1b["
 
-bool in_alternate_buffer = false;
-bool ignore_sigint = false;
-bool mouse_enabled = false;
-int ACTIVE_FILENO = STDOUT_FILENO;
-termios orig_termios;
+bool inAlternateBuffer = false;
+bool ignoreSigint = false;
+bool mouseEnabled = false;
+FILE *outputFile = stdout;
+int inputFileNo = STDIN_FILENO;
+termios origTermios;
+
+static void (*resizeCallback)(int, int) = nullptr;
 
 void move(unsigned int x, unsigned int y) {
-    printf(ANSI_ESC "%u;%uH", y + 1, x + 1);
+    fprintf(outputFile, ANSI_ESC "%u;%uH", y + 1, x + 1);
 }
 
-void move_home() {
-    printf(ANSI_ESC "H");
+void moveHome() {
+    fprintf(outputFile, ANSI_ESC "H");
 }
 
-void move_up() {
-    printf(ANSI_ESC "A");
+void moveUp() {
+    fprintf(outputFile, ANSI_ESC "A");
 }
 
-void move_down() {
-    printf(ANSI_ESC "B");
+void moveDown() {
+    fprintf(outputFile, ANSI_ESC "B");
 }
 
-void move_right() {
-    printf(ANSI_ESC "C");
+void moveRight() {
+    fprintf(outputFile, ANSI_ESC "C");
 }
 
-void move_left() {
-    printf(ANSI_ESC "D");
+void moveLeft() {
+    fprintf(outputFile, ANSI_ESC "D");
 }
 
-void move_up(unsigned int amount) {
-    printf(ANSI_ESC "%uA", amount);
+void moveUp(unsigned int amount) {
+    fprintf(outputFile, ANSI_ESC "%uA", amount);
 }
 
-void move_down(unsigned int amount) {
-    printf(ANSI_ESC "%uB", amount);
+void moveDown(unsigned int amount) {
+    fprintf(outputFile, ANSI_ESC "%uB", amount);
 }
 
-void move_right(unsigned int amount) {
-    printf(ANSI_ESC "%uC", amount);
+void moveRight(unsigned int amount) {
+    fprintf(outputFile, ANSI_ESC "%uC", amount);
 }
 
-void move_left(unsigned int amount) {
-    printf(ANSI_ESC "%uD", amount);
+void moveLeft(unsigned int amount) {
+    fprintf(outputFile, ANSI_ESC "%uD", amount);
 }
 
-void move_up_or_scroll() {
-    printf("\x1bM");
+void moveUpOrScroll() {
+    fprintf(outputFile, "\x1bM");
 }
 
-void move_down_or_scroll() {
-    printf("\n");
+void moveDownOrScroll() {
+    fprintf(outputFile, "\n");
 }
 
-void enable_mouse() {
-    if (!mouse_enabled) {
-        mouse_enabled = true;
-        printf(ANSI_ESC "?1002h" ANSI_ESC "?1015h" ANSI_ESC "?1006h");
+void enableMouse() {
+    if (!mouseEnabled) {
+        mouseEnabled = true;
+        fprintf(outputFile, ANSI_ESC "?1002h" ANSI_ESC "?1015h" ANSI_ESC "?1006h");
     }
 }
 
-void disable_mouse() {
-    if (mouse_enabled) {
-        mouse_enabled = false;
-        printf(ANSI_ESC "?1000l");
+void disableMouse() {
+    if (mouseEnabled) {
+        mouseEnabled = false;
+        fprintf(outputFile, ANSI_ESC "?1000l");
     }
 }
 
-void set_alternate_buffer(bool value) {
-    if (in_alternate_buffer == value) {
+void setAlternateBuffer(bool value) {
+    if (inAlternateBuffer == value) {
         return;
     }
-    in_alternate_buffer = value;
-    printf(ANSI_ESC "?1049%c", value ? 'h' : 'l');
+    inAlternateBuffer = value;
+    fprintf(outputFile, ANSI_ESC "?1049%c", value ? 'h' : 'l');
 }
 
-void clear_til_eol() {
-    printf(ANSI_ESC "K");
+void clearTilEOL() {
+    fprintf(outputFile, ANSI_ESC "K");
 }
 
-void clear_til_sof() {
-    printf(ANSI_ESC "1J");
+void clearTilSOF() {
+    fprintf(outputFile, ANSI_ESC "1J");
 }
 
-void clear_til_eof() {
-    printf(ANSI_ESC "2J");
+void clearTilEOF() {
+    fprintf(outputFile, ANSI_ESC "2J");
 }
 
-void clear_term() {
-    printf(ANSI_ESC "2J");
+void clearTerm() {
+    fprintf(outputFile, ANSI_ESC "2J");
 }
 
-void set_cursor(bool value) {
-    printf(ANSI_ESC "?25%c", value ? 'h' : 'l');
+void setCursor(bool value) {
+    fprintf(outputFile, ANSI_ESC "?25%c", value ? 'h' : 'l');
 }
 
-void exit_gracefully(int sig) {
-    restore_term();
+void exitGracefully(int sig) {
+    restoreTerm();
     exit(1);
 }
 
-void set_ctrl_c(bool value) {
-    ignore_sigint = value;
+void setCtrlC(bool value) {
+    ignoreSigint = value;
 }
 
-void on_sigint(int sig) {
-    if (!ignore_sigint) {
-        exit_gracefully(sig);
+void onSigint(int sig) {
+    if (!ignoreSigint) {
+        exitGracefully(sig);
     }
 }
 
-void useStderr(bool value) {
-    if (value == (ACTIVE_FILENO == STDERR_FILENO)) {
-        return;
-    }
-
-    ACTIVE_FILENO = value ? STDERR_FILENO : STDOUT_FILENO;
-    FILE *tmp = stdout;
-    stdout = stderr;
-    stderr = tmp;
+void setInputFileNo(int fileNo) {
+    inputFileNo = fileNo;
 }
 
-void on_sig_resize(int sig) {
+void setOutputFile(FILE *file) {
+    outputFile = file;
+}
+
+void onSigResize(int sig) {
     winsize ws;
-    if (ioctl(ACTIVE_FILENO, TIOCGWINSZ, &ws)) {
-        restore_term();
-        printf("Failed to query terminal size\n");
+    if (ioctl(fileno(outputFile), TIOCGWINSZ, &ws)) {
+        restoreTerm();
+        fprintf(outputFile, "Failed to query terminal size\n");
         exit(1);
     }
-    if (resize_callback != nullptr) {
-        resize_callback(ws.ws_col, ws.ws_row);
+    if (resizeCallback != nullptr) {
+        resizeCallback(ws.ws_col, ws.ws_row);
     }
 }
 
-void save_cursor() {
-    printf("\x1b" "7");
+void saveCursor() {
+    fprintf(outputFile, "\x1b" "7");
 }
 
-void restore_cursor() {
-    printf("\x1b" "8");
+void restoreCursor() {
+    fprintf(outputFile, "\x1b" "8");
 }
 
-void refresh() {
-    fflush(stdout);
-}
-
-void restore_term(void) {
-    set_alternate_buffer(true);       // enter alternate buffer
-    disable_mouse();
-    printf("\x1b[0m");
-    clear_term();                     // clean up the buffer
-    set_cursor(true);                 // show the cursor
-    set_alternate_buffer(false);      // return to the main buffer
-    useStderr(false);
-    tcsetattr(STDIN_FILENO, TCSANOW, &orig_termios);
+void restoreTerm(void) {
+    setAlternateBuffer(true);
+    disableMouse();
+    fprintf(outputFile, "\x1b[0m");
+    clearTerm();
+    setCursor(true);
+    setAlternateBuffer(false);
+    tcsetattr(inputFileNo, TCSANOW, &origTermios);
 
     signal(SIGWINCH, SIG_DFL);
     signal(SIGTERM, SIG_DFL);
@@ -164,34 +162,38 @@ void restore_term(void) {
     signal(SIGINT, SIG_DFL);
 }
 
-// char stdout_buffer[50000];
+// char stdoutBuffer[50000];
 
-void init_term(void) {
-    // since we're using printf here, which doesn't play nicely
-    // with non-canonical mode, we need to turn off buffering.
+void initTerm(void) {
     // setvbuf(stdout, NULL, _IONBF, 0);
-    // setvbuf(stdout, stdout_buffer, _IOFBF, sizeof(stdout_buffer));
+    // setvbuf(stdout, stdoutBuffer, _IOFBF, sizeof(stdoutBuffer));
 
-    tcgetattr(STDIN_FILENO, &orig_termios);
-    termios raw = orig_termios;
+    tcgetattr(inputFileNo, &origTermios);
+    termios raw = origTermios;
 
-    raw.c_iflag &= ~(ICRNL);         // differentiate newline and linefeed
-    raw.c_lflag &= ISIG;             // generate exit signals
-    raw.c_lflag &= ~(ECHO | ICANON); // disable echo and cannonical mode
+    raw.c_iflag &= ~(ICRNL);  // differentiate newline and linefeed
+    raw.c_lflag &= ISIG;  // generate exit signals
+    raw.c_lflag &= ~(ECHO | ICANON);  // disable echo and cannonical mode
 
-    tcsetattr(STDIN_FILENO, TCSANOW, &raw);
+    tcsetattr(inputFileNo, TCSANOW, &raw);
 
-    signal(SIGWINCH, on_sig_resize);
-    signal(SIGTERM, exit_gracefully);
-    signal(SIGQUIT, exit_gracefully);
-    signal(SIGINT, on_sigint);
+    signal(SIGWINCH, onSigResize);
+    signal(SIGTERM, exitGracefully);
+    signal(SIGQUIT, exitGracefully);
+    signal(SIGINT, onSigint);
 
-    set_alternate_buffer(true);
-    clear_term();
-    move_home();
-    on_sig_resize(0);
+    setAlternateBuffer(true);
+    clearTerm();
+    moveHome();
+    onSigResize(0);
 }
 
-void register_resize_callback(void (*func)(int, int)) {
-    resize_callback = func;
+void registerResizeCallback(void (*func)(int, int)) {
+    resizeCallback = func;
+}
+
+void closeStdin() {
+    int fd = open("/dev/null", O_RDONLY);
+    dup2(fd, 0);
+    close(fd);
 }

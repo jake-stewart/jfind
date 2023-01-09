@@ -1,28 +1,26 @@
-#ifndef SOURCE_PARSER
-#define SOURCE_PARSER
+#ifndef HISTORY_MANAGER_HPP
+#define HISTORY_MANAGER_HPP
 
-#include "source.hpp"
-#include "sources.hpp"
+#include "item.hpp"
 #include <vector>
 #include <string>
 #include <filesystem>
-#include <map>
+#include <unordered_map>
 
 namespace fs = std::filesystem;
 
-class HistoryManager
-{
-    private:
-        std::map<std::string_view, int> m_history_lookup;
-        fs::path m_file;
-        bool createHistoryLookup();
-
+class HistoryManager {
     public:
-        static int historyCount;
-
         HistoryManager(fs::path file);
-        bool readHistory(Sources& sources);
-        bool writeHistory(Source& selected, Sources& sources);
+        void setHistoryLimit(int historyLimit);
+        bool readHistory();
+        void applyHistory(Item *item);
+        bool writeHistory(Item *selected);
+
+    private:
+        std::unordered_map<std::string, int> m_historyLookup;
+        int m_historyLimit;
+        fs::path m_file;
 };
 
 #endif

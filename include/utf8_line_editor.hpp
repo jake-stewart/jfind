@@ -6,44 +6,34 @@
 
 #include <string>
 
-class Utf8LineEditor
-{
-private:
-    Utf8String m_string;
-    Utf8StringCursor m_cursor;
-    Utf8StringCursor m_start;
-    Utf8StringCursor m_end;
+class Utf8LineEditor {
+    public:
+        Utf8LineEditor();
+        bool requiresRedraw();
+        void setOutputFile(FILE *file);
+        void print();
+        void input(char ch);
+        void input(std::string text);
+        void handleClick(int x);
+        void backspace();
+        void del();
+        void moveCursorLeft();
+        void moveCursorRight();
+        void clear();
+        std::string& getText();
+        int getCursorCol();
+        void setWidth(int width);
 
-    bool m_modified;
-    bool m_redraw;
+    private:
+        Utf8String m_string;
+        Utf8StringCursor m_cursor;
+        Utf8StringCursor m_start;
+        Utf8StringCursor m_end;
+        FILE *m_outputFile;
+        bool m_requiresRedraw;
+        int m_width;
 
-    int m_width;
-
-    void adjustBounds();
-
-public:
-    Utf8LineEditor() {
-        m_cursor.setString(&m_string);
-        m_start.setString(&m_string);
-        m_end.setString(&m_string);
-    }
-
-    bool requiresRedraw();
-    void print();
-
-    bool isModified();
-    void input(char ch);
-    void input(std::string text);
-    void handleClick(int x);
-    void backspace();
-    void del();
-    void moveCursorLeft();
-    void moveCursorRight();
-    void clear();
-    std::string& getText();
-    int getCursorCol();
-
-    void setWidth(int width);
+        void adjustBounds();
 };
 
 #endif

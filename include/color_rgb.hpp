@@ -3,8 +3,7 @@
 
 #include <string>
 
-struct ColorRGB
-{
+struct ColorRGB {
     unsigned char r = 0;
     unsigned char g = 0;
     unsigned char b = 0;

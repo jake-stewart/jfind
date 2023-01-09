@@ -8,31 +8,31 @@
 
 struct Utf8String {
     std::string bytes;
-    std::vector<int> byte_widths;
-    std::vector<int> cell_widths;
+    std::vector<int> byteWidths;
+    std::vector<int> cellWidths;
 };
 
-class Utf8StringCursor
-{
-    Utf8String *m_str;
-    int m_char_idx;
-    int m_byte_idx;
-    int m_cell_idx;
+class Utf8StringCursor {
+    public:
+        int getByte();
+        int getIdx();
+        int getCol();
+        void setString(Utf8String *str);
+        void insert(char ch);
+        void insert(std::string& str);
+        bool moveLeft();
+        bool moveRight();
+        bool backspace();
+        bool del();
+        void reset();
+        int getBytesForCols(int cols);
+        const char* getPointer();
 
-public:
-    int getByte();
-    int getIdx();
-    int getCol();
-    void setString(Utf8String *str);
-    void insert(char ch);
-    void insert(std::string& str);
-    bool moveLeft();
-    bool moveRight();
-    bool backspace();
-    bool del();
-    void reset();
-    int getBytesForCols(int cols);
-    const char* getPointer();
+    private:
+        Utf8String *m_str;
+        int m_charIdx;
+        int m_byteIdx;
+        int m_cellIdx;
 };
 
 #endif

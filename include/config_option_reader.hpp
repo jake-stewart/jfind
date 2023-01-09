@@ -3,14 +3,13 @@
 
 #include "config.hpp"
 
-class ConfigOptionReader
-{
-private:
-    Config *m_config;
+class ConfigOptionReader {
+    public:
+        ConfigOptionReader(Config *config);
+        bool read(int argc, const char **argv);
 
-public:
-    ConfigOptionReader(Config *config);
-    bool read(int argc, const char **argv);
+    private:
+        Config *m_config;
 };
 
 #endif

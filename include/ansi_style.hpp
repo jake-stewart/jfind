@@ -22,32 +22,13 @@ enum ColorType {
 };
 
 class AnsiStyle {
-    private:
-        ColorType     m_fg_type = NO_COLOR;
-        ColorRGB      m_fg_rgb;
-        Color16       m_fg_16;
-        int           m_fg_256;
-
-        ColorType     m_bg_type = NO_COLOR;
-        ColorRGB      m_bg_rgb;
-        Color16       m_bg_16;
-        int           m_bg_256;
-
-        bool          m_bold = 0;
-        bool          m_italic = 0;
-        bool          m_blink = 0;
-        bool          m_standout = 0;
-        bool          m_strikethrough = 0;
-        bool          m_dim = 0;
-        UnderlineType m_underline = NO_UNDERLINE;
-
     public:
         AnsiStyle& fg(Color16 color);
         AnsiStyle& bg(Color16 color);
         AnsiStyle& fg(int color);
         AnsiStyle& bg(int color);
-        AnsiStyle fg(ColorRGB color);
-        AnsiStyle bg(ColorRGB color);
+        AnsiStyle& fg(ColorRGB color);
+        AnsiStyle& bg(ColorRGB color);
         AnsiStyle& bold();
         AnsiStyle& italic();
         AnsiStyle& underline();
@@ -57,6 +38,26 @@ class AnsiStyle {
         AnsiStyle& dim();
         AnsiStyle& underline(UnderlineType type);
         std::string build();
+
+    private:
+        ColorType m_fgType = NO_COLOR;
+        ColorRGB m_fgRgb;
+        Color16 m_fg16;
+        int m_fg256;
+
+        ColorType m_bgType = NO_COLOR;
+        ColorRGB m_bgRgb;
+        Color16 m_bg16;
+        int m_bg256;
+
+        bool m_bold = false;
+        bool m_italic = false;
+        bool m_blink = false;
+        bool m_standout = false;
+        bool m_strikethrough = false;
+        bool m_dim = false;
+
+        UnderlineType m_underlineType = NO_UNDERLINE;
 };
 
 #endif

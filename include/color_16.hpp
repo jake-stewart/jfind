@@ -3,8 +3,7 @@
 
 #include <string>
 
-enum Color16
-{
+enum Color16 {
     UNKNOWN = -1,
 
     BLACK,

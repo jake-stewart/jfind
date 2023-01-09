@@ -2,50 +2,55 @@
 #include "../include/ansi_wrapper.hpp"
 #include "../include/input_reader.hpp"
 
+Utf8LineEditor::Utf8LineEditor() {
+    m_cursor.setString(&m_string);
+    m_start.setString(&m_string);
+    m_end.setString(&m_string);
+}
+
+void Utf8LineEditor::setOutputFile(FILE *file) {
+    m_outputFile = file;
+}
+
 void Utf8LineEditor::input(char ch) {
-    m_redraw = true;
-    m_modified = true;
+    m_requiresRedraw = true;
     m_cursor.insert(ch);
 }
 
 void Utf8LineEditor::input(std::string text) {
-    m_redraw = true;
-    m_modified = true;
+    m_requiresRedraw = true;
     m_cursor.insert(text);
     m_end.reset();
 }
 
 void Utf8LineEditor::moveCursorLeft() {
-    m_redraw = true;
+    m_requiresRedraw = true;
     m_cursor.moveLeft();
 }
 
 void Utf8LineEditor::moveCursorRight() {
-    m_redraw = true;
+    m_requiresRedraw = true;
     m_cursor.moveRight();
 }
 
 void Utf8LineEditor::backspace() {
     if (m_cursor.backspace()) {
-        m_redraw = true;
-        m_modified = true;
+        m_requiresRedraw = true;
         m_end.reset();
     }
 }
 
 void Utf8LineEditor::del() {
     if (m_cursor.del()) {
-        m_redraw = true;
-        m_modified = true;
+        m_requiresRedraw = true;
         m_end.reset();
     }
 }
 
 void Utf8LineEditor::clear() {
-    m_redraw = true;
-    m_modified = true;
-    m_string.byte_widths.clear();
-    m_string.cell_widths.clear();
+    m_requiresRedraw = true;
+    m_string.byteWidths.clear();
+    m_string.cellWidths.clear();
     m_string.bytes.clear();
     m_cursor.reset();
     m_start.reset();
@@ -74,15 +79,14 @@ void Utf8LineEditor::adjustBounds() {
 }
 
 bool Utf8LineEditor::requiresRedraw() {
-    return m_redraw;
+    return m_requiresRedraw;
 }
 
 void Utf8LineEditor::print() {
-    m_modified = false;
-    m_redraw = false;
+    m_requiresRedraw = false;
     adjustBounds();
     int bytes = m_end.getPointer() - m_start.getPointer();
-    printf("%.*s", bytes, m_start.getPointer());
+    fprintf(m_outputFile, "%.*s", bytes, m_start.getPointer());
 }
 
 void Utf8LineEditor::handleClick(int x) {
@@ -97,12 +101,6 @@ void Utf8LineEditor::handleClick(int x) {
 
 void Utf8LineEditor::setWidth(int width) {
     m_width = width - 1;
-}
-
-bool Utf8LineEditor::isModified() {
-    bool tmp = m_modified;
-    m_modified = false;
-    return tmp;
 }
 
 int Utf8LineEditor::getCursorCol() {

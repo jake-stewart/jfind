@@ -1,3 +1,4 @@
+#include <cstdio>
 #include <stdio.h>
 #include <string.h>
 #include <termios.h>
@@ -9,8 +10,7 @@
 
 #include "../include/input_reader.hpp"
 
-std::map<std::string, Key> create_key_lookup()
-{
+std::map<std::string, Key> createKeyLookup() {
     std::map<std::string, Key> lookup;
     lookup["[A"] = K_UP;
     lookup["[B"] = K_DOWN;
@@ -31,7 +31,6 @@ std::map<std::string, Key> create_key_lookup()
     lookup["[1;5I"] = K_CTRL_TAB;
     lookup["[1;6I"] = K_CTRL_SHIFT_TAB;
     lookup["\x1b[Z"] = K_ALT_SHIFT_TAB;
-
     lookup["OP"] = K_F1;
     lookup["OQ"] = K_F2;
     lookup["OR"] = K_F3;
@@ -42,18 +41,25 @@ std::map<std::string, Key> create_key_lookup()
     lookup["[19~"] = K_F8;
     lookup["[20~"] = K_F9;
     lookup["[21~"] = K_F10;
-
     lookup["[3~"] = K_DELETE;
 
     return lookup;
 }
-const std::map<std::string, Key> ESC_KEY_LOOKUP = create_key_lookup();
+const std::map<std::string, Key> ESC_KEY_LOOKUP = createKeyLookup();
 
-inline int utf8CharLen(unsigned char ch) {
-    if      (ch < 128)           return 1;
-    else if (ch >> 5 == 0b110)   return 2;
-    else if (ch >> 4 == 0b1110)  return 3;
-    else if (ch >> 3 == 0b11110) return 4;
+int utf8CharLen(unsigned char ch) {
+    if (ch < 128) {
+        return 1;
+    }
+    else if (ch >> 5 == 0b110) {
+        return 2;
+    }
+    else if (ch >> 4 == 0b1110) {
+        return 3;
+    }
+    else if (ch >> 3 == 0b11110) {
+        return 4;
+    }
     return 0;
 }
 
@@ -62,9 +68,7 @@ bool isContinuationByte(unsigned char ch) {
 }
 
 int InputReader::getKey(Key *key) {
-    if (m_mouse_events.size()) {
-        m_mouse_event = m_mouse_events[0];
-        m_mouse_events.erase(m_mouse_events.begin());
+    if (m_mouseEvents.size()) {
         *key = K_MOUSE;
         return 0;
     }
@@ -85,20 +89,24 @@ int InputReader::getKey(Key *key) {
 
 bool InputReader::hasKey() {
     FD_ZERO(&m_set);
-    FD_SET(STDIN_FILENO, &m_set);
-    int sel = select(1, &m_set, NULL, NULL, &m_timeout);
+    FD_SET(m_fileDescriptor, &m_set);
+    int sel = select(m_fileDescriptor + 1, &m_set, NULL, NULL, &m_timeout);
     return sel > 0;
 }
 
 InputReader::InputReader() {
     m_timeout.tv_sec = 0;
     m_timeout.tv_usec = 0;
+    m_fileDescriptor = STDIN_FILENO;
+}
+
+void InputReader::setFileDescriptor(int fileDescriptor) {
+    m_fileDescriptor = fileDescriptor;
 }
 
 char InputReader::getch() {
     char ch;
-    if (read(STDIN_FILENO, &ch, 1) != 1)
-    {
+    if (read(m_fileDescriptor, &ch, 1) != 1) {
         fprintf(stderr, "read error or EOF\n");
     }
     return ch;
@@ -133,22 +141,14 @@ int InputReader::parseMouse(std::string& seq, Key *key) {
     int length;
     int idx = 0;
 
-    m_mouse_events.clear();
+    m_mouseEvents.clear();
 
     while (idx < seq.size()) {
         MouseEvent event;
         int button;
         char pressed;
-        int results = sscanf(
-            seq.c_str() + idx,
-            "[<%d;%d;%d%c%n",
-            &button,
-            &event.x,
-            &event.y,
-            &pressed,
-            &length
-        );
-
+        int results = sscanf(seq.c_str() + idx, "[<%d;%d;%d%c%n", &button,
+                &event.x, &event.y, &pressed, &length);
         idx += length + 1;
 
         if (results != 4) {
@@ -205,19 +205,16 @@ int InputReader::parseMouse(std::string& seq, Key *key) {
                 continue;
         }
 
-        m_mouse_events.push_back(event);
+        m_mouseEvents.push_back(event);
     }
 
-    if (m_mouse_events.size()) {
-        m_mouse_event = m_mouse_events[0];
-        m_mouse_events.erase(m_mouse_events.begin());
-        *key = K_MOUSE;
-        return 0;
-    }
-    else {
+    if (!m_mouseEvents.size()) {
         *key = K_UNKNOWN;
         return 1;
     }
+
+    *key = K_MOUSE;
+    return 0;
 }
 
 int InputReader::parseAltKey(char ch, Key *key) {
@@ -281,5 +278,7 @@ std::string InputReader::getWideChar() {
 }
 
 MouseEvent InputReader::getMouseEvent() {
-    return m_mouse_event;
+    MouseEvent event = m_mouseEvents[0];
+    m_mouseEvents.erase(m_mouseEvents.begin());
+    return event;
 }

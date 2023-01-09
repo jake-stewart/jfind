@@ -4,104 +4,96 @@
 
 
 JsonElementType JsonElement::getType() {
-    return type;
+    return m_type;
 }
 
 int JsonElement::getLine() {
-    return line;
+    return m_line;
 }
 
 JsonString::JsonString(int line, int idx, std::string value) {
-    this->line = line;
-    this->idx = idx;
-    this->value = value;
-    type = STRING;
+    m_line = line;
+    m_idx = idx;
+    m_value = value;
+    m_type = STRING;
 }
 
 std::string& JsonString::getValue() {
-    return value;
+    return m_value;
 }
 
 std::string JsonString::repr(int indent, int depth) {
-    std::string escaped = value;
-    escaped = std::regex_replace(
-        escaped, std::regex("\\\\"), "\\\\");
-    escaped = std::regex_replace(
-        escaped, std::regex("\n"), "\\n");
-    escaped = std::regex_replace(
-        escaped, std::regex("\""), "\\\"");
-    escaped = std::regex_replace(
-        escaped, std::regex("\t"), "\\t");
-
+    std::string escaped = m_value;
+    escaped = std::regex_replace(escaped, std::regex("\\\\"), "\\\\");
+    escaped = std::regex_replace(escaped, std::regex("\n"), "\\n");
+    escaped = std::regex_replace(escaped, std::regex("\""), "\\\"");
+    escaped = std::regex_replace(escaped, std::regex("\t"), "\\t");
     return '"' + escaped + '"';
 }
 
 
-JsonInt::JsonInt(int line, int idx, long value) {
-    this->line = line;
-    this->idx = idx;
-    this->value = value;
-    type = INT;
+JsonInt::JsonInt(int line, int idx, int value) {
+    m_line = line;
+    m_idx = idx;
+    m_value = value;
+    m_type = INT;
 }
 
-long& JsonInt::getValue() {
-    return value;
+int& JsonInt::getValue() {
+    return m_value;
 }
 
 std::string JsonInt::repr(int indent, int depth) {
-    return std::to_string(value);
+    return std::to_string(m_value);
 }
-
 
 
 JsonFloat::JsonFloat(int line, int idx, double value) {
-    this->line = line;
-    this->idx = idx;
-    this->value = value;
-    type = FLOAT;
+    m_line = line;
+    m_idx = idx;
+    m_value = value;
+    m_type = FLOAT;
 }
 
 double& JsonFloat::getValue() {
-    return value;
+    return m_value;
 }
 
 std::string JsonFloat::repr(int indent, int depth) {
-    return std::to_string(value);
+    return std::to_string(m_value);
 }
-
 
 
 JsonBoolean::JsonBoolean(int line, int idx, bool value) {
-    this->line = line;
-    this->idx = idx;
-    this->value = value;
-    type = BOOLEAN;
+    m_line = line;
+    m_idx = idx;
+    m_value = value;
+    m_type = BOOLEAN;
 }
 
 bool& JsonBoolean::getValue() {
-    return value;
+    return m_value;
 }
 
 std::string JsonBoolean::repr(int indent, int depth) {
-    return value ? "true" : "false";
+    return m_value ? "true" : "false";
 }
-
 
 
 JsonObject::JsonObject(int line, int idx) {
-    this->line = line;
-    this->idx = idx;
-    type = OBJECT;
+    m_line = line;
+    m_idx = idx;
+    m_type = OBJECT;
 }
 
 std::map<std::string, JsonObjectEntry>& JsonObject::getValue() {
-    return value;
+    return m_value;
 }
 
 std::string JsonObject::repr(int indent, int depth) {
     std::string repr = "{";
 
-    for (auto it = value.begin(); it != value.end(); ++it) { 
+    for (auto it = m_value.begin(); it != m_value.end(); ++it) { 
         if (indent) {
             repr += "\n";
             for (int i = 0; i < indent * (depth + 1); i++) {
@@ -113,7 +105,7 @@ std::string JsonObject::repr(int indent, int depth) {
             repr += " ";
         }
         repr += it->second.value->repr(indent, depth + 1);
-        if (std::next(it) != value.end()) {
+        if (std::next(it) != m_value.end()) {
             repr += ",";
         }
         if (indent) {
@@ -133,20 +125,20 @@ std::string JsonObject::repr(int indent, int depth) {
 
 
 JsonArray::JsonArray(int line, int idx) {
-    this->line = line;
-    this->idx = idx;
-    type = ARRAY;
+    m_line = line;
+    m_idx = idx;
+    m_type = ARRAY;
 }
 
 std::vector<JsonElement*>& JsonArray::getValue() {
-    return value;
+    return m_value;
 }
 
 std::string JsonArray::repr(int indent, int depth) {
     std::string repr = "[";
 
     std::vector<JsonElement*>::iterator it;
-    for (it = value.begin(); it != value.end(); ++it) { 
+    for (it = m_value.begin(); it != m_value.end(); ++it) { 
         if (indent) {
             repr += "\n";
             for (int i = 0; i < indent * (depth + 1); i++) {
@@ -154,7 +146,7 @@ std::string JsonArray::repr(int indent, int depth) {
             }
         }
         repr += (*it)->repr(indent, depth + 1);
-        if (std::next(it) != value.end()) {
+        if (std::next(it) != m_value.end()) {
             repr += ",";
             if (indent) {
                 repr += " ";
@@ -175,65 +167,69 @@ std::string JsonArray::repr(int indent, int depth) {
 
 
 bool JsonParser::parse(std::string json) {
-    idx = 0;
-    line = 1;
-    this->json = json;
+    m_idx = 0;
+    m_line = 1;
+    m_json = json;
+
     skipWhitespace();
+
     if (!peek()) {
         return true;
     }
+
     bool valid = parseElement();
+
     if (valid) {
         skipWhitespace();
-        if (idx != json.length()) {
-            error = "Expected EOF";
+        if (m_idx != json.length()) {
+            m_error = "Expected EOF";
             valid = false;
         }
     }
+
     return valid;
 }
 
 std::string JsonParser::getError() {
-    return error;
+    return m_error;
 }
 
 int JsonParser::getLine() {
-    return line;
+    return m_line;
 }
 
 JsonElement* JsonParser::getElement() {
-    return elements.size() ? elements.back() : nullptr;
+    return m_elements.size() ? m_elements.back() : nullptr;
 }
 
 void JsonParser::skipWhitespace() {
-    while (idx < json.length() && (
-                json[idx] == ' '
-                || json[idx] == '\t'
-                || json[idx] == '\n'
-                || json[idx] == '\r')
-    ) {
-        if (json[idx] == '\n') {
-            line++;
+    while (m_idx < m_json.length() && (m_json[m_idx] == ' '
+                || m_json[m_idx] == '\t'
+                || m_json[m_idx] == '\n'
+                || m_json[m_idx] == '\r'))
+    {
+        if (m_json[m_idx] == '\n') {
+            m_line++;
         }
-        idx++;
+        m_idx++;
     }
 }
 
 char JsonParser::peek() {
-    if (idx >= json.length()) {
+    if (m_idx >= m_json.length()) {
         return 0;
     }
-    return json[idx];
+    return m_json[m_idx];
 }
 
 char JsonParser::next() {
-    if (idx >= json.length()) {
+    if (m_idx >= m_json.length()) {
         return 0;
     }
-    if (json[idx] == '\n') {
-        line++;
+    if (m_json[m_idx] == '\n') {
+        m_line++;
     }
-    return json[idx++];
+    return m_json[m_idx++];
 }
 
 bool JsonParser::parseElement() {
@@ -249,7 +245,7 @@ bool JsonParser::parseElement() {
         case '0' ... '9':
             return parseNumber();
         case 0:
-            error = "Unexpected EOF";
+            m_error = "Unexpected EOF";
             return false;
         default:
             return parseKeyword();
@@ -257,11 +253,11 @@ bool JsonParser::parseElement() {
 }
 
 bool JsonParser::parseObject() {
-    JsonObject *object = new JsonObject(line, idx);
+    JsonObject *object = new JsonObject(m_line, m_idx);
     bool valid = true;
 
     if (next() != '{') {
-        error = "An object must start with an open brace";
+        m_error = "An object must start with an open brace";
         valid = false;
     }
     if (valid) {
@@ -271,11 +267,11 @@ bool JsonParser::parseObject() {
                 valid = false;
                 break;
             }
-            JsonString *key = (JsonString*)elements.back();
+            JsonString *key = (JsonString*)m_elements.back();
 
             skipWhitespace();
             if (next() != ':') {
-                error = "Object expected a colon separator";
+                m_error = "Object expected a colon separator";
                 valid = false;
                 break;
             }
@@ -286,21 +282,21 @@ bool JsonParser::parseObject() {
                 break;
             }
 
-            object->getValue()[key->getValue()] = {key, elements.back()};
+            object->getValue()[key->getValue()] = {key, m_elements.back()};
 
             skipWhitespace();
             if (peek() == '}') {
                 break;
             }
             if (next() != ',') {
-                error = "Object expected a comma separator";
+                m_error = "Object expected a comma separator";
                 valid = false;
                 break;
             }
             else {
                 skipWhitespace();
                 if (peek() == '}') {
-                    error = "Trailing comma in object";
+                    m_error = "Trailing comma in object";
                     valid = false;
                     break;
                 }
@@ -309,7 +305,7 @@ bool JsonParser::parseObject() {
         }
     }
 
-    elements.push_back(object);
+    m_elements.push_back(object);
     if (valid) {
         next();
     }
@@ -317,11 +313,11 @@ bool JsonParser::parseObject() {
 }
 
 bool JsonParser::parseArray() {
-    JsonArray *array = new JsonArray(line, idx);
+    JsonArray *array = new JsonArray(m_line, m_idx);
     bool valid = true;
 
     if (next() != '[') {
-        error = "An array must start with an open bracket";
+        m_error = "An array must start with an open bracket";
         valid = false;
     }
     if (valid) {
@@ -332,21 +328,21 @@ bool JsonParser::parseArray() {
                 break;
             }
 
-            array->getValue().push_back(elements.back());
+            array->getValue().push_back(m_elements.back());
 
             skipWhitespace();
             if (peek() == ']') {
                 break;
             }
             if (next() != ',') {
-                error = "Array expected a comma separator";
+                m_error = "Array expected a comma separator";
                 valid = false;
                 break;
             }
             else {
                 skipWhitespace();
                 if (peek() == ']') {
-                    error = "Trailing comma in array";
+                    m_error = "Trailing comma in array";
                     valid = false;
                     break;
                 }
@@ -354,7 +350,7 @@ bool JsonParser::parseArray() {
             skipWhitespace();
         }
     }
-    elements.push_back(array);
+    m_elements.push_back(array);
     if (valid) {
         next();
     }
@@ -377,7 +373,7 @@ bool JsonParser::parseNumber() {
                 break;
             case '.':
                 if (hasDecimal) {
-                    error = "A number cannot contain multiple decimal points";
+                    m_error = "A number cannot contain multiple decimal points";
                     return false;
                 }
                 hasDecimal = true;
@@ -390,21 +386,25 @@ bool JsonParser::parseNumber() {
     }
 
     if (hasDecimal) {
-        if (value.front() == '.'
-                || value.back() == '.'
-                || value.length() < 3
-        ) {
-            error = "A number cannot start or end with a decimal point";
+        if (value.front() == '.' || value.back() == '.' || value.length() < 3)
+        {
+            m_error = "A number cannot start or end with a decimal point";
             return false;
         }
-        elements.push_back(new JsonFloat(line, idx, std::stod(value)));
+        m_elements.push_back(new JsonFloat(m_line, m_idx, std::stod(value)));
     }
     else {
         if (!value.length()) {
-            error = "Empty number";
+            m_error = "Empty number";
             return false;
         }
-        elements.push_back(new JsonInt(line, idx, std::stol(value)));
+        try {
+            m_elements.push_back(new JsonInt(m_line, m_idx, std::stoi(value)));
+        }
+        catch (std::out_of_range) {
+            m_error = "The number is out of range";
+            return false;
+        }
     }
 
     return true;
@@ -415,12 +415,12 @@ bool JsonParser::parseString() {
     bool escaped = false;
 
     if (next() != '"') {
-        error = "A string must start with a double quote";
+        m_error = "A string must start with a double quote";
         return false;
     }
     while (true) {
         if (peek() == 0) {
-            error = "Unexpected EOF while parsing string";
+            m_error = "Unexpected EOF while parsing string";
             return false;
         }
         if (escaped) {
@@ -455,7 +455,7 @@ bool JsonParser::parseString() {
         }
     }
 
-    elements.push_back(new JsonString(line, idx, value));
+    m_elements.push_back(new JsonString(m_line, m_idx, value));
 
     return true;
 }
@@ -476,13 +476,13 @@ bool JsonParser::parseKeyword() {
     }
 
     if (value == "true") {
-        elements.push_back(new JsonBoolean(line, idx, true));
+        m_elements.push_back(new JsonBoolean(m_line, m_idx, true));
     }
     else if (value == "false") {
-        elements.push_back(new JsonBoolean(line, idx, false));
+        m_elements.push_back(new JsonBoolean(m_line, m_idx, false));
     }
     else {
-        error = "Unknown keyword: " + value;
+        m_error = "Unknown keyword: " + value;
         return false;
     }
 
