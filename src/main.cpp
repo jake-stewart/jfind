@@ -137,72 +137,7 @@ void displayHelp(const char *name) {
     printf("    seq 100 | %s\n", name);
 }
 
-// int nTests = 0;
-// int nPasses = 0;
-// void test(std::string one, std::string two, std::string query) {
-//     printf("START\n");
-//     ItemSorter items;
-//     Item *itemsBuf = new Item[2];
-//     char *oneBuf = new char[one.size()];
-//     char *twoBuf = new char[one.size()];
-//     strcpy(oneBuf, one.c_str());
-//     strcpy(twoBuf, two.c_str());
-//     itemsBuf[0] = Item(oneBuf);
-//     printf("brh\n");
-//     itemsBuf[1] = Item(twoBuf);
-//     items.add(itemsBuf, 2);
-//     items.setQuery(query.c_str());
-//     items.calcHeuristics();
-//     printf("wh\n");
-//     bool result = items.get(0).text == one;
-//     printf("OKAY\n");
-//     if (result) {
-//         printf("um\n");
-//         ItemSorter items;
-//         itemsBuf[0] = Item(twoBuf);
-//         itemsBuf[1] = Item(oneBuf);
-//         items.add(itemsBuf, 2);
-//         printf("dude\n");
-//         items.setQuery(query.c_str());
-//         items.calcHeuristics();
-//         bool result = items.get(0).text == one;
-//         printf("what\n");
-//     }
-//     std::string style = AnsiStyle().fg(result ? GREEN : RED).build();
-//     std::string clear = AnsiStyle().build();
-//     printf(
-//         "%s%s%s   %-40s%-40s%s\n",
-//         style.c_str(),
-//         result ? "PASS" : "\x1b[31mFAIL\x1b[0m",
-//         clear.c_str(),
-//         one.c_str(),
-//         two.c_str(),
-//         query.c_str()
-//     );
-//     nTests++;
-//     nPasses += result;
-// }
-
 int main(int argc, const char **argv) {
-
-    // test("app/app.tsx", "app/this.tsx", "ats");
-    // test("models/ProductDetails.ts", "Products/ProductDetailsPage.tsx", "proddetail");
-    // test("models/ProductDetails.ts", "Products/ProductDetailsPage.tsx", "prode");
-    // test("Product/ProductDetailsPage.tsx", "Product/EditProductPage.tsx", "prodepa");
-    // test("User/EditUserPage.tsx", "User/CreateUserPage.tsx", "euspa");
-    // test("core/CancelablePromise.ts", "core/ApiRequestOptions.ts", "capro");
-    // test("core/request.ts", "models/RenderRequest.ts", "req");
-    // test("Product/ProductsPage.tsx", "Product/EditProductPage.tsx", "propa");
-    // test("Product/ProductsPage.tsx", "Product/EditProductPage.tsx", "propage");
-    // test("ThisIsABigTest", "BigHugeTest", "bigte");
-    // test("12340", "12034", "1234");
-    // test("12340", "12034", "1234");
-    // test("models/ProductDetails.ts", "Product/EditProductPage.tsx", "prode");
-    // test("Organisation/EditOrganisationPage.tsx", "models/ErrorResponse.ts", "eor");
-    // test("core/request.ts", "models/RenderErrorResponse.ts", "re");
-    // printf("\n%d/%d tests passed\n", nPasses, nTests);
-    // return 0;
-
     StyleManager *styleManager = userInterface.getStyleManager();
 
     if (!readConfig(styleManager, argc, argv)) {
