@@ -53,17 +53,23 @@ bool HistoryManager::writeHistory(Item *selected) {
         return false;
     }
 
-    m_historyLookup[selected->text] = m_historyLookup.size();
+    if (m_historyLookup.contains(selected->text)) {
+        m_historyLookup[selected->text] = m_historyLookup.size() - 1;
+    }
+    else {
+        m_historyLookup[selected->text] = m_historyLookup.size();
+    }
 
-    std::vector<std::string> history(m_historyLookup.size());
+    int size = m_historyLookup.size();
+    std::string history[size];
+
     for (std::pair<std::string, int> it : m_historyLookup) {
         history[it.second] = it.first;
     }
 
-    int start = history.size() > m_historyLimit
-        ? history.size() - m_historyLimit : 0;
+    int start = size > m_historyLimit ? size - m_historyLimit : 0;
 
-    for (int i = start; i < history.size(); i++) {
+    for (int i = start; i < size; i++) {
         if (!history[i].size()) {
             continue;
         }
