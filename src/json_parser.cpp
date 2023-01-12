@@ -394,7 +394,7 @@ bool JsonParser::parseNumber() {
         m_elements.push_back(new JsonFloat(m_line, m_idx, std::stod(value)));
     }
     else {
-        if (!value.length()) {
+        if (!value.length() || value == "-") {
             m_error = "Empty number";
             return false;
         }

@@ -1,33 +1,27 @@
 #include "../include/ansi_style.hpp"
 #include <sstream>
 
-AnsiStyle& AnsiStyle::fg(Color16 color) {
-    if (color >= BRIGHT_BLACK) {
-        return fg((int)color);
-    }
-    m_fgType = COLOR_8;
-    m_fg16 = color;
-    return *this;
-}
-
-AnsiStyle& AnsiStyle::bg(Color16 color) {
-    if (color >= BRIGHT_BLACK) {
-        return bg((int)color);
-    }
-    m_bgType = COLOR_8;
-    m_bg16 = color;
-    return *this;
-}
-
 AnsiStyle& AnsiStyle::fg(int color) {
-    m_fgType = COLOR_256;
-    m_fg256 = color;
+    if (color < BRIGHT_BLACK) {
+        m_fgType = COLOR_8;
+        m_fg16 = (Color16)color;
+    }
+    else {
+        m_fgType = COLOR_256;
+        m_fg256 = color;
+    }
     return *this;
 }
 
 AnsiStyle& AnsiStyle::bg(int color) {
-    m_bgType = COLOR_256;
-    m_bg256 = color;
+    if (color < BRIGHT_BLACK) {
+        m_bgType = COLOR_8;
+        m_bg16 = (Color16)color;
+    }
+    else {
+        m_bgType = COLOR_256;
+        m_bg256 = color;
+    }
     return *this;
 }
 

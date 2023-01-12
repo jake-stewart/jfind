@@ -45,7 +45,7 @@ class JsonStylesReaderStrategy : public JsonReaderStrategy {
         bool readStyle(JsonElement *element, AnsiStyle *style);
         bool readColorRGB(ColorRGB *color, JsonString *str);
         bool readColor16(Color16 *color, JsonString *str);
-        bool readColor(JsonString *str, AnsiStyle *style, bool fg);
+        bool readColor(JsonElement *elem, AnsiStyle *style, bool fg);
         bool readAttr(JsonArray *arr, AnsiStyle *style);
 
     private:

@@ -139,14 +139,27 @@ bool JsonStylesReaderStrategy::readColor16(Color16 *color, JsonString *str) {
     return false;
 }
 
-bool JsonStylesReaderStrategy::readColor(JsonString *str, AnsiStyle *style,
+bool JsonStylesReaderStrategy::readColor(JsonElement *elem, AnsiStyle *style,
         bool fg)
 {
-    if (str->getType() != STRING) {
-        errorMsg = "The datatype of a color must be a string";
-        errorLine = str->getLine();
+    if (elem->getType() == INT) {
+        JsonInt *integer = (JsonInt*)elem;
+        int value = integer->getValue();
+        if (value < 0 || value > 255) {
+            errorMsg = "A color code must be between 0 and 255 inclusive";
+            errorLine = elem->getLine();
+            return false;
+        }
+        fg ? style->fg(value) : style->bg(value);
+        return true;
+    }
+    else if (elem->getType() != STRING) {
+        errorMsg = "The datatype of a color must be an int or string";
+        errorLine = elem->getLine();
         return false;
     }
+
+    JsonString *str = (JsonString*)elem;
     if (str->getValue().starts_with("#")) {
         ColorRGB color;
         if (!readColorRGB(&color, str)) {
@@ -204,13 +217,14 @@ bool JsonStylesReaderStrategy::readStyle(JsonElement *element,
 bool JsonStylesReaderStrategy::readAttr(JsonArray *arr, AnsiStyle *style) {
     if (arr->getType() != ARRAY) {
         typeError("attr", "array");
+        errorLine = arr->getLine();
         return false;
     }
     auto value = arr->getValue();
 
     for (int i = 0; i < value.size(); i++) { 
         if (value[i]->getType() != STRING) {
-            errorMsg = "The datatype of a color attr must be a string";
+            errorMsg = "The datatype of an attr must be a string";
             errorLine = value[i]->getLine();
             return false;
         }

@@ -44,12 +44,27 @@ void HistoryManager::applyHistory(Item *item) {
 bool HistoryManager::writeHistory(Item *selected) {
     fs::path expanded = expandUserPath(m_file);
     fs::path parent = expanded.parent_path();
-    if (!parent.empty()) {
-        fs::create_directories(parent);
+    if (!parent.empty() && !fs::exists(parent)) {
+        try {
+            fs::create_directories(parent);
+        }
+        catch (std::exception) {
+            fprintf(stderr,
+                    "ERROR: could not create parent directories for '%s'\n",
+                    expanded.c_str());
+            return false;
+        }
+    }
+    if (fs::exists(expanded) && !fs::is_regular_file(expanded)) {
+        fprintf(stderr, "ERROR: '%s' is not a regular file\n",
+                expanded.c_str());
+        return false;
     }
     std::ofstream historyFile(expanded);
 
     if (!historyFile.is_open()) {
+        fprintf(stderr, "ERROR: '%s' could not be opened\n",
+                expanded.c_str());
         return false;
     }
 

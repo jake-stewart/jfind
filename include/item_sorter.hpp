@@ -22,8 +22,11 @@ class ItemSorter {
                                           int start, int end);
 
         int m_heuristicIdx;
+        int m_lastSize;
         int m_sortIdx;
+
         std::vector<Item> m_items;
+        bool m_wakeUp;
         bool m_isSorted;
         std::string m_query;
         bool m_queryChanged;

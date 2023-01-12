@@ -23,8 +23,6 @@ enum ColorType {
 
 class AnsiStyle {
     public:
-        AnsiStyle& fg(Color16 color);
-        AnsiStyle& bg(Color16 color);
         AnsiStyle& fg(int color);
         AnsiStyle& bg(int color);
         AnsiStyle& fg(ColorRGB color);
