@@ -56,50 +56,55 @@ int ItemSorter::size() {
     return m_items.size();
 }
 
-void ItemSorter::setQuery(std::string m_query) {
-    if (this->m_query.size() < m_query.size()) {
-        m_queryDeleted = !m_query.starts_with(this->m_query);
+void ItemSorter::setQuery(std::string query) {
+    bool backspaced;
+
+    if (m_query.size() < query.size()) {
+        backspaced = !query.starts_with(m_query);
     }
     else {
-        m_queryDeleted = this->m_query != m_query;
+        backspaced = m_query != query;
     }
 
-    if (m_queryDeleted) {
+    if (backspaced) {
         m_heuristicIdx = 0;
     }
 
     m_queryChanged = true;
-    this->m_query = m_query;
+    m_query = query;
 }
 
-void ItemSorter::calcHeuristics() {
+void ItemSorter::calcHeuristics(bool *cancel) {
     std::unique_lock lock(m_mut);
 
     if (m_queryChanged && m_heuristicIdx) {
-        calcHeuristics(m_query.c_str(), true, 0, m_heuristicIdx);
+        calcHeuristics(m_query.c_str(), false, 0, m_heuristicIdx, cancel);
     }
     int n = m_items.size();
     if (n && n > m_heuristicIdx) {
-        calcHeuristics(m_query.c_str(), false, m_heuristicIdx, n);
+        calcHeuristics(m_query.c_str(), true, m_heuristicIdx, n, cancel);
     }
     m_heuristicIdx = n;
 
     m_queryChanged = false;
 }
 
-void ItemSorter::calcHeuristics(const char* m_query, bool skipEmpty, int start,
-        int end)
+void ItemSorter::calcHeuristics(const char* query, bool newItems, int start,
+        int end, bool *cancel)
 {
     std::function<void(Item*, int)> f;
     ItemMatcher matcher;
-    std::vector<std::string> words = split(m_query, ' ');
+    std::vector<std::string> words = split(query, ' ');
 
-    m_isSorted = strlen(m_query) > 0;
+    m_isSorted = strlen(query) > 0;
 
     if (m_isSorted) {
         f = [&] (Item *item, int n) {
             for (int i = 0; i < n; i++) {
-                if (skipEmpty && item->heuristic == INT_MAX) {
+                if (*cancel) {
+                    return;
+                }
+                if (!newItems && item->heuristic == -INT_MAX) {
                     item++;
                     continue;
                 }

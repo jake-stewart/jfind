@@ -12,14 +12,13 @@ class ItemSorter {
         int size();
         void sort(int n);
         void setQuery(std::string query);
-        void calcHeuristics();
+        void calcHeuristics(bool *cancel);
         std::vector<Item>& getItems();
         int copyItems(Item *buffer, int idx, int n);
 
     private:
-        void calcHeuristics(const char *query, bool skipEmpty);
-        void calcHeuristics(const char *query, bool skipEmpty,
-                                          int start, int end);
+        void calcHeuristics(const char *query, bool newItems,
+                            int start, int end, bool *cancel);
 
         int m_heuristicIdx;
         int m_lastSize;
@@ -30,7 +29,6 @@ class ItemSorter {
         bool m_isSorted;
         std::string m_query;
         bool m_queryChanged;
-        bool m_queryDeleted;
         std::mutex m_mut;
 };
 

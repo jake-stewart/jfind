@@ -49,6 +49,7 @@ bool ItemReader::readWithHints(std::vector<Item>& itemsBuf) {
     Item item;
     item.text = thirdBuf;
     item.index = m_itemId++;
+    item.heuristic = 0;
     itemsBuf.push_back(item);
 
     return true;

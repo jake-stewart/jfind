@@ -99,13 +99,15 @@ void ThreadCoordinator::sortItems() {
         m_queryChanged = false;
     }
 
-    m_sorter->calcHeuristics();
+    // calc will cancel upon query change
+    // this way, jfind can quickly restart calc with new query
+    m_sorter->calcHeuristics(&m_queryChanged);
 
-    // sort the first few items on the sorter thread. this is to remove the
-    // delay on the main thread, which the user could notice
-    m_sorter->sort(256);
+    if (!m_queryChanged) {
+        // sort the first few items on the sorter thread. this is to remove the
+        // delay on the main thread, which the user could notice
+        m_sorter->sort(256);
 
-    {
         std::unique_lock lock(m_sorterMainMutex);
         if (m_userInputBlocked) {
             m_userInterface->redraw();
@@ -114,6 +116,7 @@ void ThreadCoordinator::sortItems() {
         else {
             m_requiresRedraw = true;
         }
+
     }
 }
 
