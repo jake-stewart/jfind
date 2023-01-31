@@ -22,11 +22,9 @@ int ItemMatcher::calc(const char *text, std::vector<std::string>& queries) {
 
 int ItemMatcher::matchStart(const char *tp, const char *qp) {
     int maxScore = -INT_MAX;
-
     if (!(*tp)) {
         return maxScore;
     }
-
     if (tolower(*tp) == *qp) {
         if (!*(qp + 1)) {
             return START_LINE_BONUS;
@@ -37,7 +35,6 @@ int ItemMatcher::matchStart(const char *tp, const char *qp) {
         }
         maxScore += START_LINE_BONUS;
     }
-
     int score = match(tp + 1, qp, 0, 0);
     return score > maxScore ? score : maxScore;
 }
@@ -46,7 +43,6 @@ int ItemMatcher::letterScore(const char *tp, int consecutive) {
     if (consecutive) {
         consecutive += CONSECUTIVE_SHIFT;
     }
-
     int acceptScore;
     switch (*tp) {
         case 'a' ... 'z':
@@ -54,7 +50,7 @@ int ItemMatcher::letterScore(const char *tp, int consecutive) {
                 ? LETTER_MATCH_BONUS : START_WORD_BONUS;
             break;
         case 'A' ... 'Z':
-            acceptScore = (islower(*(tp + 1)) || !isupper(*(tp - 1)))
+            acceptScore = (!isupper(*(tp - 1)) || islower(*(tp + 1)))
                 ? START_WORD_BONUS : LETTER_MATCH_BONUS;
             break;
         case '0' ... '9':
@@ -65,64 +61,40 @@ int ItemMatcher::letterScore(const char *tp, int consecutive) {
             acceptScore = LETTER_MATCH_BONUS;
             break;
     }
-
     return acceptScore + consecutive * CONSECUTIVE_BONUS;
 }
 
 bool ItemMatcher::isWordStart(const char *tp) {
     switch (*tp) {
-        case 'a' ... 'z':
-            return !isalpha(*(tp - 1));
-        case 'A' ... 'Z':
-            return islower(*(tp + 1)) || !isupper(*(tp - 1));
-        case '0' ... '9':
-            return !isdigit(*(tp - 1));
-        default:
-            return false;
+        case 'a' ... 'z': return !isalpha(*(tp - 1));
+        case 'A' ... 'Z': return !isupper(*(tp - 1)) || islower(*(tp + 1));
+        case '0' ... '9': return !isdigit(*(tp - 1));
+        default:          return false;
     }
 }
 
-int ItemMatcher::match(const char *tp, const char *qp, int distance,
-        int consecutive)
-{
+int ItemMatcher::match(const char *tp, const char *qp, int distance, int consecutive) {
     int maxScore = -INT_MAX;
-
     while (*tp) {
         if (distance) {
             distance += isWordStart(tp);
         }
-
         if (tolower(*tp) == *qp) {
-            if (!(*(qp + 1))) {
-                int score = letterScore(tp, consecutive)
-                    + distance * DISTANCE_PENALTY;
-                if (score > maxScore) {
-                    maxScore = score;
+            int score = 0;
+            if (*(qp + 1)) {
+                score = match(tp + 1, qp + 1, distance ? distance : 1,
+                        consecutive ? consecutive : isWordStart(tp));
+                if (score == -INT_MAX) {
+                    break;
                 }
-                break;
             }
-
-            bool resetConsecutive = !consecutive && islower(*tp)
-                && isalpha(*(tp - 1));
-
-            int score = match(tp + 1, qp + 1, distance + 1,
-                    resetConsecutive ? 0 : consecutive + 1);
-
-            if (score == -INT_MAX) {
-                break;
-            }
-
-            score += letterScore(tp, consecutive)
-                + distance * DISTANCE_PENALTY;
-
+            score += letterScore(tp, consecutive) + distance * DISTANCE_PENALTY;
             if (score > maxScore) {
                 maxScore = score;
             }
         }
-
         consecutive = 0;
         tp++;
     }
-
     return maxScore;
 }

@@ -53,7 +53,7 @@ void UserInterface::drawName(int i) {
     }
 
     fprintf(m_outputFile, "%s", name.c_str());
-    // fprintf(m_outputFile, "%s %d", name.c_str(), items->get(i).heuristic);
+    // fprintf(m_outputFile, "%s %d", name.c_str(), m_itemCache.get(i)->heuristic);
 }
 
 void UserInterface::drawHint(int i) {
