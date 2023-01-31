@@ -96,6 +96,7 @@ void ThreadCoordinator::sortItems() {
     {
         std::unique_lock lock(m_sorterMainMutex);
         m_sorter->setQuery(m_userInterface->getEditor()->getText());
+        m_sorting = true;
         m_queryChanged = false;
     }
 
@@ -107,6 +108,7 @@ void ThreadCoordinator::sortItems() {
         // sort the first few items on the sorter thread. this is to remove the
         // delay on the main thread, which the user could notice
         m_sorter->sort(256);
+        m_sorting = false;
 
         std::unique_lock lock(m_sorterMainMutex);
         if (m_userInputBlocked) {
@@ -172,11 +174,40 @@ void ThreadCoordinator::setItemReader(ItemReader itemReader) {
     m_itemReader = itemReader;
 }
 
+void ThreadCoordinator::setConfig(Config *config) {
+    m_config = config;
+}
+
+void ThreadCoordinator::spinnerThreadFunc() {
+    bool isSpinning = false;
+    int nFrames = 0;
+
+    while (m_sorterThreadState == ACTIVE) {
+        std::this_thread::sleep_for(100ms);
+        std::unique_lock lock(m_sorterMainMutex);
+        bool isLoading = m_sorting || m_readerThreadState != INACTIVE;
+        if (isLoading) {
+            isSpinning = true;
+            nFrames = 3;
+        }
+        else if (isSpinning) {
+            if (--nFrames == 0) {
+                isSpinning = false;
+            }
+        }
+        m_userInterface->updateSpinner(isSpinning);
+    }
+}
+
 void ThreadCoordinator::startThreads() {
     m_readerThreadState = ACTIVE;
     m_sorterThreadState = ACTIVE;
     m_sorterThread = std::thread(&ThreadCoordinator::sorterThreadFunc, this);
     m_readerThread = std::thread(&ThreadCoordinator::readerThreadFunc, this);
+
+    if (m_config->showSpinner) {
+        m_spinnerThread = std::thread(&ThreadCoordinator::spinnerThreadFunc, this);
+    }
 }
 
 void ThreadCoordinator::handleUserInput() {
@@ -247,6 +278,11 @@ void ThreadCoordinator::endThreads() {
 
         m_sorterMainCv.notify_one();
     }
+
     m_readerThread.join();
     m_sorterThread.join();
+
+    if (m_config->showSpinner) {
+        m_spinnerThread.join();
+    }
 }

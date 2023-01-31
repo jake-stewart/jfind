@@ -32,6 +32,7 @@ struct Config {
     bool showHints = false;
     bool selectHint = false;
     bool selectBoth = false;
+    bool showSpinner = true;
     bool acceptNonMatch = false;
 
     fs::path historyFile;

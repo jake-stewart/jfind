@@ -18,6 +18,8 @@ std::map<std::string, JsonReaderStrategy*> ConfigJsonReader::createOptions() {
             new JsonIntReaderStrategy(&m_config->minHintWidth))->min(0);
     options["max_hint_width"] = (
             new JsonIntReaderStrategy(&m_config->maxHintWidth))->min(0);
+    options["show_spinner"] = (
+            new JsonBoolReaderStrategy(&m_config->showSpinner));
 
     std::map<std::string, int*> styles;
     styles["item"] = &m_config->itemStyle;

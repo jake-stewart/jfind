@@ -104,6 +104,7 @@ void displayHelp(const char *name) {
     printf("    min_hint_spacing: INT         Minimum gap between an item and its hint\n");
     printf("    min_hint_width: INT           Minimum width a hint should be before it is shown\n");
     printf("    max_hint_width: INT           Maximum width a hint can grow to\n");
+    printf("    show_spinner: BOOL            Show a spinner animation at the bottom right when loading\n");
     printf("    style: STYLE OBJECT           Custom styles. See STYLES for keys, and STYLE OBJECT for values\n");
     printf("\n");
     printf("STYLES:\n");
@@ -144,7 +145,7 @@ int main(int argc, const char **argv) {
         return 1;
     }
 
-    if (config.showHelp) {
+    if (isatty(STDIN_FILENO) || config.showHelp) {
         displayHelp(argv[0]);
         return 0;
     }
@@ -187,6 +188,7 @@ int main(int argc, const char **argv) {
     coordinator.setItemReader(itemReader);
     coordinator.setUserInterface(&userInterface);
     coordinator.setHistoryManager(historyManager);
+    coordinator.setConfig(&config);
     coordinator.start();
 
     restoreTerm();

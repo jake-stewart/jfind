@@ -86,6 +86,21 @@ bool JsonIntReaderStrategy::read(const std::string& name, JsonElement *element)
     return true;
 }
 
+JsonBoolReaderStrategy::JsonBoolReaderStrategy(bool *value) {
+    m_value = value;
+}
+
+bool JsonBoolReaderStrategy::read(const std::string& name, JsonElement *element)
+{
+    if (element->getType() != BOOLEAN) {
+        typeError(name, "boolean");
+        errorLine = element->getLine();
+        return false;
+    }
+    *m_value = ((JsonBoolean*)element)->getValue();
+    return true;
+}
+
 JsonStylesReaderStrategy::JsonStylesReaderStrategy(StyleManager *styleManager,
         std::map<std::string, int*>& styles)
 {

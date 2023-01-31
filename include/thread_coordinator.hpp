@@ -43,6 +43,7 @@ class ThreadCoordinator {
         void setUserInterface(UserInterface *userInterface);
         void setItemSorter(ItemSorter *sorter);
         void setItemReader(ItemReader itemReader);
+        void setConfig(Config *config);
         void start();
 
     private:
@@ -71,6 +72,10 @@ class ThreadCoordinator {
         // reset the flag
         bool m_queryChanged = false;
 
+        // sorter thread toggles this flag to let the spinner thread know
+        // when it should show its animation
+        bool m_sorting = false;
+
         // the sorter reader cv and mutex are used for coordinating the first
         // and final batch reads. the first batch read is performed quickly so
         // that there is no flicker when first launching jfind
@@ -86,9 +91,11 @@ class ThreadCoordinator {
 
         std::thread m_sorterThread;
         std::thread m_readerThread;
+        std::thread m_spinnerThread;
         ThreadState m_sorterThreadState = INACTIVE;
         ThreadState m_readerThreadState = INACTIVE;
 
+        Config *m_config;
         ItemReader m_itemReader;
         ItemSorter *m_sorter;
         HistoryManager *m_historyManager;
@@ -104,6 +111,9 @@ class ThreadCoordinator {
         void waitForFirstBatch();
         void addItems();
         void sortItems();
+
+        // spinner thread funcs
+        void spinnerThreadFunc();
 
         // main thread funcs
         void handleUserInput();

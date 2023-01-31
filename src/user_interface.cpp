@@ -3,12 +3,17 @@
 
 #include <string>
 
+const char *SPINNER[6] = {"⠇", "⠋", "⠙", "⠸", "⠴", "⠦"};
+const int SPINNER_SIZE = 6;
+
 UserInterface::UserInterface() {
     m_outputFile = stdout;
     m_offset = 0;
     m_cursor = 0;
     m_active = true;
     m_selected = false;
+    m_spinnerFrame = 0;
+    m_isSpinning = false;
 }
 
 void UserInterface::setOutputFile(FILE *file) {
@@ -124,6 +129,38 @@ void UserInterface::drawQuery() {
     clearTilEOL();
     m_styleManager.set(m_config->searchStyle);
     m_editor.print();
+
+    if (m_isSpinning) {
+        drawSpinner();
+    }
+}
+
+void UserInterface::drawSpinner() {
+    m_styleManager.set(m_config->searchPromptStyle);
+    move(m_width - 1, m_height - 1);
+    fprintf(m_outputFile, "%s", SPINNER[m_spinnerFrame]);
+    focusEditor();
+}
+
+void UserInterface::updateSpinner(bool isSpinning) {
+    m_spinnerFrame = (m_spinnerFrame + 1) % SPINNER_SIZE;
+
+    if (!m_width || !m_height) {
+        return;
+    }
+
+    if (!isSpinning) {
+        if (m_isSpinning) {
+            m_isSpinning = false;
+            drawPrompt();
+            drawQuery();
+            focusEditor();
+        }
+        return;
+    }
+
+    m_isSpinning = true;
+    drawSpinner();
 }
 
 void UserInterface::focusEditor() {

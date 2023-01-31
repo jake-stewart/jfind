@@ -23,6 +23,7 @@ class UserInterface {
         void setOutputFile(FILE *file);
         void setItemCache(ItemCache cache);
         void focusEditor();
+        void updateSpinner(bool isSpinning);
         Item* getSelected();
         Utf8LineEditor* getEditor();
         StyleManager* getStyleManager();
@@ -33,6 +34,7 @@ class UserInterface {
         void drawName(int i);
         void drawHint(int i);
         void drawItems();
+        void drawSpinner();
         void calcVisibleItems();
         void moveCursorDown();
         void moveCursorUp();
@@ -41,6 +43,9 @@ class UserInterface {
         void handleClick(int x, int y);
         void handleMouse(MouseEvent event);
         void warmCache();
+
+        int m_spinnerFrame;
+        bool m_isSpinning;
 
         FILE *m_outputFile;
         int m_width;

@@ -37,6 +37,15 @@ class JsonIntReaderStrategy : public JsonReaderStrategy {
         std::optional<int> m_max;
 };
 
+class JsonBoolReaderStrategy : public JsonReaderStrategy {
+    public:
+        JsonBoolReaderStrategy(bool *value);
+        bool read(const std::string& name, JsonElement *element);
+
+    private:
+        bool* m_value;
+};
+
 class JsonStylesReaderStrategy : public JsonReaderStrategy {
     public:
         JsonStylesReaderStrategy(StyleManager *styleManager,
