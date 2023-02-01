@@ -65,13 +65,13 @@ void ThreadCoordinator::readerThreadFunc() {
 
         if (!success && m_readerThreadState == ACTIVE) {
             std::unique_lock lock(m_sorterReaderMut);
-            while (m_secondaryBufHasItems) {
+            while (m_secondaryBufHasItems && m_readerThreadState == ACTIVE) {
                 m_sorterReaderCv.wait(lock);
             }
             if (m_itemsBuf.getPrimary().size()) {
                 m_itemsBuf.swap();
                 m_secondaryBufHasItems = true;
-                while (m_secondaryBufHasItems) {
+                while (m_secondaryBufHasItems && m_readerThreadState == ACTIVE) {
                     m_sorterReaderCv.wait(lock);
                 }
             }
@@ -183,19 +183,24 @@ void ThreadCoordinator::spinnerThreadFunc() {
     int nFrames = 0;
 
     while (m_sorterThreadState == ACTIVE) {
-        std::this_thread::sleep_for(100ms);
-        std::unique_lock lock(m_sorterMainMutex);
-        bool isLoading = m_sorting || m_readerThreadState != INACTIVE;
-        if (isLoading) {
-            isSpinning = true;
-            nFrames = 3;
+        {
+            std::unique_lock lock(m_spinnerMut);
+            m_spinnerSleepCv.wait_for(lock, 100ms);
         }
-        else if (isSpinning) {
-            if (--nFrames == 0) {
-                isSpinning = false;
+        if (m_sorterThreadState == ACTIVE) {
+            std::unique_lock lock(m_sorterMainMutex);
+            bool isLoading = m_sorting || m_readerThreadState != INACTIVE;
+            if (isLoading) {
+                isSpinning = true;
+                nFrames = 3;
             }
+            else if (isSpinning) {
+                if (--nFrames == 0) {
+                    isSpinning = false;
+                }
+            }
+            m_userInterface->updateSpinner(isSpinning);
         }
-        m_userInterface->updateSpinner(isSpinning);
     }
 }
 
@@ -269,20 +274,27 @@ void ThreadCoordinator::start() {
 }
 
 void ThreadCoordinator::endThreads() {
+    m_sorterThreadState = CLOSING;
+    m_readerThreadState = CLOSING;
     {
         std::unique_lock lock(m_sorterMainMutex);
-        m_sorterThreadState = CLOSING;
-        m_readerThreadState = CLOSING;
-
+        m_queryChanged = true;
         closeStdin();
-
         m_sorterMainCv.notify_one();
+    }
+    {
+        std::unique_lock lock(m_sorterReaderMut);
+        m_sorterReaderCv.notify_one();
     }
 
     m_readerThread.join();
     m_sorterThread.join();
 
     if (m_config->showSpinner) {
+        {
+            std::unique_lock lock(m_spinnerMut);
+            m_spinnerSleepCv.notify_one();
+        }
         m_spinnerThread.join();
     }
 }

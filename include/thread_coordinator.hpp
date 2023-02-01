@@ -82,6 +82,9 @@ class ThreadCoordinator {
         std::condition_variable m_sorterReaderCv;
         std::mutex m_sorterReaderMut;
 
+        std::mutex m_spinnerMut;
+        std::condition_variable m_spinnerSleepCv;
+
         // the sorter main cv tells the sorter thread when the query has
         // changed it also fires when the sorter thread should terminate. the
         // sorter main mutex is used to share the user interface between the
