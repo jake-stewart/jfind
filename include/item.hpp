@@ -1,6 +1,10 @@
 #ifndef ITEM_HPP
 #define ITEM_HPP
 
+#include <climits>
+
+#define BAD_HEURISTIC -INT_MAX
+
 // an item represents a single record being queried
 // it is 16 bytes (text (8) + heuristic (4) + index (4))
 

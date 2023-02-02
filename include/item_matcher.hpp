@@ -11,7 +11,7 @@ class ItemMatcher {
     private:
         int matchStart(const char *tp, const char *qp);
         int match(const char *tp, const char *qp, int distance,
-                int consecutive);
+                bool consecutive);
 };
 
 #endif
