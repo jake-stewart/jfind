@@ -316,6 +316,7 @@ void ThreadCoordinator::onResize(int w, int h) {
     if (m_userInputBlocked) {
         m_userInterface->onResize(w, h);
         m_requiresResize = false;
+        m_requiresRedraw = false;
     }
     else {
         m_resizeW = w;

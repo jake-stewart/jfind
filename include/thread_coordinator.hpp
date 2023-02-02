@@ -59,7 +59,7 @@ class ThreadCoordinator {
         // thread should instead set requiresRedraw to true to indicate to the
         // main thread that a redraw is required once finished handling user
         // input
-        bool m_userInputBlocked = false;
+        bool m_userInputBlocked = true;
         bool m_requiresRedraw = false;
 
         bool m_requiresResize = false;

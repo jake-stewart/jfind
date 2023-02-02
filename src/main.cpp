@@ -186,8 +186,8 @@ int main(int argc, const char **argv) {
     enableMouse();
     setCursor(true);
 
-    userInterface.drawPrompt();
-    userInterface.drawQuery();
+    // userInterface.drawPrompt();
+    // userInterface.drawQuery();
 
     coordinator.start();
 

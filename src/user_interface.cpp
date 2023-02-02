@@ -213,23 +213,21 @@ void UserInterface::onResize(int w, int h) {
         m_itemWidth = m_width - m_hintWidth - selectorWidth;
     }
 
-    if (firstResize) {
-        return;
-    }
-
-    calcVisibleItems();
-
-    if (m_height - 1 + m_offset > m_itemCache.size()) {
-        m_offset = m_itemCache.size() - (m_height - 1);
-        if (m_offset < 0) {
-            m_offset = 0;
+    if (!firstResize) {
+        calcVisibleItems();
+        if (m_height - 1 + m_offset > m_itemCache.size()) {
+            m_offset = m_itemCache.size() - (m_height - 1);
+            if (m_offset < 0) {
+                m_offset = 0;
+            }
         }
-    }
-    else if (m_cursor - m_offset >= m_nVisibleItems) {
-        m_offset = m_cursor - m_nVisibleItems + 1;
+        else if (m_cursor - m_offset >= m_nVisibleItems) {
+            m_offset = m_cursor - m_nVisibleItems + 1;
+        }
+
+        drawItems();
     }
 
-    drawItems();
     drawPrompt();
     drawQuery();
     focusEditor();
