@@ -185,17 +185,22 @@ void ThreadCoordinator::spinnerThreadFunc() {
     while (m_sorterThreadState == ACTIVE) {
         {
             std::unique_lock lock(m_spinnerMut);
-            m_spinnerSleepCv.wait_for(lock, 100ms);
+            m_spinnerSleepCv.wait_for(lock, 75ms);
         }
         if (m_sorterThreadState == ACTIVE) {
             std::unique_lock lock(m_sorterMainMutex);
             bool isLoading = m_sorting || m_readerThreadState != INACTIVE;
             if (isLoading) {
-                isSpinning = true;
-                nFrames = 3;
+                if (!isSpinning) {
+                    isSpinning = true;
+                    nFrames = 0;
+                }
+                nFrames += 1;
             }
             else if (isSpinning) {
-                if (--nFrames == 0) {
+                nFrames += 1;
+                if (nFrames >= 5) {
+                    nFrames = 0;
                     isSpinning = false;
                 }
             }
@@ -251,15 +256,22 @@ void ThreadCoordinator::mainThreadFunc() {
         if (query != editor->getText()) {
             m_queryChanged = true;
         }
-        if (editor->requiresRedraw()) {
-            m_userInterface->drawQuery();
-        }
-        if (m_requiresRedraw) {
-            m_userInterface->redraw();
+        if (m_requiresResize) {
+            m_userInterface->onResize(m_resizeW, m_resizeH);
+            m_requiresResize = false;
             m_requiresRedraw = false;
         }
         else {
-            m_userInterface->focusEditor();
+            if (editor->requiresRedraw()) {
+                m_userInterface->drawQuery();
+            }
+            if (m_requiresRedraw) {
+                m_userInterface->redraw();
+                m_requiresRedraw = false;
+            }
+            else {
+                m_userInterface->focusEditor();
+            }
         }
         if (m_queryChanged) {
             m_sorterMainCv.notify_one();
@@ -296,5 +308,18 @@ void ThreadCoordinator::endThreads() {
             m_spinnerSleepCv.notify_one();
         }
         m_spinnerThread.join();
+    }
+}
+
+void ThreadCoordinator::onResize(int w, int h) {
+    std::unique_lock lock(m_sorterMainMutex);
+    if (m_userInputBlocked) {
+        m_userInterface->onResize(w, h);
+        m_requiresResize = false;
+    }
+    else {
+        m_resizeW = w;
+        m_resizeH = h;
+        m_requiresResize = true;
     }
 }

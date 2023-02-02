@@ -2,12 +2,6 @@
 #include "../include/item.hpp"
 #include <climits>
 
-const int START_LINE_BONUS = 100;
-const int START_WORD_BONUS = 100;
-const int CONSECUTIVE_BONUS = 90;
-const int LETTER_MATCH_BONUS = 1;
-const int DISTANCE_PENALTY = -25;
-
 #define isupper(c) (c >= 'A' && c <= 'Z')
 #define islower(c) (c >= 'a' && c <= 'z')
 #define isdigit(c) (c >= '0' && c <= '9')
@@ -19,13 +13,16 @@ inline bool isWordStart(const char *c) {
         || (isdigit(*c)) && !isdigit(*(c - 1));
 }
 
+const int MATCH_BONUS = 1;
+const int BOUNDARY_BONUS = 100;
+const int CONSECUTIVE_BONUS = 200;
+const int DISTANCE_PENALTY = -50;
+
 int ItemMatcher::calc(const char *text, std::vector<std::string>& queries) {
     int total = 0;
     for (std::string& query : queries) {
         int score = matchStart(text, query.c_str());
-        if (score == BAD_HEURISTIC) {
-            return BAD_HEURISTIC;
-        }
+        if (score == BAD_HEURISTIC) return BAD_HEURISTIC;
         total += score;
     }
     return total;
@@ -33,57 +30,41 @@ int ItemMatcher::calc(const char *text, std::vector<std::string>& queries) {
 
 int ItemMatcher::matchStart(const char *tp, const char *qp) {
     int maxScore = BAD_HEURISTIC;
-    bool startOfLine = true;
+    bool first = true;
     while (*tp) {
-        bool wordStart = isWordStart(tp);
         if (tolower(*tp) == *qp) {
+            bool boundary = isWordStart(tp);
             int score = 0;
             if (*(qp + 1)) {
-                score = match(tp + 1, qp + 1, 1, wordStart);
-                if (score == BAD_HEURISTIC) {
-                    return maxScore;
-                }
+                score = match(tp + 1, qp + 1, 1, boundary);
+                if (score == BAD_HEURISTIC) return maxScore;
             }
-            score += LETTER_MATCH_BONUS
-                + (wordStart | startOfLine) * START_WORD_BONUS;
+            score += MATCH_BONUS + (boundary | first) * BOUNDARY_BONUS;
             maxScore = std::max(score, maxScore);
-            tp++;
         }
-        else {
-            do tp++;
-            while (tolower(*tp) != *qp && *tp);
-        }
-        startOfLine = false;
+        tp++;
+        first = false;
     }
     return maxScore;
 }
 
-int ItemMatcher::match(const char *tp, const char *qp, int distance,
-        bool consecutive)
-{
+int ItemMatcher::match(const char *tp, const char *qp, int dist, bool consec) {
     int maxScore = BAD_HEURISTIC;
     while (*tp) {
-        bool wordStart = isWordStart(tp);
-        distance += wordStart;
+        bool boundary = isWordStart(tp);
+        dist += boundary;
         if (tolower(*tp) == *qp) {
             int score = 0;
             if (*(qp + 1)) {
-                score = match(tp + 1, qp + 1, distance, consecutive | wordStart);
-                if (score == BAD_HEURISTIC) {
-                    return maxScore;
-                }
+                score = match(tp + 1, qp + 1, dist, consec | boundary);
+                if (score == BAD_HEURISTIC) return maxScore;
             }
-            score += (LETTER_MATCH_BONUS + wordStart * START_WORD_BONUS)
-                + (consecutive * CONSECUTIVE_BONUS)
-                + (distance * DISTANCE_PENALTY);
+            score += MATCH_BONUS + boundary * BOUNDARY_BONUS
+                + consec * CONSECUTIVE_BONUS + dist * DISTANCE_PENALTY;
             maxScore = std::max(score, maxScore);
-            tp++;
         }
-        else {
-            do tp++;
-            while (tolower(*tp) != *qp && *tp);
-        }
-        consecutive = false;
+        tp++;
+        consec = false;
     }
     return maxScore;
 }

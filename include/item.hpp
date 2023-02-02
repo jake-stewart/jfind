@@ -3,7 +3,7 @@
 
 #include <climits>
 
-#define BAD_HEURISTIC -INT_MAX
+const int BAD_HEURISTIC = -INT_MAX;
 
 // an item represents a single record being queried
 // it is 16 bytes (text (8) + heuristic (4) + index (4))

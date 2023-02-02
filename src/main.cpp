@@ -16,6 +16,7 @@
 
 Config config;
 UserInterface userInterface;
+ThreadCoordinator coordinator;
 HistoryManager *historyManager = nullptr;
 ItemSorter sorter;
 
@@ -139,7 +140,6 @@ void displayHelp(const char *name) {
 }
 
 int main(int argc, const char **argv) {
-
     StyleManager *styleManager = userInterface.getStyleManager();
 
     if (!readConfig(styleManager, argc, argv)) {
@@ -163,9 +163,21 @@ int main(int argc, const char **argv) {
     // enable unicode
     setlocale(LC_ALL, "en_US.UTF-8");
 
+    Utf8LineEditor *editor = userInterface.getEditor();
+    editor->input(config.query);
+
+    ItemReader itemReader;
+    itemReader.setFile(stdin);
+    itemReader.setReadHints(config.showHints);
+
     registerResizeCallback([] (int w, int h) {
-        userInterface.onResize(w, h);
+        coordinator.onResize(w, h);
     });
+    coordinator.setItemSorter(&sorter);
+    coordinator.setItemReader(itemReader);
+    coordinator.setUserInterface(&userInterface);
+    coordinator.setHistoryManager(historyManager);
+    coordinator.setConfig(&config);
 
     styleManager->setOutputFile(stderr);
     userInterface.setOutputFile(stderr);
@@ -174,26 +186,12 @@ int main(int argc, const char **argv) {
     enableMouse();
     setCursor(true);
 
-    Utf8LineEditor *editor = userInterface.getEditor();
-    editor->input(config.query);
-
     userInterface.drawPrompt();
     userInterface.drawQuery();
 
-    ItemReader itemReader;
-    itemReader.setFile(stdin);
-    itemReader.setReadHints(config.showHints);
-
-    ThreadCoordinator coordinator;
-    coordinator.setItemSorter(&sorter);
-    coordinator.setItemReader(itemReader);
-    coordinator.setUserInterface(&userInterface);
-    coordinator.setHistoryManager(historyManager);
-    coordinator.setConfig(&config);
     coordinator.start();
 
     restoreTerm();
-
     printResult(userInterface.getSelected());
 
     return 0;

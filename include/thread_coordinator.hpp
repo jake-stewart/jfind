@@ -44,6 +44,7 @@ class ThreadCoordinator {
         void setItemSorter(ItemSorter *sorter);
         void setItemReader(ItemReader itemReader);
         void setConfig(Config *config);
+        void onResize(int w, int h);
         void start();
 
     private:
@@ -60,6 +61,10 @@ class ThreadCoordinator {
         // input
         bool m_userInputBlocked = false;
         bool m_requiresRedraw = false;
+
+        bool m_requiresResize = false;
+        int m_resizeW;
+        int m_resizeH;
 
         // the sorter thread will copy items from the secondary buffer into the
         // main items pool when this flag is true. once finished, this flag is

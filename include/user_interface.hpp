@@ -16,7 +16,7 @@ class UserInterface {
         UserInterface();
         void drawPrompt();
         void drawQuery();
-        void onResize(int newWidth, int newHeight);
+        void onResize(int w, int h);
         void handleInput(Key key);
         void redraw();
         bool isActive();

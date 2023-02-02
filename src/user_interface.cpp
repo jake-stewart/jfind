@@ -173,21 +173,21 @@ void UserInterface::calcVisibleItems() {
         ? m_height - 1
         : m_itemCache.size();
     for (int i = 0; i < m_nVisibleItems; i++) {
-        if (m_itemCache.get(m_offset + i)->heuristic == -INT_MAX) {
+        if (m_itemCache.get(m_offset + i)->heuristic == BAD_HEURISTIC) {
             m_nVisibleItems = i;
             break;
         }
     }
 }
 
-void UserInterface::onResize(int newWidth, int newHeight) {
+void UserInterface::onResize(int w, int h) {
     bool firstResize = m_width == 0;
 
-    m_width = newWidth;
-    m_height = newHeight;
+    m_width = w;
+    m_height = h;
 
-    if (newHeight < m_itemCache.getReserve() * 2) {
-        m_itemCache.setReserve(newHeight * 2);
+    if (w < m_itemCache.getReserve() * 2) {
+        m_itemCache.setReserve(h * 2);
     }
 
     m_editor.setWidth(m_width - 1);
@@ -264,7 +264,7 @@ void UserInterface::warmCache() {
 
 void UserInterface::moveCursorUp() {
     Item *item = m_itemCache.get(m_cursor + 1);
-    if (item == nullptr || item->heuristic == -INT_MAX) {
+    if (item == nullptr || item->heuristic == BAD_HEURISTIC) {
         return;
     }
 
@@ -287,7 +287,7 @@ void UserInterface::moveCursorUp() {
 
 void UserInterface::scrollUp() {
     Item *item = m_itemCache.get(m_offset + m_height - 1);
-    if (item == nullptr || item->heuristic == -INT_MAX) {
+    if (item == nullptr || item->heuristic == BAD_HEURISTIC) {
         return;
     }
 
@@ -344,7 +344,7 @@ void UserInterface::handleClick(int x, int y) {
         return;
     }
     Item *clicked = m_itemCache.get(newCursor);
-    if (clicked == nullptr || clicked->heuristic == -INT_MAX) {
+    if (clicked == nullptr || clicked->heuristic == BAD_HEURISTIC) {
         return;
     }
 
@@ -461,7 +461,7 @@ void UserInterface::redraw() {
     std::vector<int> itemIds;
     for (int i = 0; i < m_nVisibleItems; i++) {
         Item *item = m_itemCache.get(m_offset + i);
-        if (item == nullptr || item->heuristic == -INT_MAX) {
+        if (item == nullptr || item->heuristic == BAD_HEURISTIC) {
             break;
         }
         itemIds.push_back(item->index);

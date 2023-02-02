@@ -104,7 +104,7 @@ void ItemSorter::calcHeuristics(const char* query, bool newItems, int start,
                 if (*cancel) {
                     return;
                 }
-                if (!newItems && item->heuristic == -INT_MAX) {
+                if (!newItems && item->heuristic == BAD_HEURISTIC) {
                     item++;
                     continue;
                 }
