@@ -1,4 +1,6 @@
 #include "../include/item_reader.hpp"
+#include <cstring>
+#include <cstdlib>
 
 ItemReader::ItemReader() {
     m_file = stdin;

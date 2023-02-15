@@ -4,6 +4,7 @@
 #include "item.hpp"
 #include <vector>
 #include <fstream>
+#include <mutex>
 
 class ItemSorter {
     public:

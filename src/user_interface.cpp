@@ -2,6 +2,7 @@
 #include "../include/ansi_wrapper.hpp"
 
 #include <string>
+#include <cstring>
 
 const char *SPINNER[6] = {"⠇", "⠋", "⠙", "⠸", "⠴", "⠦"};
 const int SPINNER_SIZE = 6;

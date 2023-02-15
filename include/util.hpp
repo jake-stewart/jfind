@@ -3,6 +3,7 @@
 
 #include <string>
 #include <filesystem>
+#include <vector>
 
 std::vector<std::string> split(std::string str, char delim);
 std::string toLower(std::string s);

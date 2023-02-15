@@ -12,6 +12,7 @@
 #include "../include/thread_coordinator.hpp"
 
 #include <climits>
+#include <cstring>
 #include <fcntl.h>
 
 Config config;

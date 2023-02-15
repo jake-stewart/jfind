@@ -1,5 +1,6 @@
 #include "../include/option.hpp"
 #include "../include/util.hpp"
+#include <cstring>
 
 bool Option::error(std::string message) {
     printf("The '--%s' option %s\n", m_key.c_str(), message.c_str());
