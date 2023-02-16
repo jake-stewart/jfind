@@ -379,8 +379,10 @@ void UserInterface::handleMouse(MouseEvent event) {
         case MB_LEFT:
             if (event.pressed && !event.dragged) {
                 if (event.y == m_height) {
-                    m_editor.handleClick(event.x - m_config->prompt.size()
-                            - m_config->promptGap);
+                    int offset = m_config->prompt.size() + m_config->promptGap;
+                    if (event.x > offset) {
+                        m_editor.handleClick(event.x - offset);
+                    }
                 }
                 else {
                     handleClick(event.x, event.y);
