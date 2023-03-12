@@ -27,6 +27,7 @@ struct Config {
     std::string selector = "  ";
     std::string activeSelector = "* ";
     std::string query = "";
+    std::string logFile = "";
 
     bool showHelp = false;
     bool showHints = false;
@@ -41,6 +42,15 @@ struct Config {
     int minHintWidth = 25;
     int minHintSpacing = 5;
     int maxHintWidth = 60;
+
+    static Config& instance() {
+        static Config singleton;
+        return singleton;
+    }
+
+private:
+    Config() {};
+
 };
 
 #endif

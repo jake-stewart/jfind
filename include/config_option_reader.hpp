@@ -5,11 +5,10 @@
 
 class ConfigOptionReader {
     public:
-        ConfigOptionReader(Config *config);
         bool read(int argc, const char **argv);
 
     private:
-        Config *m_config;
+        Config& m_config = Config::instance();
 };
 
 #endif

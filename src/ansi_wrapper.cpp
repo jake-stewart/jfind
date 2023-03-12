@@ -5,194 +5,159 @@
 
 #define ANSI_ESC "\x1b["
 
-bool inAlternateBuffer = false;
-bool ignoreSigint = false;
-bool mouseEnabled = false;
-FILE *outputFile = stdout;
-int inputFileNo = STDIN_FILENO;
-termios origTermios;
+AnsiWrapper::AnsiWrapper() {
+    m_inAlternateBuffer = false;
+    m_mouseEnabled = false;
+    m_outputFile = stdout;
+    m_inputFileNo = STDIN_FILENO;
+};
 
-static void (*resizeCallback)(int, int) = nullptr;
-
-void move(unsigned int x, unsigned int y) {
-    fprintf(outputFile, ANSI_ESC "%u;%uH", y + 1, x + 1);
+AnsiWrapper& AnsiWrapper::instance() {
+    static AnsiWrapper singleton;
+    return singleton;
 }
 
-void moveHome() {
-    fprintf(outputFile, ANSI_ESC "H");
+void AnsiWrapper::move(unsigned int x, unsigned int y) {
+    fprintf(m_outputFile, ANSI_ESC "%u;%uH", y + 1, x + 1);
 }
 
-void moveUp() {
-    fprintf(outputFile, ANSI_ESC "A");
+void AnsiWrapper::moveHome() {
+    fprintf(m_outputFile, ANSI_ESC "H");
 }
 
-void moveDown() {
-    fprintf(outputFile, ANSI_ESC "B");
+void AnsiWrapper::moveUp() {
+    fprintf(m_outputFile, ANSI_ESC "A");
 }
 
-void moveRight() {
-    fprintf(outputFile, ANSI_ESC "C");
+void AnsiWrapper::moveDown() {
+    fprintf(m_outputFile, ANSI_ESC "B");
 }
 
-void moveLeft() {
-    fprintf(outputFile, ANSI_ESC "D");
+void AnsiWrapper::moveRight() {
+    fprintf(m_outputFile, ANSI_ESC "C");
 }
 
-void moveUp(unsigned int amount) {
-    fprintf(outputFile, ANSI_ESC "%uA", amount);
+void AnsiWrapper::moveLeft() {
+    fprintf(m_outputFile, ANSI_ESC "D");
 }
 
-void moveDown(unsigned int amount) {
-    fprintf(outputFile, ANSI_ESC "%uB", amount);
+void AnsiWrapper::moveUp(unsigned int amount) {
+    fprintf(m_outputFile, ANSI_ESC "%uA", amount);
 }
 
-void moveRight(unsigned int amount) {
-    fprintf(outputFile, ANSI_ESC "%uC", amount);
+void AnsiWrapper::moveDown(unsigned int amount) {
+    fprintf(m_outputFile, ANSI_ESC "%uB", amount);
 }
 
-void moveLeft(unsigned int amount) {
-    fprintf(outputFile, ANSI_ESC "%uD", amount);
+void AnsiWrapper::moveRight(unsigned int amount) {
+    fprintf(m_outputFile, ANSI_ESC "%uC", amount);
 }
 
-void moveUpOrScroll() {
-    fprintf(outputFile, "\x1bM");
+void AnsiWrapper::moveLeft(unsigned int amount) {
+    fprintf(m_outputFile, ANSI_ESC "%uD", amount);
 }
 
-void moveDownOrScroll() {
-    fprintf(outputFile, "\n");
+void AnsiWrapper::moveUpOrScroll() {
+    fprintf(m_outputFile, "\x1bM");
 }
 
-void enableMouse() {
-    if (!mouseEnabled) {
-        mouseEnabled = true;
-        fprintf(outputFile, ANSI_ESC "?1002h" ANSI_ESC "?1015h" ANSI_ESC "?1006h");
+void AnsiWrapper::moveDownOrScroll() {
+    fprintf(m_outputFile, "\n");
+}
+
+void AnsiWrapper::enableMouse() {
+    if (!m_mouseEnabled) {
+        m_mouseEnabled = true;
+        fprintf(m_outputFile, ANSI_ESC "?1002h" ANSI_ESC "?1015h" ANSI_ESC "?1006h");
     }
 }
 
-void disableMouse() {
-    if (mouseEnabled) {
-        mouseEnabled = false;
-        fprintf(outputFile, ANSI_ESC "?1000l");
+void AnsiWrapper::disableMouse() {
+    if (m_mouseEnabled) {
+        m_mouseEnabled = false;
+        fprintf(m_outputFile, ANSI_ESC "?1000l");
     }
 }
 
-void setAlternateBuffer(bool value) {
-    if (inAlternateBuffer == value) {
+void AnsiWrapper::setAlternateBuffer(bool value) {
+    if (m_inAlternateBuffer == value) {
         return;
     }
-    inAlternateBuffer = value;
-    fprintf(outputFile, ANSI_ESC "?1049%c", value ? 'h' : 'l');
+    m_inAlternateBuffer = value;
+    fprintf(m_outputFile, ANSI_ESC "?1049%c", value ? 'h' : 'l');
 }
 
-void clearTilEOL() {
-    fprintf(outputFile, ANSI_ESC "K");
+void AnsiWrapper::clearTilEOL() {
+    fprintf(m_outputFile, ANSI_ESC "K");
 }
 
-void clearTilSOF() {
-    fprintf(outputFile, ANSI_ESC "1J");
+void AnsiWrapper::clearTilSOF() {
+    fprintf(m_outputFile, ANSI_ESC "1J");
 }
 
-void clearTilEOF() {
-    fprintf(outputFile, ANSI_ESC "2J");
+void AnsiWrapper::clearTilEOF() {
+    fprintf(m_outputFile, ANSI_ESC "2J");
 }
 
-void clearTerm() {
-    fprintf(outputFile, ANSI_ESC "2J");
+void AnsiWrapper::clearTerm() {
+    fprintf(m_outputFile, ANSI_ESC "2J");
 }
 
-void setCursor(bool value) {
-    fprintf(outputFile, ANSI_ESC "?25%c", value ? 'h' : 'l');
+void AnsiWrapper::setCursor(bool value) {
+    fprintf(m_outputFile, ANSI_ESC "?25%c", value ? 'h' : 'l');
 }
 
-void exitGracefully(int sig) {
-    restoreTerm();
-    exit(1);
+void AnsiWrapper::setInputFileNo(int fileNo) {
+    m_inputFileNo = fileNo;
 }
 
-void setCtrlC(bool value) {
-    ignoreSigint = value;
+void AnsiWrapper::setOutputFile(FILE *file) {
+    m_outputFile = file;
 }
 
-void onSigint(int sig) {
-    if (!ignoreSigint) {
-        exitGracefully(sig);
-    }
+void AnsiWrapper::saveCursor() {
+    fprintf(m_outputFile, "\x1b" "7");
 }
 
-void setInputFileNo(int fileNo) {
-    inputFileNo = fileNo;
+void AnsiWrapper::restoreCursor() {
+    fprintf(m_outputFile, "\x1b" "8");
 }
 
-void setOutputFile(FILE *file) {
-    outputFile = file;
-}
-
-void onSigResize(int sig) {
-    winsize ws;
-    if (ioctl(fileno(outputFile), TIOCGWINSZ, &ws)) {
-        restoreTerm();
-        fprintf(outputFile, "Failed to query terminal size\n");
-        exit(1);
-    }
-    if (resizeCallback != nullptr) {
-        resizeCallback(ws.ws_col, ws.ws_row);
-    }
-}
-
-void saveCursor() {
-    fprintf(outputFile, "\x1b" "7");
-}
-
-void restoreCursor() {
-    fprintf(outputFile, "\x1b" "8");
-}
-
-void restoreTerm(void) {
+void AnsiWrapper::restoreTerm(void) {
     setAlternateBuffer(true);
     disableMouse();
-    fprintf(outputFile, "\x1b[0m");
+    fprintf(m_outputFile, "\x1b[0m");
     clearTerm();
     setCursor(true);
     setAlternateBuffer(false);
-    tcsetattr(inputFileNo, TCSANOW, &origTermios);
+    tcsetattr(m_inputFileNo, TCSANOW, &m_origTermios);
 
     signal(SIGWINCH, SIG_DFL);
     signal(SIGTERM, SIG_DFL);
     signal(SIGQUIT, SIG_DFL);
-    signal(SIGINT, SIG_DFL);
 }
 
 // char stdoutBuffer[50000];
 
-void initTerm(void) {
+void AnsiWrapper::initTerm(void) {
     // setvbuf(stdout, NULL, _IONBF, 0);
     // setvbuf(stdout, stdoutBuffer, _IOFBF, sizeof(stdoutBuffer));
 
-    tcgetattr(inputFileNo, &origTermios);
-    termios raw = origTermios;
+    tcgetattr(m_inputFileNo, &m_origTermios);
+    termios raw = m_origTermios;
 
     raw.c_iflag &= ~(ICRNL);  // differentiate newline and linefeed
     raw.c_lflag &= ISIG;  // generate exit signals
     raw.c_lflag &= ~(ECHO | ICANON);  // disable echo and cannonical mode
 
-    tcsetattr(inputFileNo, TCSANOW, &raw);
-
-    signal(SIGWINCH, onSigResize);
-    signal(SIGTERM, exitGracefully);
-    signal(SIGQUIT, exitGracefully);
-    signal(SIGINT, onSigint);
+    tcsetattr(m_inputFileNo, TCSANOW, &raw);
 
     setAlternateBuffer(true);
     clearTerm();
     moveHome();
-    onSigResize(0);
 }
 
-void registerResizeCallback(void (*func)(int, int)) {
-    resizeCallback = func;
-}
-
-void closeStdin() {
+void AnsiWrapper::closeStdin() {
     int fd = open("/dev/null", O_RDONLY);
     dup2(fd, 0);
     close(fd);

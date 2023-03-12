@@ -11,44 +11,59 @@
 #include <signal.h>
 #include <stdbool.h>
 
-void setInputFileNo(int fileNo);
-void setOutputFile(FILE *file);
 
-void registerResizeCallback(void (*func)(int, int));
+class AnsiWrapper {
+private:
+    AnsiWrapper();
 
-void move(unsigned int x, unsigned int y);
-void moveHome();
-void moveUp();
+    bool m_inAlternateBuffer;
+    bool m_mouseEnabled;
+    FILE *m_outputFile;
+    int m_inputFileNo;
+    termios m_origTermios;
 
-void clearTerm();
-void clearTilEOL();
-void clearTilSOF();
-void clearTilEOF();
+public:
+    static AnsiWrapper& instance();
 
-void moveUp();
-void moveDown();
-void moveLeft();
-void moveRight();
+    void setInputFileNo(int fileNo);
+    void setOutputFile(FILE *file);
 
-void moveUp(unsigned int amount);
-void moveDown(unsigned int amount);
-void moveLeft(unsigned int amount);
-void moveRight(unsigned int amount);
+    void move(unsigned int x, unsigned int y);
+    void moveHome();
 
-void moveUpOrScroll();
-void moveDownOrScroll();
+    void moveUp();
+    void moveDown();
+    void moveLeft();
+    void moveRight();
 
-void enableMouse();
-void disableMouse();
+    void moveUp(unsigned int amount);
+    void moveDown(unsigned int amount);
+    void moveLeft(unsigned int amount);
+    void moveRight(unsigned int amount);
 
-void setAlternateBuffer(bool value);
-void setCursor(bool value);
-void setCtrlC(bool value);
+    void moveUpOrScroll();
+    void moveDownOrScroll();
 
-void initTerm();
-void initTermSimple();
-void restoreTerm();
+    void clearTerm();
+    void clearTilEOL();
+    void clearTilSOF();
+    void clearTilEOF();
 
-void closeStdin();
+    void enableMouse();
+    void disableMouse();
+
+    void setAlternateBuffer(bool value);
+    void setCursor(bool value);
+    void setCtrlC(bool value);
+
+    void initTerm();
+    void initTermSimple();
+    void restoreTerm();
+
+    void saveCursor();
+    void restoreCursor();
+
+    void closeStdin();
+};
 
 #endif

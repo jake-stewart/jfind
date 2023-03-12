@@ -9,23 +9,23 @@
 #include "../include/utf8_line_editor.hpp"
 #include "../include/style_manager.hpp"
 #include "../include/user_interface.hpp"
-#include "../include/thread_coordinator.hpp"
+#include "../include/event_dispatch.hpp"
+#include "../include/item_reader.hpp"
+#include "../include/logger.hpp"
 
+#include <thread>
 #include <climits>
 #include <cstring>
 #include <fcntl.h>
+#include <signal.h>
 
-Config config;
-UserInterface userInterface;
-ThreadCoordinator coordinator;
-HistoryManager *historyManager = nullptr;
-ItemSorter sorter;
+Config& config = Config::instance();
+AnsiWrapper& ansi = AnsiWrapper::instance();
+EventDispatch& eventDispatch = EventDispatch::instance();
+Logger& logger = Logger::instance();
 
-void printResult(Item *selected) {
+void printResult(Item *selected, const char *input) {
     if (selected) {
-        if (historyManager) {
-            historyManager->writeHistory(selected);
-        }
         if (!config.selectHint || config.selectBoth) {
             printf("%s\n", selected->text);
         }
@@ -34,7 +34,7 @@ void printResult(Item *selected) {
         }
     }
     else if (config.acceptNonMatch) {
-        printf("%s\n", userInterface.getEditor()->getText().c_str());
+        printf("%s\n", input);
     }
 }
 
@@ -54,8 +54,8 @@ void createStyles(StyleManager *styleManager) {
 }
 
 bool readConfig(StyleManager *styleManager, int argc, const char **argv) {
-    ConfigJsonReader configJsonReader(&config, styleManager);
-    ConfigOptionReader configOptionReader(&config);
+    ConfigJsonReader configJsonReader(styleManager);
+    ConfigOptionReader configOptionReader;
 
     std::ifstream ifs(expandUserPath("~/.config/jfind/config.json"));
     if (ifs.is_open()) {
@@ -72,15 +72,28 @@ bool readConfig(StyleManager *styleManager, int argc, const char **argv) {
         return false;
     }
 
-    createStyles(styleManager);
-
-    if (!config.historyFile.empty()) {
-        historyManager = new HistoryManager(config.historyFile);
-        historyManager->setHistoryLimit(config.historyLimit);
-        historyManager->readHistory();
-    }
-
     return true;
+}
+
+void emitResizeEvent() {
+    winsize ws;
+    if (ioctl(fileno(stderr), TIOCGWINSZ, &ws)) {
+        logger.log("failed to query terminal size");
+        ansi.restoreTerm();
+        exit(1);
+    }
+    eventDispatch.dispatch(std::make_shared<ResizeEvent>(ws.ws_col, ws.ws_row));
+}
+
+void signalHandler(int sig) {
+    switch (sig) {
+        case SIGINT:
+            eventDispatch.dispatch(std::make_shared<QuitEvent>());
+            break;
+        case SIGWINCH:
+            emitResizeEvent();
+            break;
+    }
 }
 
 void displayHelp(const char *name) {
@@ -136,15 +149,20 @@ void displayHelp(const char *name) {
     printf("    bold, italic, blink, reverse,\n");
     printf("    underline, curly_underline, double_underline, dotted_underline, dashed_underline\n");
     printf("\n");
-    printf("Input should be piped into JFind for it to be useful. You can try the following example:\n");
+    printf("Input should be piped into jfind for it to be useful. You can try the following example:\n");
     printf("    seq 100 | %s\n", name);
 }
 
 int main(int argc, const char **argv) {
-    StyleManager *styleManager = userInterface.getStyleManager();
+    StyleManager styleManager;
 
-    if (!readConfig(styleManager, argc, argv)) {
+    if (!readConfig(&styleManager, argc, argv)) {
         return 1;
+    }
+
+    if (config.logFile.size()) {
+        logger.open(config.logFile.c_str());
+        logger.log("");
     }
 
     if (isatty(STDIN_FILENO) || config.showHelp) {
@@ -152,14 +170,25 @@ int main(int argc, const char **argv) {
         return 0;
     }
 
-    ItemCache itemCache;
-    itemCache.setSorter(&sorter);
-    userInterface.setItemCache(itemCache);
-    userInterface.setConfig(&config);
+    createStyles(&styleManager);
 
+    HistoryManager *historyManager = nullptr;
+    if (!config.historyFile.empty()) {
+        historyManager = new HistoryManager(config.historyFile);
+        historyManager->setHistoryLimit(config.historyLimit);
+        historyManager->readHistory();
+    }
+
+    ItemSorter itemSorter;
+    ItemCache itemCache;
+    itemCache.setSorter(&itemSorter);
+    UserInterface userInterface(&styleManager);
+    userInterface.setItemCache(itemCache);
+
+    InputReader inputReader;
     int fd = open("/dev/tty", O_RDONLY);
-    setInputFileNo(fd);
-    userInterface.getInputReader()->setFileDescriptor(fd);
+    ansi.setInputFileNo(fd);
+    inputReader.setFileDescriptor(fd);
 
     // enable unicode
     setlocale(LC_ALL, "en_US.UTF-8");
@@ -171,29 +200,32 @@ int main(int argc, const char **argv) {
     itemReader.setFile(stdin);
     itemReader.setReadHints(config.showHints);
 
-    registerResizeCallback([] (int w, int h) {
-        coordinator.onResize(w, h);
-    });
-    coordinator.setItemSorter(&sorter);
-    coordinator.setItemReader(itemReader);
-    coordinator.setUserInterface(&userInterface);
-    coordinator.setHistoryManager(historyManager);
-    coordinator.setConfig(&config);
-
-    styleManager->setOutputFile(stderr);
+    ansi.setOutputFile(stderr);
     userInterface.setOutputFile(stderr);
-    setOutputFile(stderr);
-    initTerm();
-    enableMouse();
-    setCursor(true);
 
-    // userInterface.drawPrompt();
-    // userInterface.drawQuery();
+    signal(SIGWINCH, signalHandler);
+    signal(SIGINT, signalHandler);
 
-    coordinator.start();
+    ansi.initTerm();
+    ansi.enableMouse();
+    ansi.setCursor(true);
+    emitResizeEvent();
 
-    restoreTerm();
-    printResult(userInterface.getSelected());
+    std::vector<std::thread*> threads;
+    threads.push_back(new std::thread(&UserInterface::start, &userInterface));
+    threads.push_back(new std::thread(&ItemSorter::start, &itemSorter));
+    threads.push_back(new std::thread(&ItemReader::start, &itemReader));
+    threads.push_back(new std::thread(&InputReader::start, &inputReader));
+    for (std::thread* thread : threads) {
+        thread->join();
+    }
+
+    ansi.restoreTerm();
+    Item *selected = userInterface.getSelected();
+    if (selected && historyManager) {
+        historyManager->writeHistory(selected);
+    }
+    printResult(selected, userInterface.getEditor()->getText().c_str());
 
     return 0;
 }

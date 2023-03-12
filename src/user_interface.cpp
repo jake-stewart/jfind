@@ -1,25 +1,40 @@
 #include "../include/user_interface.hpp"
-#include "../include/ansi_wrapper.hpp"
-
 #include <string>
 #include <cstring>
+#include <chrono>
+
+using namespace std::chrono_literals;
+using std::chrono::system_clock;
+using std::chrono::milliseconds;
+using std::chrono::duration_cast;
 
 const char *SPINNER[6] = {"⠇", "⠋", "⠙", "⠸", "⠴", "⠦"};
 const int SPINNER_SIZE = 6;
 
-UserInterface::UserInterface() {
+UserInterface::UserInterface(StyleManager *styleManager) {
     m_outputFile = stdout;
     m_offset = 0;
     m_cursor = 0;
-    m_active = true;
     m_selected = false;
+    m_requiresRedraw = false;
     m_spinnerFrame = 0;
     m_isSpinning = false;
+    m_isReading = true;
+    m_isSorting = false;
+    m_styleManager = styleManager;
+
+    m_dispatch.subscribe(this, KEY_EVENT);
+    m_dispatch.subscribe(this, QUIT_EVENT);
+    m_dispatch.subscribe(this, RESIZE_EVENT);
+    m_dispatch.subscribe(this, ITEMS_SORTED_EVENT);
+    m_dispatch.subscribe(this, ALL_ITEMS_READ_EVENT);
 }
 
 void UserInterface::setOutputFile(FILE *file) {
     m_outputFile = file;
     m_editor.setOutputFile(file);
+    m_styleManager->setOutputFile(file);
+    ansi.setOutputFile(file);
 }
 
 void UserInterface::setItemCache(ItemCache itemCache) {
@@ -33,24 +48,24 @@ void UserInterface::drawName(int i) {
         name = name.substr(0, m_itemWidth - 1) + "…";
     }
 
-    move(0, m_height - i - 2 + m_offset);
+    ansi.move(0, m_height - i - 2 + m_offset);
     if (i == m_cursor) {
-        m_styleManager.set(m_config->activeRowStyle);
-        clearTilEOL();
-        if (m_config->activeSelector.size()) {
-            m_styleManager.set(m_config->activeSelectorStyle);
-            fprintf(m_outputFile, "%s", m_config->activeSelector.c_str());
+        m_styleManager->set(m_config.activeRowStyle);
+        ansi.clearTilEOL();
+        if (m_config.activeSelector.size()) {
+            m_styleManager->set(m_config.activeSelectorStyle);
+            fprintf(m_outputFile, "%s", m_config.activeSelector.c_str());
         }
-        m_styleManager.set(m_config->activeItemStyle);
+        m_styleManager->set(m_config.activeItemStyle);
     }
     else {
-        m_styleManager.set(m_config->rowStyle);
-        clearTilEOL();
-        if (m_config->selector.size()) {
-            m_styleManager.set(m_config->selectorStyle);
-            fprintf(m_outputFile, "%s", m_config->selector.c_str());
+        m_styleManager->set(m_config.rowStyle);
+        ansi.clearTilEOL();
+        if (m_config.selector.size()) {
+            m_styleManager->set(m_config.selectorStyle);
+            fprintf(m_outputFile, "%s", m_config.selector.c_str());
         }
-        m_styleManager.set(m_config->itemStyle);
+        m_styleManager->set(m_config.itemStyle);
     }
 
     fprintf(m_outputFile, "%s", name.c_str());
@@ -61,8 +76,8 @@ void UserInterface::drawHint(int i) {
     char *text = m_itemCache.get(i)->text;
     std::string hint = std::string(text + strlen(text) + 1);
 
-    m_styleManager.set(i == m_cursor ? m_config->activeHintStyle
-            : m_config->hintStyle);
+    m_styleManager->set(i == m_cursor ? m_config.activeHintStyle
+            : m_config.hintStyle);
 
     if (hint.size() > m_hintWidth) {
         const char *str = hint.data();
@@ -75,12 +90,12 @@ void UserInterface::drawHint(int i) {
                break;
            }
         }
-        move(m_width - hint.size() + idx - 1, m_height - i - 2 + m_offset);
+        ansi.move(m_width - hint.size() + idx - 1, m_height - i - 2 + m_offset);
         fprintf(m_outputFile, "…");
         fprintf(m_outputFile, "%s", str + idx);
     }
     else {
-        move(m_width - hint.size(), m_height - i - 2 + m_offset);
+        ansi.move(m_width - hint.size(), m_height - i - 2 + m_offset);
         fprintf(m_outputFile, "%s", hint.data());
     }
 }
@@ -96,15 +111,15 @@ void UserInterface::drawItems() {
         drawName(i);
     }
 
-    if (m_hintWidth >= m_config->minHintWidth) {
+    if (m_hintWidth >= m_config.minHintWidth) {
         for (int i = m_offset; i < m_nVisibleItems + m_offset; i++) {
             drawHint(i);
         }
     }
     if (m_height - m_nVisibleItems - 2 >= 0) {
-        move(m_width - 1, m_height - m_nVisibleItems - 2);
-        m_styleManager.set(m_config->backgroundStyle);
-        clearTilSOF();
+        ansi.move(m_width - 1, m_height - m_nVisibleItems - 2);
+        m_styleManager->set(m_config.backgroundStyle);
+        ansi.clearTilSOF();
     }
 }
 
@@ -112,23 +127,23 @@ void UserInterface::drawPrompt() {
     if (!m_width || !m_height) {
         return;
     }
-    move(0, m_height - 1);
-    m_styleManager.set(m_config->searchRowStyle);
-    clearTilEOL();
-    m_styleManager.set(m_config->searchPromptStyle);
-    fprintf(m_outputFile, "%s", m_config->prompt.c_str());
-    move(m_config->prompt.size() + m_config->promptGap, m_height - 1);
-    m_styleManager.set(m_config->searchStyle);
+    ansi.move(0, m_height - 1);
+    m_styleManager->set(m_config.searchRowStyle);
+    ansi.clearTilEOL();
+    m_styleManager->set(m_config.searchPromptStyle);
+    fprintf(m_outputFile, "%s", m_config.prompt.c_str());
+    ansi.move(m_config.prompt.size() + m_config.promptGap, m_height - 1);
+    m_styleManager->set(m_config.searchStyle);
 }
 
 void UserInterface::drawQuery() {
     if (!m_width || !m_height) {
         return;
     }
-    move(m_config->prompt.size() + m_config->promptGap, m_height - 1);
-    m_styleManager.set(m_config->searchRowStyle);
-    clearTilEOL();
-    m_styleManager.set(m_config->searchStyle);
+    ansi.move(m_config.prompt.size() + m_config.promptGap, m_height - 1);
+    m_styleManager->set(m_config.searchRowStyle);
+    ansi.clearTilEOL();
+    m_styleManager->set(m_config.searchStyle);
     m_editor.print();
 
     if (m_isSpinning) {
@@ -137,19 +152,18 @@ void UserInterface::drawQuery() {
 }
 
 void UserInterface::drawSpinner() {
-    m_styleManager.set(m_config->searchPromptStyle);
-    move(m_width - 1, m_height - 1);
+    m_styleManager->set(m_config.searchPromptStyle);
+    ansi.move(m_config.prompt.size() == 1 ? 0 : m_width - 1, m_height - 1);
     fprintf(m_outputFile, "%s", SPINNER[m_spinnerFrame]);
     focusEditor();
 }
 
-void UserInterface::updateSpinner(bool isSpinning) {
-    m_spinnerFrame = (m_spinnerFrame + 1) % SPINNER_SIZE;
-
+void UserInterface::updateSpinner() {
     if (!m_width || !m_height) {
         return;
     }
 
+    bool isSpinning = m_isReading || m_isSorting;
     if (!isSpinning) {
         if (m_isSpinning) {
             m_isSpinning = false;
@@ -161,11 +175,12 @@ void UserInterface::updateSpinner(bool isSpinning) {
     }
 
     m_isSpinning = true;
+    m_spinnerFrame = (m_spinnerFrame + 1) % SPINNER_SIZE;
     drawSpinner();
 }
 
 void UserInterface::focusEditor() {
-    move(m_config->prompt.size() + m_config->promptGap
+    ansi.move(m_config.prompt.size() + m_config.promptGap
             + m_editor.getCursorCol(), m_height - 1);
 }
 
@@ -193,16 +208,16 @@ void UserInterface::onResize(int w, int h) {
 
     m_editor.setWidth(m_width - 1);
 
-    int selectorWidth = std::max(m_config->selector.size(),
-            m_config->activeSelector.size());
+    int selectorWidth = std::max(m_config.selector.size(),
+            m_config.activeSelector.size());
 
-    if (m_config->showHints) {
-        m_hintWidth = (m_width - ((m_width / 5) * 3) - selectorWidth - m_config->minHintSpacing);
-        if (m_hintWidth >= m_config->minHintWidth) {
-            if (m_hintWidth >= m_config->maxHintWidth) {
-                m_hintWidth = m_config->maxHintWidth;
+    if (m_config.showHints) {
+        m_hintWidth = (m_width - ((m_width / 5) * 3) - selectorWidth - m_config.minHintSpacing);
+        if (m_hintWidth >= m_config.minHintWidth) {
+            if (m_hintWidth >= m_config.maxHintWidth) {
+                m_hintWidth = m_config.maxHintWidth;
             }
-            m_itemWidth = m_width - m_hintWidth - selectorWidth - m_config->minHintSpacing;
+            m_itemWidth = m_width - m_hintWidth - selectorWidth - m_config.minHintSpacing;
         }
         else {
             m_hintWidth = 0;
@@ -242,15 +257,15 @@ void UserInterface::moveCursorDown() {
     if (m_cursor - m_offset < 0) {
         m_offset -= 1;
 
-        move(0, m_height - 1);
-        moveDownOrScroll();
+        ansi.move(0, m_height - 1);
+        ansi.moveDownOrScroll();
 
         drawPrompt();
         drawQuery();
     }
     drawName(m_cursor + 1);
     drawName(m_cursor);
-    if (m_hintWidth > m_config->minHintWidth) {
+    if (m_hintWidth > m_config.minHintWidth) {
         drawHint(m_cursor + 1);
         drawHint(m_cursor);
     }
@@ -271,14 +286,14 @@ void UserInterface::moveCursorUp() {
     if (m_cursor - m_offset >= m_nVisibleItems) {
         m_offset += 1;
         warmCache();
-        moveHome();
-        moveUpOrScroll();
+        ansi.moveHome();
+        ansi.moveUpOrScroll();
         drawPrompt();
         drawQuery();
     }
     drawName(m_cursor - 1);
     drawName(m_cursor);
-    if (m_hintWidth > m_config->minHintWidth) {
+    if (m_hintWidth > m_config.minHintWidth) {
         drawHint(m_cursor - 1);
         drawHint(m_cursor);
     }
@@ -292,18 +307,18 @@ void UserInterface::scrollUp() {
 
     m_offset += 1;
     warmCache();
-    moveHome();
-    moveUpOrScroll();
+    ansi.moveHome();
+    ansi.moveUpOrScroll();
     if (m_cursor - m_offset < 0) {
         m_cursor += 1;
         drawName(m_offset);
-        if (m_hintWidth > m_config->minHintWidth) {
+        if (m_hintWidth > m_config.minHintWidth) {
             drawHint(m_offset);
         }
     }
 
     drawName(m_offset + m_height - 2);
-    if (m_hintWidth > m_config->minHintWidth) {
+    if (m_hintWidth > m_config.minHintWidth) {
         drawHint(m_offset + m_height - 2);
     }
 
@@ -317,23 +332,30 @@ void UserInterface::scrollDown() {
     }
     m_offset -= 1;
     warmCache();
-    move(0, m_height - 1);
-    moveDownOrScroll();
+    ansi.move(0, m_height - 1);
+    ansi.moveDownOrScroll();
     if (m_cursor - m_offset >= m_height - 1) {
         m_cursor -= 1;
         drawName(m_offset + m_height - 2);
-        if (m_hintWidth > m_config->minHintWidth) {
+        if (m_hintWidth > m_config.minHintWidth) {
             drawHint(m_offset + m_height - 2);
         }
     }
 
     drawName(m_offset);
-    if (m_hintWidth > m_config->minHintWidth) {
+    if (m_hintWidth > m_config.minHintWidth) {
         drawHint(m_offset);
     }
 
     drawPrompt();
     drawQuery();
+}
+
+void UserInterface::quit(bool selected) {
+    m_logger.log("UserInterface: quitting with selected=%s",
+        selected ? "true" : "false");
+    m_selected = selected;
+    m_dispatch.dispatch(std::make_shared<QuitEvent>());
 }
 
 void UserInterface::handleClick(int x, int y) {
@@ -351,8 +373,7 @@ void UserInterface::handleClick(int x, int y) {
         chrono::milliseconds delta = chrono::duration_cast<chrono
             ::milliseconds>(chrono::system_clock::now() - m_lastClickTime);
         if (canDoubleClick && delta.count() < 250) {
-            m_active = false;
-            m_selected = true;
+            quit(true);
         }
     }
     else {
@@ -360,7 +381,7 @@ void UserInterface::handleClick(int x, int y) {
         m_cursor = newCursor;
         drawName(oldCursor);
         drawName(m_cursor);
-        if (m_hintWidth > m_config->minHintWidth) {
+        if (m_hintWidth > m_config.minHintWidth) {
             drawHint(oldCursor);
             drawHint(m_cursor);
         }
@@ -379,7 +400,7 @@ void UserInterface::handleMouse(MouseEvent event) {
         case MB_LEFT:
             if (event.pressed && !event.dragged) {
                 if (event.y == m_height) {
-                    int offset = m_config->prompt.size() + m_config->promptGap;
+                    int offset = m_config.prompt.size() + m_config.promptGap;
                     if (event.x > offset) {
                         m_editor.handleClick(event.x - offset);
                     }
@@ -394,15 +415,16 @@ void UserInterface::handleMouse(MouseEvent event) {
     }
 }
 
-void UserInterface::handleInput(Key key) {
-    switch (key) {
+void UserInterface::handleInput(KeyEvent event) {
+    std::string query = m_editor.getText();
+    switch (event.getKey()) {
         case K_ESCAPE:
-        case K_CTRL_C:
-            m_active = false;
+        case K_CTRL_C: {
+            quit(false);
             break;
-
+        }
         case 32 ... 126:
-            m_editor.input(key);
+            m_editor.input(event.getKey());
             break;
 
         case K_CTRL_A:
@@ -440,19 +462,52 @@ void UserInterface::handleInput(Key key) {
             m_editor.moveCursorRight();
             break;
 
-        case K_ENTER:
-            m_selected = true;
-            m_active = false;
+        case K_ENTER: {
+            quit(true);
             break;
+        }
 
         case K_UTF8:
-            m_editor.input(m_reader.getWideChar());
+            m_editor.input(event.getWidechar());
             break;
 
         case K_MOUSE:
-            handleMouse(m_reader.getMouseEvent());
+            for (MouseEvent mouseEvent : event.getMouseEvents()) {
+                handleMouse(mouseEvent);
+            }
             break;
 
+        default:
+            break;
+    }
+    if (m_editor.getText() != query) {
+        m_isSorting = true;
+        m_dispatch.dispatch(std::make_shared<QueryChangeEvent>(m_editor.getText()));
+    }
+}
+
+void UserInterface::onEvent(std::shared_ptr<Event> event) {
+    m_logger.log("UserInterface: received %s", getEventNames()[event->getType()]);
+    switch (event->getType()) {
+        case KEY_EVENT: {
+            KeyEvent *keyEvent = (KeyEvent*)event.get();
+            m_inputQueue.push_back(*keyEvent);
+            break;
+        }
+        case RESIZE_EVENT: {
+            ResizeEvent *resizeEvent = (ResizeEvent*)event.get();
+            onResize(resizeEvent->getWidth(), resizeEvent->getHeight());
+            break;
+        }
+        case ITEMS_SORTED_EVENT: {
+            m_isSorting = false;
+            m_requiresRedraw = true;
+            break;
+        }
+        case ALL_ITEMS_READ_EVENT: {
+            m_isReading = false;
+            break;
+        }
         default:
             break;
     }
@@ -476,11 +531,13 @@ void UserInterface::redraw() {
     if (m_nVisibleItems != itemIds.size()) {
         needsRedraw = true;
     }
-    else for (int i = 0; i < m_nVisibleItems; i++) {
-        Item *item = m_itemCache.get(i + m_offset);
-        if (item == nullptr || itemIds[i] != item->index) {
-            needsRedraw = true;
-            break;
+    else {
+        for (int i = 0; i < m_nVisibleItems; i++) {
+            Item *item = m_itemCache.get(i + m_offset);
+            if (item == nullptr || itemIds[i] != item->index) {
+                needsRedraw = true;
+                break;
+            }
         }
     }
 
@@ -490,10 +547,6 @@ void UserInterface::redraw() {
         drawItems();
         focusEditor();
     }
-}
-
-bool UserInterface::isActive() {
-    return m_active;
 }
 
 Item* UserInterface::getSelected() {
@@ -507,14 +560,36 @@ Utf8LineEditor* UserInterface::getEditor() {
     return &m_editor;
 }
 
-InputReader* UserInterface::getInputReader() {
-    return &m_reader;
+void UserInterface::onStart() {
+    m_lastLoopTime = system_clock::now();
 }
 
-StyleManager* UserInterface::getStyleManager() {
-    return &m_styleManager;
-}
+void UserInterface::onLoop() {
+    if (m_inputQueue.size()) {
+        for (KeyEvent& event : m_inputQueue) {
+            handleInput(event);
+        }
+        m_inputQueue.clear();
+        if (m_editor.requiresRedraw()) {
+            drawQuery();
+            focusEditor();
+        }
+        else {
+            focusEditor();
+        }
+    }
+    if (m_requiresRedraw) {
+        redraw();
+        m_requiresRedraw = false;
+    }
 
-void UserInterface::setConfig(Config *config) {
-    m_config = config;
+    milliseconds remaining = 150ms - duration_cast<milliseconds>(
+            system_clock::now() - m_lastLoopTime);
+    if (remaining > 0ms) {
+        awaitEvent(remaining);
+    }
+    else {
+        updateSpinner();
+        m_lastLoopTime = system_clock::now();
+    }
 }

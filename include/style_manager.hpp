@@ -9,10 +9,10 @@ const int NO_STYLE = -1;
 
 class StyleManager {
     public:
-        StyleManager();
         int add(AnsiStyle& style);
         void set(int idx);
         void setOutputFile(FILE *file);
+        StyleManager();
 
     private:
         std::map<std::string, int> m_lookup;

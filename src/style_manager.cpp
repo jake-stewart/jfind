@@ -32,4 +32,3 @@ void StyleManager::set(int idx) {
 void StyleManager::setOutputFile(FILE *file) {
     m_outputFile = file;
 }
-

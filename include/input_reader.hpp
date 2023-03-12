@@ -2,55 +2,59 @@
 #define INPUT_READER_HPP
 
 #include "key.hpp"
+#include "event_dispatch.hpp"
+#include "mouse_event.hpp"
+#include "logger.hpp"
 #include <string>
 #include <vector>
 #include <sys/select.h>
+#include <thread>
 
 bool isContinuationByte(unsigned char ch);
 int utf8CharLen(unsigned char ch);
 
-enum MouseButton {
-    MB_NONE = -1,
-    MB_LEFT = 0,
-    MB_MIDDLE = 1,
-    MB_RIGHT = 2,
-    MB_SCROLL_UP = 64,
-    MB_SCROLL_DOWN = 65,
-    MB_SCROLL_RIGHT = 66,
-    MB_SCROLL_LEFT = 67,
-};
+class InputReader : public EventListener {
+public:
+    InputReader();
 
-struct MouseEvent {
-    MouseButton button;
-    bool dragged;
-    bool pressed;
-    int x;
-    int y;
-};
+    bool getKey(Key *key);
+    bool hasKey();
+    void setFileDescriptor(int fileDescriptor);
 
-class InputReader {
-    public:
-        InputReader();
+    void onLoop();
+    void preOnEvent(EventType type);
+    void onEvent(std::shared_ptr<Event> event);
 
-        int getKey(Key *key);
-        bool hasKey();
-        void setFileDescriptor(int fileDescriptor);
-        std::string getWideChar();
-        MouseEvent getMouseEvent();
+    void onSigInt();
 
-    private:
-        fd_set m_set;
-        int m_fileDescriptor;
-        timeval m_timeout;
-        char m_widechar[4];
-        std::vector<MouseEvent> m_mouseEvents;
+private:
+    EventDispatch& m_dispatch = EventDispatch::instance();
+    Logger& m_logger = Logger::instance();
 
-        char getch();
-        int parseEsc(Key *key);
-        int parseAltKey(char ch, Key *key);
-        int parseMouse(std::string& seq, Key *key);
-        int parseEsqSeq(std::string& seq, Key *key);
-        int parseUtf8(char ch, Key *key);
+    // the file descriptor read for input
+    int m_fileDescriptor;
+
+    // payload for events which require more than just
+    // the Key enum value
+    char m_widechar[4];
+    std::vector<MouseEvent> m_mouseEvents;
+
+    // when reading for user input, the thread is blocked
+    // if a quit event occurs, we have to unblock the thread
+    // to do this, the thread reads using select on both
+    // the input file descriptor and an internal pipe.
+    // when quitting, this internal pipe is closed, waking
+    // up select and allowing the thread to see the quit event
+    fd_set m_set;
+    timeval m_timeout;
+    int m_pipe[2];
+
+    char getch();
+    int parseEsc(Key *key);
+    int parseAltKey(char ch, Key *key);
+    int parseMouse(std::string& seq, Key *key);
+    int parseEsqSeq(std::string& seq, Key *key);
+    int parseUtf8(char ch, Key *key);
 };
 
 #endif
