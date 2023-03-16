@@ -29,7 +29,7 @@ public:
 
 private:
     EventDispatch& m_dispatch = EventDispatch::instance();
-    Logger& m_logger = Logger::instance();
+    Logger m_logger = Logger("InputReader");
 
     // the file descriptor read for input
     int m_fileDescriptor;
@@ -38,6 +38,10 @@ private:
     // the Key enum value
     char m_widechar[4];
     std::vector<MouseEvent> m_mouseEvents;
+
+    std::chrono::time_point<std::chrono::system_clock> m_lastClickTime;
+    int m_clickCount = 0;
+    MouseButton m_lastClickButton = MB_NONE;
 
     // when reading for user input, the thread is blocked
     // if a quit event occurs, we have to unblock the thread

@@ -1,36 +1,41 @@
 #include "../include/logger.hpp"
 #include <stdarg.h>
 
+bool Logger::c_enabled;
+std::mutex Logger::c_mut;
+FILE *Logger::c_fp;
+
 bool Logger::open(const char *file) {
-    if (m_enabled) {
+    if (c_enabled) {
         return false;
     }
-    m_fp = fopen(file, "w+");
-    m_enabled = !!m_fp;
-    return m_enabled;
+    c_fp = fopen(file, "w+");
+    c_enabled = !!c_fp;
+    return c_enabled;
+}
+
+void Logger::close() {
+    if (c_enabled) {
+        c_enabled = false;
+        fclose(c_fp);
+    }
+}
+
+Logger::Logger(const char *name) {
+    m_name = name;
 }
 
 void Logger::log(const char *fmt, ...) {
-    if (!m_enabled) {
+    if (!c_enabled) {
         return;
     }
-    std::unique_lock lock(m_mut);
+    std::unique_lock lock(c_mut);
+    fprintf(c_fp, "%s: ", m_name);
     va_list args;
     va_start(args, fmt);
-    vfprintf(m_fp, fmt, args);
+    vfprintf(c_fp, fmt, args);
     va_end(args);
-    fprintf(m_fp, "\n");
-    fflush(m_fp);
+    fprintf(c_fp, "\n");
+    fflush(c_fp);
 }
 
-Logger::~Logger() {
-    if (m_enabled) {
-        m_enabled = false;
-        fclose(m_fp);
-    }
-}
-
-Logger& Logger::instance() {
-    static Logger singleton;
-    return singleton;
-}

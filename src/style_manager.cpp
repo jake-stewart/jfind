@@ -1,7 +1,7 @@
 #include "../include/style_manager.hpp"
 
-StyleManager::StyleManager() {
-    m_outputFile = stdout;
+StyleManager::StyleManager(FILE *outputFile) {
+    m_outputFile = outputFile;
 }
 
 int StyleManager::add(AnsiStyle& style) {
@@ -27,8 +27,4 @@ void StyleManager::set(int idx) {
         fprintf(m_outputFile, "%s", m_escSeqs[idx].c_str());
     }
     m_currentStyle = idx;
-}
-
-void StyleManager::setOutputFile(FILE *file) {
-    m_outputFile = file;
 }

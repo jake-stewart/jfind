@@ -14,6 +14,7 @@ enum MouseButton {
 
 struct MouseEvent {
     MouseButton button;
+    int numClicks;
     bool dragged;
     bool pressed;
     int x;

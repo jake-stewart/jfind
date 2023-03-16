@@ -1,80 +1,54 @@
 #ifndef USER_INTERFACE_HPP
 #define USER_INTERFACE_HPP
 
-#include "item_cache.hpp"
 #include "style_manager.hpp"
 #include "config.hpp"
 #include "utf8_line_editor.hpp"
 #include "input_reader.hpp"
 #include "ansi_wrapper.hpp"
-#include "sliding_cache.hpp"
 #include "event_dispatch.hpp"
-#include <chrono>
-
-namespace chrono = std::chrono;
+#include "spinner.hpp"
+#include "item_list.hpp"
 
 class UserInterface : public EventListener {
 public:
-    UserInterface(StyleManager *styleManager);
-    void drawPrompt();
-    void drawQuery();
-    void onResize(int w, int h);
+    UserInterface(FILE *outputFile, StyleManager *styleManager,
+            ItemList *itemLis, Utf8LineEditor *editor);
     void handleInput(KeyEvent event);
-    void redraw();
-    void setOutputFile(FILE *file);
-    void setItemCache(ItemCache cache);
-    void focusEditor();
-    void updateSpinner();
     Item* getSelected();
-    Utf8LineEditor* getEditor();
     void onEvent(std::shared_ptr<Event> event);
-    void onStart();
     void onLoop();
 
 private:
-    void quit(bool withSelected);
-    void drawName(int i);
-    void drawHint(int i);
-    void drawItems();
-    void drawSpinner();
-    void calcVisibleItems();
-    void moveCursorDown();
-    void moveCursorUp();
-    void scrollUp();
-    void scrollDown();
-    void handleClick(int x, int y);
+    void redraw();
+    void focusEditor();
+    void updateSpinner();
+    void onResize(int w, int h);
+    void drawPrompt();
+    void drawQuery();
     void handleMouse(MouseEvent event);
-    void warmCache();
 
     EventDispatch& m_dispatch = EventDispatch::instance();
-    Logger& m_logger = Logger::instance();
+    Logger m_logger = Logger("UserInterface");
+    StyleManager *m_styleManager;
+    AnsiWrapper& ansi = AnsiWrapper::instance();
+    Config& m_config = Config::instance();
+    FILE *m_outputFile;
+
+    ItemList *m_itemList;
+    Utf8LineEditor *m_editor;
+    Spinner m_spinner;
 
     std::vector<KeyEvent> m_inputQueue;
 
-    bool m_requiresRedraw;
+    bool m_requiresRefresh;
+    bool m_isSorting = false;
+    bool m_isReading = true;
 
-    bool m_isSorting;
-    bool m_isReading;
+    bool m_selected = false;
 
-    int m_spinnerFrame;
-    bool m_isSpinning;
-    chrono::time_point<chrono::system_clock> m_lastLoopTime;
-
-    FILE *m_outputFile;
-    int m_width;
-    int m_height;
-    int m_offset;
-    int m_cursor;
-    bool m_selected;
-    StyleManager *m_styleManager;
-    int m_itemWidth;
-    int m_hintWidth;
-    int m_nVisibleItems;
-    ItemCache m_itemCache;
-    Utf8LineEditor m_editor;
-    AnsiWrapper &ansi = AnsiWrapper::instance();
-    Config& m_config = Config::instance();
-    chrono::time_point<chrono::system_clock> m_lastClickTime;
+    int m_width = 0;
+    int m_height = 0;
 };
 
 #endif

@@ -12,8 +12,7 @@
 
 class ItemReader : public EventListener {
 public:
-    ItemReader();
-    void setFile(FILE *file);
+    ItemReader(FILE *file);
     void setReadHints(bool readHints);
     bool read();
     void onStart();
@@ -25,8 +24,8 @@ private:
     void endInterval();
 
     bool m_itemsRead = true;
-    bool m_intervalPassed;
-    bool m_intervalActive;
+    bool m_intervalPassed = false;
+    bool m_intervalActive = false;
 
     std::thread *m_intervalThread;
 
@@ -35,7 +34,7 @@ private:
     FILE *m_file;
 
     EventDispatch& m_dispatch = EventDispatch::instance();
-    Logger& m_logger = Logger::instance();
+    Logger m_logger = Logger("ItemReader");
 
     std::mutex m_intervalMut;
     std::condition_variable m_intervalCv;

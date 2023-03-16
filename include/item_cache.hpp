@@ -7,8 +7,7 @@
 
 class ItemCache {
     public:
-        ItemCache();
-        void setSorter(ItemSorter *sorter);
+        ItemCache(ItemSorter *sorter);
         void refresh();
         Item* get(int i);
         int size();

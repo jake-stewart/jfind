@@ -8,81 +8,51 @@
 #include <fstream>
 #include <mutex>
 
-class LayeredMutex {
-    std::mutex m_mut;
-    int m_layer;
-
-public:
-    LayeredMutex() {
-        m_layer = 0;
-    }
-
-    void lock() {
-        if (m_layer == 0) {
-            m_mut.lock();
-        }
-        m_layer++;
-    }
-
-    void unlock() {
-        m_layer--;
-        if (m_layer == 0) {
-            m_mut.unlock();
-        }
-    }
-};
-
-class LayeredLock {
-    LayeredMutex *m_mut;
-
-public:
-    LayeredLock(LayeredMutex& mut) {
-        m_mut = &mut;
-        m_mut->lock();
-    }
-
-    ~LayeredLock() {
-        m_mut->unlock();
-    }
-};
-
 class ItemSorter : public EventListener {
 public:
     ItemSorter();
-    void add(Item *items, int n);
     int size();
-    void sort(int n);
-    std::vector<Item>& getItems();
     int copyItems(Item *buffer, int idx, int n);
     void onEvent(std::shared_ptr<Event> event);
     void onLoop();
+    void onStart();
 
 private:
-    void setQuery(std::string query);
+    bool m_sorterThreadActive = false;
+    std::thread *m_sorterThread;
+    void sorterThread();
+    void endSorterThread();
+
+    void sort(int n);
+    void setQuery();
     void calcHeuristics(bool queryChanged);
-    void calcHeuristics(const char *query, bool newItems,
-                        int start, int end);
+    void calcHeuristics(bool newItems, int start, int end);
 
     void addNewItems();
     void sortItems();
 
     EventDispatch& m_dispatch = EventDispatch::instance();
-    Logger& m_logger = Logger::instance();
+    Logger m_logger = Logger("ItemSorter");
 
-    LayeredMutex m_mut;
+    std::mutex m_sorter_mut;
+    std::condition_variable m_sorter_cv;
+
+    std::mutex m_items_mut;
 
     bool m_hasNewItems = false;
     std::vector<Item> *m_newItems;
 
     int m_heuristicIdx;
-    int m_lastSize;
     int m_sortIdx;
 
+    Item m_firstItems[256];
+    int m_firstItemsSize = 0;
+
     std::vector<Item> m_items;
-    bool m_wakeUp;
     bool m_isSorted;
     std::string m_query;
     bool m_queryChanged;
+    std::string m_newQuery;
 };
 
 #endif

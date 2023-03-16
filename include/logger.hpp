@@ -5,16 +5,18 @@
 #include <mutex>
 
 class Logger {
-    bool m_enabled;
-    std::mutex m_mut;
-    FILE *m_fp;
+    static bool c_enabled;
+    static std::mutex c_mut;
+    static FILE *c_fp;
+
+    const char *m_name;
 
 public:
-    static Logger& instance();
-    bool open(const char *file);
-    void log(const char *fmt, ...);
+    static bool open(const char *file);
+    static void close();
 
-    ~Logger();
+    Logger(const char *name);
+    void log(const char *fmt, ...);
 };
 
 #endif

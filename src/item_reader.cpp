@@ -4,22 +4,20 @@
 #include <chrono>
 #include <thread>
 
-namespace chrono = std::chrono;
 using namespace std::chrono_literals;
+using std::chrono::time_point;
+using std::chrono::system_clock;
+
 
 #define INTERVAL 50ms
 
-ItemReader::ItemReader() {
-    m_file = stdin;
+ItemReader::ItemReader(FILE *file) {
+    m_file = file;
     m_readHints = false;
     m_itemId = 0;
 
     m_dispatch.subscribe(this, QUIT_EVENT);
     m_dispatch.subscribe(this, ITEMS_ADDED_EVENT);
-}
-
-void ItemReader::setFile(FILE *fp) {
-    m_file = fp;
 }
 
 void ItemReader::setReadHints(bool readHints) {
@@ -87,7 +85,7 @@ bool ItemReader::readWithoutHints() {
 }
 
 void ItemReader::readFirstBatch() {
-    chrono::time_point start = chrono::system_clock::now();
+    time_point start = system_clock::now();
     for (int i = 0; i < 128; i++) {
 
         bool success = read();
@@ -95,24 +93,27 @@ void ItemReader::readFirstBatch() {
             break;
         }
 
-        if (chrono::system_clock::now() - start > INTERVAL) {
+        if (system_clock::now() - start > INTERVAL) {
             break;
         }
     }
 }
 
 void ItemReader::endInterval() {
-    if (m_intervalActive) {
+    if (!m_intervalActive) {
         return;
     }
-    m_intervalActive = false;
+    {
+        std::unique_lock lock(m_intervalMut);
+        m_intervalActive = false;
+    }
     m_intervalCv.notify_one();
     m_intervalThread->join();
     delete m_intervalThread;
 }
 
 void ItemReader::onEvent(std::shared_ptr<Event> event) {
-    m_logger.log("ItemReader: received %s", getEventNames()[event->getType()]);
+    m_logger.log("received %s", getEventNames()[event->getType()]);
     switch (event->getType()) {
         case QUIT_EVENT: {
             endInterval();

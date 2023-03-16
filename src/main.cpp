@@ -6,6 +6,7 @@
 #include "../include/config_json_reader.hpp"
 #include "../include/config_option_reader.hpp"
 #include "../include/ansi_wrapper.hpp"
+#include "../include/item_list.hpp"
 #include "../include/utf8_line_editor.hpp"
 #include "../include/style_manager.hpp"
 #include "../include/user_interface.hpp"
@@ -22,7 +23,7 @@
 Config& config = Config::instance();
 AnsiWrapper& ansi = AnsiWrapper::instance();
 EventDispatch& eventDispatch = EventDispatch::instance();
-Logger& logger = Logger::instance();
+Logger logger = Logger("main");
 
 void printResult(Item *selected, const char *input) {
     if (selected) {
@@ -82,7 +83,8 @@ void emitResizeEvent() {
         ansi.restoreTerm();
         exit(1);
     }
-    eventDispatch.dispatch(std::make_shared<ResizeEvent>(ws.ws_col, ws.ws_row));
+    eventDispatch.dispatch(
+            std::make_shared<ResizeEvent>(ws.ws_col, ws.ws_row));
 }
 
 void signalHandler(int sig) {
@@ -154,15 +156,15 @@ void displayHelp(const char *name) {
 }
 
 int main(int argc, const char **argv) {
-    StyleManager styleManager;
+    StyleManager styleManager(stderr);
 
     if (!readConfig(&styleManager, argc, argv)) {
         return 1;
     }
 
     if (config.logFile.size()) {
-        logger.open(config.logFile.c_str());
-        logger.log("");
+        Logger::open(config.logFile.c_str());
+        logger.log("--------------");
     }
 
     if (isatty(STDIN_FILENO) || config.showHelp) {
@@ -180,10 +182,14 @@ int main(int argc, const char **argv) {
     }
 
     ItemSorter itemSorter;
-    ItemCache itemCache;
-    itemCache.setSorter(&itemSorter);
-    UserInterface userInterface(&styleManager);
-    userInterface.setItemCache(itemCache);
+    ItemCache itemCache(&itemSorter);
+
+    ItemList itemList(stderr, &styleManager, &itemCache);
+
+    Utf8LineEditor editor(stderr);
+    editor.input(config.query);
+
+    UserInterface userInterface(stderr, &styleManager, &itemList, &editor);
 
     InputReader inputReader;
     int fd = open("/dev/tty", O_RDONLY);
@@ -193,15 +199,10 @@ int main(int argc, const char **argv) {
     // enable unicode
     setlocale(LC_ALL, "en_US.UTF-8");
 
-    Utf8LineEditor *editor = userInterface.getEditor();
-    editor->input(config.query);
-
-    ItemReader itemReader;
-    itemReader.setFile(stdin);
+    ItemReader itemReader(stdin);
     itemReader.setReadHints(config.showHints);
 
     ansi.setOutputFile(stderr);
-    userInterface.setOutputFile(stderr);
 
     signal(SIGWINCH, signalHandler);
     signal(SIGINT, signalHandler);
@@ -225,7 +226,9 @@ int main(int argc, const char **argv) {
     if (selected && historyManager) {
         historyManager->writeHistory(selected);
     }
-    printResult(selected, userInterface.getEditor()->getText().c_str());
+    printResult(selected, editor.getText().c_str());
+
+    Logger::close();
 
     return 0;
 }

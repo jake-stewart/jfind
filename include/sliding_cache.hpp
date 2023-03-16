@@ -8,7 +8,7 @@ template <class T>
 class SlidingCache {
     public:
         SlidingCache() {
-            m_reserve = 64;
+            m_reserve = 128;
             m_cache = new T[m_reserve];
             m_size = 0;
             m_idx = 0;

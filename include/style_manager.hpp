@@ -11,8 +11,7 @@ class StyleManager {
     public:
         int add(AnsiStyle& style);
         void set(int idx);
-        void setOutputFile(FILE *file);
-        StyleManager();
+        StyleManager(FILE *outputFile);
 
     private:
         std::map<std::string, int> m_lookup;

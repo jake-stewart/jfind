@@ -2,14 +2,11 @@
 #include "../include/ansi_wrapper.hpp"
 #include "../include/input_reader.hpp"
 
-Utf8LineEditor::Utf8LineEditor() {
+Utf8LineEditor::Utf8LineEditor(FILE *file) {
+    m_outputFile = file;
     m_cursor.setString(&m_string);
     m_start.setString(&m_string);
     m_end.setString(&m_string);
-}
-
-void Utf8LineEditor::setOutputFile(FILE *file) {
-    m_outputFile = file;
 }
 
 void Utf8LineEditor::input(char ch) {

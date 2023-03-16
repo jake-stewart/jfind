@@ -130,6 +130,7 @@ void AnsiWrapper::restoreTerm(void) {
     clearTerm();
     setCursor(true);
     setAlternateBuffer(false);
+    fflush(m_outputFile);
     tcsetattr(m_inputFileNo, TCSANOW, &m_origTermios);
 
     signal(SIGWINCH, SIG_DFL);
@@ -137,11 +138,12 @@ void AnsiWrapper::restoreTerm(void) {
     signal(SIGQUIT, SIG_DFL);
 }
 
-// char stdoutBuffer[50000];
+char outputBuffer[50000];
 
 void AnsiWrapper::initTerm(void) {
-    // setvbuf(stdout, NULL, _IONBF, 0);
-    // setvbuf(stdout, stdoutBuffer, _IOFBF, sizeof(stdoutBuffer));
+    setvbuf(m_outputFile, outputBuffer, _IOFBF, sizeof(outputBuffer));
+    // setvbuf(m_outputFile, nullptr, _IOFBF, BUFSIZ);
+    // setvbuf(m_outputFile, NULL, _IONBF, 0);
 
     tcgetattr(m_inputFileNo, &m_origTermios);
     termios raw = m_origTermios;
@@ -155,6 +157,7 @@ void AnsiWrapper::initTerm(void) {
     setAlternateBuffer(true);
     clearTerm();
     moveHome();
+    fflush(m_outputFile);
 }
 
 void AnsiWrapper::closeStdin() {

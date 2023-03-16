@@ -31,12 +31,13 @@ int ItemMatcher::calc(const char *text, std::vector<std::string>& queries) {
 int ItemMatcher::matchStart(const char *tp, const char *qp) {
     int maxScore = BAD_HEURISTIC;
     bool first = true;
+    int depth = 0;
     while (*tp) {
         if (tolower(*tp) == *qp) {
             bool boundary = isWordStart(tp);
             int score = 0;
             if (*(qp + 1)) {
-                score = match(tp + 1, qp + 1, 1, boundary);
+                score = match(tp + 1, qp + 1, 1, boundary, &depth);
                 if (score == BAD_HEURISTIC) return maxScore;
             }
             score += MATCH_BONUS + (boundary | first) * BOUNDARY_BONUS;
@@ -48,7 +49,7 @@ int ItemMatcher::matchStart(const char *tp, const char *qp) {
     return maxScore;
 }
 
-int ItemMatcher::match(const char *tp, const char *qp, int dist, bool consec) {
+int ItemMatcher::match(const char *tp, const char *qp, int dist, bool consec, int *depth) {
     int maxScore = BAD_HEURISTIC;
     while (*tp) {
         bool boundary = isWordStart(tp);
@@ -56,12 +57,13 @@ int ItemMatcher::match(const char *tp, const char *qp, int dist, bool consec) {
         if (tolower(*tp) == *qp) {
             int score = 0;
             if (*(qp + 1)) {
-                score = match(tp + 1, qp + 1, dist, consec | boundary);
+                score = match(tp + 1, qp + 1, dist, consec | boundary, depth);
                 if (score == BAD_HEURISTIC) return maxScore;
             }
             score += MATCH_BONUS + boundary * BOUNDARY_BONUS
                 + consec * CONSECUTIVE_BONUS + dist * DISTANCE_PENALTY;
             maxScore = std::max(score, maxScore);
+            if (++(*depth) > 100) return maxScore;
         }
         tp++;
         consec = false;

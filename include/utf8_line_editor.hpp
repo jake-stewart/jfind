@@ -8,9 +8,8 @@
 
 class Utf8LineEditor {
     public:
-        Utf8LineEditor();
+        Utf8LineEditor(FILE *outputFile);
         bool requiresRedraw();
-        void setOutputFile(FILE *file);
         void print();
         void input(char ch);
         void input(std::string text);

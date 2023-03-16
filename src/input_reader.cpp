@@ -8,12 +8,14 @@
 #include <errno.h>
 #include <sstream>
 #include <map>
-#include <thread>
 #include <iostream>
 #include <csignal>
 #include <cerrno>
-
 #include "../include/input_reader.hpp"
+
+using std::chrono::system_clock;
+using std::chrono::milliseconds;
+using std::chrono::duration_cast;
 
 std::map<std::string, Key> createKeyLookup() {
     std::map<std::string, Key> lookup;
@@ -189,9 +191,11 @@ int InputReader::parseMouse(std::string& seq, Key *key) {
         switch (pressed) {
             case 'm':
                 event.pressed = false;
+                event.numClicks = 0;
                 break;
             case 'M':
                 event.pressed = true;
+                event.numClicks = 1;
                 break;
             default:
                 continue;
@@ -234,6 +238,26 @@ int InputReader::parseMouse(std::string& seq, Key *key) {
                 break;
             default:
                 continue;
+        }
+
+        if (event.pressed == false && event.button != m_lastClickButton || event.dragged) {
+            m_clickCount = 0;
+            m_lastClickButton = MB_NONE;
+        }
+        else if (event.pressed) {
+            if (event.button == m_lastClickButton) {
+                milliseconds delta = duration_cast<milliseconds>(
+                        system_clock::now() - m_lastClickTime);
+                if (delta.count() < 250) {
+                    m_clickCount++;
+                    event.numClicks += m_clickCount;
+                }
+            }
+            else {
+                m_clickCount = 0;
+            }
+            m_lastClickButton = event.button;
+            m_lastClickTime = system_clock::now();
         }
 
         m_mouseEvents.push_back(event);
@@ -333,6 +357,5 @@ void InputReader::preOnEvent(EventType type) {
 }
 
 void InputReader::onEvent(std::shared_ptr<Event> event) {
-    m_logger.log("InputReader: received %s",
-                 getEventNames()[event->getType()]);
+    m_logger.log("received %s", getEventNames()[event->getType()]);
 }

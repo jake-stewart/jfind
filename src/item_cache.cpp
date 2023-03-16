@@ -1,13 +1,10 @@
 #include "../include/item_cache.hpp"
 
-ItemCache::ItemCache() {
+ItemCache::ItemCache(ItemSorter *sorter) {
+    m_sorter = sorter;
     m_cache.setDatasource([this] (Item *buffer, int idx, int n) {
         return m_sorter->copyItems(buffer, idx, n);
     });
-}
-
-void ItemCache::setSorter(ItemSorter *sorter) {
-    m_sorter = sorter;
 }
 
 void ItemCache::refresh() {

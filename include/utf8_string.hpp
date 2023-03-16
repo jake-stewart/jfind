@@ -30,9 +30,9 @@ class Utf8StringCursor {
 
     private:
         Utf8String *m_str;
-        int m_charIdx;
-        int m_byteIdx;
-        int m_cellIdx;
+        int m_charIdx = 0;
+        int m_byteIdx = 0;
+        int m_cellIdx = 0;
 };
 
 #endif
