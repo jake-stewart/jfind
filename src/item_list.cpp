@@ -56,6 +56,7 @@ void ItemList::drawName(int i) {
     }
 
     fprintf(m_outputFile, "%s", name.c_str());
+    // fprintf(m_outputFile, "%s %d", name.c_str(), m_itemCache->get(i)->heuristic);
 }
 
 void ItemList::drawHint(int i) {
@@ -275,6 +276,8 @@ void ItemList::allowScrolling(bool value) {
 }
 
 void ItemList::refresh() {
+    m_offset = 0;
+    m_cursor = 0;
     std::vector<int> itemIds(m_nVisibleItems);
     for (int i = 0; i < m_nVisibleItems; i++) {
         itemIds[i] = m_itemCache->get(m_offset + i)->index;
@@ -297,8 +300,6 @@ void ItemList::refresh() {
     m_logger.log("visibleItemsChanged=%d", visibleItemsChanged);
 
     if (visibleItemsChanged) {
-        m_offset = 0;
-        m_cursor = 0;
         calcVisibleItems();
         drawItems();
     }
