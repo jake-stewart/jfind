@@ -20,4 +20,12 @@ Instead of switching back to `fzf`, I continue to use `jfind` due to the better 
 
     cmake -S . -B build
     cd build
-    make install
+    sudo make install
+
+### Uninstall Instructions
+
+    sudo make uninstall
+
+    or
+
+    sudo rm /usr/local/bin/jfind
