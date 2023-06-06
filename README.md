@@ -26,6 +26,6 @@ Instead of switching back to `fzf`, I continue to use `jfind` due to the better 
 
     sudo make uninstall
 
-    or
+or
 
     sudo rm /usr/local/bin/jfind
