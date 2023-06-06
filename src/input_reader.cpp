@@ -102,6 +102,8 @@ InputReader::InputReader() {
     m_timeout.tv_sec = 0;
     m_timeout.tv_usec = 0;
     m_fileDescriptor = STDIN_FILENO;
+
+    pipe(m_pipe);
     m_dispatch.subscribe(this, QUIT_EVENT);
 }
 
@@ -110,13 +112,17 @@ void InputReader::setFileDescriptor(int fileDescriptor) {
 }
 
 char InputReader::getch() {
-    fd_set read_fds;
+    fd_set read_fds, except_fds;
     FD_ZERO(&read_fds);
     FD_SET(m_fileDescriptor, &read_fds);
+    FD_SET(m_pipe[0], &read_fds);
 
-    int activity = select(
-        m_fileDescriptor + 1, &read_fds, nullptr, nullptr, nullptr
-    );
+    FD_ZERO(&except_fds);
+    FD_SET(m_fileDescriptor, &except_fds);
+    FD_SET(m_pipe[0], &except_fds);
+
+    int maxfd = m_fileDescriptor > m_pipe[0] ? m_fileDescriptor : m_pipe[0];
+    int activity = select(maxfd + 1, &read_fds, nullptr, &except_fds, nullptr);
 
     switch (activity) {
         case -1:
@@ -345,7 +351,7 @@ void InputReader::onLoop() {
 }
 
 void InputReader::preOnEvent(EventType type) {
-    close(m_fileDescriptor);
+    close(m_pipe[1]);
 }
 
 void InputReader::onEvent(std::shared_ptr<Event> event) {

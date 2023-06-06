@@ -43,8 +43,15 @@ private:
     int m_clickCount = 0;
     MouseButton m_lastClickButton = MB_NONE;
 
+    // when reading for user input, the thread is blocked
+    // if a quit event occurs, we have to unblock the thread
+    // to do this, the thread reads using select on both
+    // the input file descriptor and an internal pipe.
+    // when quitting, this internal pipe is closed, waking
+    // up select and allowing the thread to see the quit event
     fd_set m_set;
     timeval m_timeout;
+    int m_pipe[2];
 
     char getch();
     int parseEsc(Key *key);
