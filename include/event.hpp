@@ -4,6 +4,7 @@
 #include "mouse_event.hpp"
 #include "key.hpp"
 #include "item.hpp"
+#include <cstring>
 #include <vector>
 
 enum EventType {
