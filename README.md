@@ -16,8 +16,8 @@
 Prior to this verison, `fzf` had a terrible scoring algorithm.
 Instead of switching back to `fzf`, I continue to use `jfind` due to the better performance and nice aesthetic.
 
-### Build Instructions
+### Install Instructions
 
     cmake -S . -B build
     cd build
-    make
+    make install
