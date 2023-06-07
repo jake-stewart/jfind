@@ -29,3 +29,33 @@ Instead of switching back to `fzf`, I continue to use `jfind` due to the better 
 or
 
     sudo rm /usr/local/bin/jfind
+
+
+## Example config (`~/.config/jfind/config.json`)
+```json
+{
+    "selector": "",
+    "active_selector": "",
+    "history_limit": 0,
+    "style": {
+        "active_item": {
+            "fg": "bright_white",
+            "bg": 233,
+            "attr": ["bold"]
+        },
+        "hint": {
+            "fg": 240
+        },
+        "active_row": {
+            "bg": 233
+        },
+        "active_selector": {
+            "bg": 233
+        },
+        "active_hint": {
+            "fg": "bright_white",
+            "bg": 233
+        }
+    }
+}
+```
