@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <mutex>
 #include <condition_variable>
+#include <thread>
 #include "item.hpp"
 #include "logger.hpp"
 #include "event_dispatch.hpp"
