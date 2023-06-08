@@ -19,7 +19,7 @@ ItemSorter::ItemSorter() {
     m_dispatch.subscribe(this, QUIT_EVENT);
 }
 
-bool sortFunc(Item& l, Item& r) {
+static bool sortFunc(const Item& l, const Item& r) {
     if (l.heuristic == r.heuristic) {
         if (strlen(l.text) == strlen(r.text)) {
             return l.index < r.index;
@@ -29,7 +29,7 @@ bool sortFunc(Item& l, Item& r) {
     return l.heuristic > r.heuristic;
 }
 
-bool sortEmptyFunc(Item& l, Item& r) {
+static bool sortEmptyFunc(const Item& l, const Item& r) {
     return l.index < r.index;
 }
 
@@ -40,13 +40,18 @@ void ItemSorter::sort(int sortIdx) {
     if (sortIdx > m_items.size()) {
         sortIdx = m_items.size();
     }
-    std::function<bool(Item& l, Item &r)> f;
-    f = m_isSorted ? sortFunc : sortEmptyFunc;
 
     m_logger.log("sorting from %d to %d", m_sortIdx, sortIdx);
 
-    std::partial_sort(m_items.begin() + m_sortIdx,
-            m_items.begin() + sortIdx, m_items.end(), f);
+    auto first = m_items.begin() + m_sortIdx;
+    auto middle = m_items.begin() + sortIdx;
+    auto last = m_items.end();
+    if (m_isSorted) {
+        std::partial_sort(first, middle, last, sortFunc);
+    } else {
+        std::partial_sort(first, middle, last, sortEmptyFunc);
+    }
+
     m_sortIdx = sortIdx;
 }
 
