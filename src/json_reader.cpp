@@ -209,10 +209,10 @@ bool JsonStylesReaderStrategy::readStyle(JsonElement *element,
     for (it = obj.begin(); it != obj.end(); ++it) {
         bool valid;
         if (it->first == "fg") {
-            valid = readColor((JsonString*)it->second.value, style, true);
+            valid = readColor(it->second.value, style, true);
         }
         else if (it->first == "bg") {
-            valid = readColor((JsonString*)it->second.value, style, false);
+            valid = readColor(it->second.value, style, false);
         }
         else if (it->first == "attr") {
             valid = readAttr((JsonArray*)it->second.value, style);
