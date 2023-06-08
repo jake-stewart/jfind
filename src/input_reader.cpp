@@ -19,10 +19,18 @@ using std::chrono::duration_cast;
 
 std::map<std::string, Key> createKeyLookup() {
     std::map<std::string, Key> lookup;
+    lookup["A"] = K_UP;
+    lookup["B"] = K_DOWN;
+    lookup["C"] = K_RIGHT;
+    lookup["D"] = K_LEFT;
     lookup["[A"] = K_UP;
     lookup["[B"] = K_DOWN;
     lookup["[C"] = K_RIGHT;
     lookup["[D"] = K_LEFT;
+    lookup["OA"] = K_UP;
+    lookup["OB"] = K_DOWN;
+    lookup["OC"] = K_RIGHT;
+    lookup["OD"] = K_LEFT;
     lookup["[1;2A"] = K_SHIFT_UP;
     lookup["[1;2B"] = K_SHIFT_DOWN;
     lookup["[1;2C"] = K_SHIFT_RIGHT;
