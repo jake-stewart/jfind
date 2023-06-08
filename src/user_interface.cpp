@@ -251,7 +251,9 @@ void UserInterface::onLoop() {
     focusEditor();
     fflush(m_outputFile);
 
-    if (remaining > 0ms) {
+    if (!m_spinner.isSpinning()) {
+        awaitEvent();
+    } else if (remaining > 0ms) {
         awaitEvent(remaining);
     }
 }
