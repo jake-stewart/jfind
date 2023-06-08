@@ -2,7 +2,7 @@
 #define ITEM_READER_HPP
 
 #include <vector>
-#include <stdio.h>
+#include <cstdio>
 #include <mutex>
 #include <condition_variable>
 #include <thread>

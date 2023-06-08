@@ -1,16 +1,18 @@
 #include <cstdio>
-#include <stdio.h>
-#include <string.h>
-#include <termios.h>
-#include <sys/time.h>
-#include <unistd.h>
-#include <sys/select.h>
-#include <errno.h>
+#include <cstring>
+#include <cerrno>
 #include <sstream>
 #include <map>
 #include <iostream>
 #include <csignal>
-#include <cerrno>
+
+extern "C" {
+#include <termios.h>
+#include <sys/time.h>
+#include <unistd.h>
+#include <sys/select.h>
+}
+
 #include "../include/input_reader.hpp"
 
 using std::chrono::system_clock;

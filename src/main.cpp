@@ -17,8 +17,10 @@
 #include <thread>
 #include <climits>
 #include <cstring>
+#include <csignal>
+extern "C" {
 #include <fcntl.h>
-#include <signal.h>
+}
 
 static Config& config = Config::instance();
 static AnsiWrapper& ansi = AnsiWrapper::instance();

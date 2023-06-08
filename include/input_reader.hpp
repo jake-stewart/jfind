@@ -5,10 +5,14 @@
 #include "event_dispatch.hpp"
 #include "mouse_event.hpp"
 #include "logger.hpp"
+
 #include <string>
 #include <vector>
-#include <sys/select.h>
 #include <thread>
+
+extern "C" {
+#include <sys/select.h>
+}
 
 bool isContinuationByte(unsigned char ch);
 int utf8CharLen(unsigned char ch);

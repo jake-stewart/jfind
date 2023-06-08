@@ -1,15 +1,18 @@
 #ifndef ANSI_WRAPPER_HPP
 #define ANSI_WRAPPER_HPP
 
+#include <cstdint>
+#include <cstddef>
+#include <cstdlib>
+#include <cstdio>
+#include <csignal>
+#include <cstdbool>
+
+extern "C" {
 #include <unistd.h>
-#include <stdint.h>
-#include <stddef.h>
 #include <sys/ioctl.h>
 #include <termios.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <signal.h>
-#include <stdbool.h>
+}
 
 
 class AnsiWrapper {

@@ -1,7 +1,9 @@
 #include "../include/ansi_wrapper.hpp"
 
+extern "C" {
 #include <sys/stat.h>
 #include <fcntl.h>
+}
 
 #define ANSI_ESC "\x1b["
 
