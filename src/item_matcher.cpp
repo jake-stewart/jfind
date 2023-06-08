@@ -46,8 +46,16 @@ int ItemMatcher::calc(const char *text, std::vector<std::string>& queries) {
 
 int ItemMatcher::matchStart(const char *tp, const char *qp) {
     int maxScore = BAD_HEURISTIC;
-    int first = BOUNDARY_BONUS;
     int depth = 0;
+    if (tolower(*tp) == *qp) {
+        int score = 0;
+        if (*(qp + 1)) {
+            score = match(tp + 1, qp + 1, 1, true, &depth);
+            if (score == BAD_HEURISTIC) return maxScore;
+        }
+        maxScore = score + MATCH_BONUS + BOUNDARY_BONUS;
+    }
+    tp++;
     while (*tp) {
         if (tolower(*tp) == *qp) {
             int boundary = boundaryScore(tp);
@@ -56,11 +64,10 @@ int ItemMatcher::matchStart(const char *tp, const char *qp) {
                 score = match(tp + 1, qp + 1, 1, boundary > 0, &depth);
                 if (score == BAD_HEURISTIC) return maxScore;
             }
-            score += MATCH_BONUS + std::max(boundary, first);
+            score += MATCH_BONUS + boundary;
             maxScore = std::max(score, maxScore);
         }
         tp++;
-        first = 0;
     }
     return maxScore;
 }
