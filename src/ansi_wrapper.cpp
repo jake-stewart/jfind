@@ -77,7 +77,7 @@ void AnsiWrapper::enableMouse() {
 void AnsiWrapper::disableMouse() {
     if (m_mouseEnabled) {
         m_mouseEnabled = false;
-        fprintf(m_outputFile, ANSI_ESC "?1000l");
+        fprintf(m_outputFile, ANSI_ESC "?1002l" ANSI_ESC "?1015l" ANSI_ESC "?1006l");
     }
 }
 
