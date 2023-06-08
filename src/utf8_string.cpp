@@ -46,7 +46,7 @@ void Utf8StringCursor::insert(std::string& str) {
             try {
                 ws = converter.from_bytes(widechar);
             }
-            catch (std::range_error) {
+            catch (const std::range_error&) {
                 continue;
             }
 

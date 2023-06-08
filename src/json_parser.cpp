@@ -401,7 +401,7 @@ bool JsonParser::parseNumber() {
         try {
             m_elements.push_back(new JsonInt(m_line, m_idx, std::stoi(value)));
         }
-        catch (std::out_of_range) {
+        catch (const std::out_of_range&) {
             m_error = "The number is out of range";
             return false;
         }

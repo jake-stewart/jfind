@@ -80,7 +80,7 @@ bool IntegerOption::parse(const char *value) {
     try {
         num = std::stoi(value);
     }
-    catch (std::out_of_range) {
+    catch (const std::out_of_range&) {
         return error("received an out of range integer");
     }
 
