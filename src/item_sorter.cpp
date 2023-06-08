@@ -55,7 +55,7 @@ void ItemSorter::sort(int sortIdx) {
     m_sortIdx = sortIdx;
 }
 
-int ItemSorter::size() {
+int ItemSorter::size() const {
     return m_items.size();
 }
 

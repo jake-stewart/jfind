@@ -7,7 +7,7 @@ ItemList::ItemList(FILE *outputFile, StyleManager *styleManager,
     m_itemCache = itemCache;
 }
 
-void ItemList::drawItems() {
+void ItemList::drawItems() const {
     if (m_width <= 2 || m_height <= 1) {
         return;
     }
@@ -28,7 +28,7 @@ void ItemList::drawItems() {
     }
 }
 
-void ItemList::drawName(int i) {
+void ItemList::drawName(int i) const {
     std::string name = std::string(m_itemCache->get(i)->text);
 
     if (name.size() > m_itemWidth) {
@@ -59,7 +59,7 @@ void ItemList::drawName(int i) {
     // fprintf(m_outputFile, "%s %d", name.c_str(), m_itemCache->get(i)->heuristic);
 }
 
-void ItemList::drawHint(int i) {
+void ItemList::drawHint(int i) const {
     char *text = m_itemCache->get(i)->text;
     std::string hint = std::string(text + strlen(text) + 1);
 
@@ -261,7 +261,7 @@ void ItemList::setSelected(int y) {
     }
 }
 
-Item* ItemList::get(int y) {
+Item* ItemList::get(int y) const {
     return m_itemCache->get(m_offset + y);
 }
 
@@ -305,7 +305,7 @@ void ItemList::refresh() {
     }
 }
 
-Item* ItemList::getSelected() {
+Item* ItemList::getSelected() const {
     if (m_nVisibleItems) {
         return m_itemCache->get(m_cursor);
     }

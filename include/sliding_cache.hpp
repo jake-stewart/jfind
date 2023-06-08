@@ -60,7 +60,7 @@ class SlidingCache {
             refresh(0);
         }
 
-        int getReserve() {
+        int getReserve() const {
             return m_reserve;
         }
 

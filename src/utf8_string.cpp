@@ -131,18 +131,18 @@ int Utf8StringCursor::getBytesForCols(int cols) {
     return bytes;
 }
 
-int Utf8StringCursor::getByte() {
+int Utf8StringCursor::getByte() const {
     return m_byteIdx;
 }
 
-int Utf8StringCursor::getIdx() {
+int Utf8StringCursor::getIdx() const {
     return m_charIdx;
 }
 
-int Utf8StringCursor::getCol() {
+int Utf8StringCursor::getCol() const {
     return m_cellIdx;
 }
 
-const char* Utf8StringCursor::getPointer() {
+const char* Utf8StringCursor::getPointer() const {
     return m_str->bytes.c_str() + m_byteIdx;
 }

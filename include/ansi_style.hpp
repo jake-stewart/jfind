@@ -35,7 +35,7 @@ class AnsiStyle {
         AnsiStyle& strikethrough();
         AnsiStyle& dim();
         AnsiStyle& underline(UnderlineType type);
-        std::string build();
+        std::string build() const;
 
     private:
         ColorType m_fgType = NO_COLOR;

@@ -11,7 +11,7 @@ Spinner::Spinner(FILE *file) {
     m_outputFile = file;
 }
 
-milliseconds Spinner::frameTimeRemaining() {
+milliseconds Spinner::frameTimeRemaining() const {
     milliseconds remaining = 150ms - duration_cast<milliseconds>(
             system_clock::now() - m_lastFrameTime);
     if (remaining <= 0ms) {
@@ -36,14 +36,14 @@ void Spinner::update() {
     m_lastFrameTime = system_clock::now();
 }
 
-void Spinner::draw() {
+void Spinner::draw() const {
     if (m_firstUpdateComplete) {
         ansi.move(m_x, m_y);
         fprintf(m_outputFile, "%s", SPINNER[m_frame]);
     }
 }
 
-bool Spinner::isSpinning() {
+bool Spinner::isSpinning() const {
     return m_isSpinning;
 }
 

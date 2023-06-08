@@ -16,11 +16,11 @@ Item* ItemCache::get(int i) {
     return m_cache.get(i);
 }
 
-int ItemCache::size() {
+int ItemCache::size() const {
     return m_cachedSize;
 }
 
-int ItemCache::getReserve() {
+int ItemCache::getReserve() const {
     return m_cache.getReserve();
 }
 

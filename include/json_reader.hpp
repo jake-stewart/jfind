@@ -67,7 +67,7 @@ class JsonReader {
     public:
         JsonReader(std::map<std::string, JsonReaderStrategy*>& options);
         bool read(JsonElement *element);
-        static std::string& getError();
+        static const std::string& getError();
         static int getErrorLine();
 
     private:

@@ -9,7 +9,7 @@
 class Utf8LineEditor {
     public:
         Utf8LineEditor(FILE *outputFile);
-        bool requiresRedraw();
+        bool requiresRedraw() const;
         void print();
         void input(char ch);
         void input(std::string text);
@@ -19,8 +19,8 @@ class Utf8LineEditor {
         void moveCursorLeft();
         void moveCursorRight();
         void clear();
-        std::string& getText();
-        int getCursorCol();
+        const std::string& getText() const;
+        int getCursorCol() const;
         void setWidth(int width);
 
     private:

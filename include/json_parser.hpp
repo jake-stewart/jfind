@@ -17,8 +17,8 @@ enum JsonElementType {
 class JsonElement {
     public:
         virtual std::string repr(int indent, int depth) = 0;
-        JsonElementType getType();
-        int getLine();
+        JsonElementType getType() const;
+        int getLine() const;
 
     protected:
         JsonElementType m_type;
@@ -95,9 +95,9 @@ class JsonArray : public JsonElement {
 class JsonParser {
     public:
         bool parse(std::string json);
-        std::string getError();
-        JsonElement* getElement();
-        int getLine();
+        std::string getError() const;
+        JsonElement* getElement() const;
+        int getLine() const;
 
     private:
         std::string m_error;

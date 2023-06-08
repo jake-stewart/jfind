@@ -6,12 +6,12 @@
 
 class Option {
     public:
-        const std::string& getKey();
+        const std::string& getKey() const;
         virtual bool parse(const char *value) = 0;
 
     protected:
         std::string m_key;
-        bool error(std::string message);
+        bool error(const std::string& message) const;
 };
 
 class BooleanOption : public Option {

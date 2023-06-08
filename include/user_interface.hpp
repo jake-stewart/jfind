@@ -15,7 +15,7 @@ public:
     UserInterface(FILE *outputFile, StyleManager *styleManager,
             ItemList *itemLis, Utf8LineEditor *editor);
     void handleInput(KeyEvent event);
-    Item* getSelected();
+    Item* getSelected() const;
     void onEvent(std::shared_ptr<Event> event);
     void onLoop();
 

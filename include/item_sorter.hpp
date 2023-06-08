@@ -12,7 +12,7 @@
 class ItemSorter : public EventListener {
 public:
     ItemSorter();
-    int size();
+    int size() const;
     int copyItems(Item *buffer, int idx, int n);
     void onEvent(std::shared_ptr<Event> event);
     void onLoop();

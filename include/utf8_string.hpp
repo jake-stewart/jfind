@@ -14,9 +14,9 @@ struct Utf8String {
 
 class Utf8StringCursor {
     public:
-        int getByte();
-        int getIdx();
-        int getCol();
+        int getByte() const;
+        int getIdx() const;
+        int getCol() const;
         void setString(Utf8String *str);
         void insert(char ch);
         void insert(std::string& str);
@@ -26,7 +26,7 @@ class Utf8StringCursor {
         bool del();
         void reset();
         int getBytesForCols(int cols);
-        const char* getPointer();
+        const char* getPointer() const;
 
     private:
         Utf8String *m_str;

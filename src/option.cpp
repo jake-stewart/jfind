@@ -2,12 +2,12 @@
 #include "../include/util.hpp"
 #include <cstring>
 
-bool Option::error(std::string message) {
+bool Option::error(const std::string& message) const {
     printf("The '--%s' option %s\n", m_key.c_str(), message.c_str());
     return false;
 }
 
-const std::string& Option::getKey() {
+const std::string& Option::getKey() const {
     return m_key;
 }
 
@@ -17,7 +17,7 @@ BooleanOption::BooleanOption(std::string key, bool *value) {
     m_value = value;
     m_defaultValue = false;
 }
-        
+
 BooleanOption* BooleanOption::defaultTrue() {
     m_defaultValue = true;
     *m_value = true;
@@ -43,7 +43,7 @@ StringOption* StringOption::nonEmpty() {
     m_allowEmpty = false;
     return this;
 }
-        
+
 bool StringOption::parse(const char *value) {
     if (!value) {
         return error("expects a value");
@@ -70,7 +70,7 @@ IntegerOption* IntegerOption::max(int max) {
     m_max = max;
     return this;
 }
-        
+
 bool IntegerOption::parse(const char *value) {
     if (!isInteger(value)) {
         return error("expects an integer");

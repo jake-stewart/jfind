@@ -286,7 +286,7 @@ JsonReader::JsonReader(std::map<std::string, JsonReaderStrategy*>& options) {
     m_options = options;
 }
 
-std::string& JsonReader::getError() {
+const std::string& JsonReader::getError() {
     return errorMsg;
 }
 
