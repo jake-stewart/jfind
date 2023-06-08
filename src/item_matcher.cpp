@@ -8,13 +8,13 @@
 #define isalpha(c) (isupper(c) || islower(c))
 #define tolower(c) (isupper(c) ? c + 32 : c)
 
-const int MATCH_BONUS = 1;
-const int BOUNDARY_BONUS = 100;
-const int NEW_WORD_BONUS = 101;
-const int CONSECUTIVE_BONUS = 200;
-const int DISTANCE_PENALTY = -50;
+static const int MATCH_BONUS = 1;
+static const int BOUNDARY_BONUS = 100;
+static const int NEW_WORD_BONUS = 101;
+static const int CONSECUTIVE_BONUS = 200;
+static const int DISTANCE_PENALTY = -50;
 
-inline int boundaryScore(const char *c) {
+static inline int boundaryScore(const char *c) {
     if (islower(*c)) {
         if (!isalpha(*(c - 1))) {
             return NEW_WORD_BONUS;

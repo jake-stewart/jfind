@@ -3,7 +3,7 @@
 #include <locale>
 #include <codecvt>
 
-std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+static std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
 
 void Utf8StringCursor::setString(Utf8String *str) {
     m_str = str;

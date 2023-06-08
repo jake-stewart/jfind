@@ -1,6 +1,6 @@
 #include "../include/event.hpp"
 
-const char *EVENT_NAMES[] = {
+static const char *EVENT_NAMES[] = {
     "KEY_EVENT",
     "QUERY_CHANGE_EVENT",
     "NEW_ITEMS_EVENT",

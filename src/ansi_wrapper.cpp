@@ -138,7 +138,7 @@ void AnsiWrapper::restoreTerm(void) {
     signal(SIGQUIT, SIG_DFL);
 }
 
-char outputBuffer[50000];
+static char outputBuffer[50000];
 
 void AnsiWrapper::initTerm(void) {
     setvbuf(m_outputFile, outputBuffer, _IOFBF, sizeof(outputBuffer));

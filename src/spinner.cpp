@@ -4,8 +4,8 @@ using namespace std::chrono_literals;
 using std::chrono::milliseconds;
 using std::chrono::system_clock;
 
-const char *SPINNER[6] = {"⠇", "⠋", "⠙", "⠸", "⠴", "⠦"};
-const int SPINNER_SIZE = 6;
+static const char *SPINNER[6] = {"⠇", "⠋", "⠙", "⠸", "⠴", "⠦"};
+static const int SPINNER_SIZE = 6;
 
 Spinner::Spinner(FILE *file) {
     m_outputFile = file;
