@@ -16,8 +16,8 @@ public:
             ItemList *itemLis, Utf8LineEditor *editor);
     void handleInput(KeyEvent event);
     Item* getSelected() const;
-    void onEvent(std::shared_ptr<Event> event);
-    void onLoop();
+    void onEvent(std::shared_ptr<Event> event) override;
+    void onLoop() override;
 
 private:
     void redraw();

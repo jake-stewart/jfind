@@ -45,7 +45,7 @@ public:
         m_mouseEvents = mouseEvents;
     }
 
-    EventType getType() const {
+    EventType getType() const override {
         return KEY_EVENT;
     }
 
@@ -70,7 +70,7 @@ public:
         m_query = query;
     }
 
-    EventType getType() const {
+    EventType getType() const override {
         return QUERY_CHANGE_EVENT;
     }
 
@@ -87,7 +87,7 @@ public:
         m_items = items;
     }
 
-    EventType getType() const {
+    EventType getType() const override {
         return NEW_ITEMS_EVENT;
     }
 
@@ -97,25 +97,25 @@ public:
 };
 
 class AllItemsReadEvent : public Event {
-    EventType getType() const {
+    EventType getType() const override {
         return ALL_ITEMS_READ_EVENT;
     }
 };
 
 class QuitEvent : public Event {
-    EventType getType() const {
+    EventType getType() const override {
         return QUIT_EVENT;
     }
 };
 
 class ItemsAddedEvent : public Event {
-    EventType getType() const {
+    EventType getType() const override {
         return ITEMS_ADDED_EVENT;
     }
 };
 
 class ItemsSortedEvent : public Event {
-    EventType getType() const {
+    EventType getType() const override {
         return ITEMS_SORTED_EVENT;
     }
 };
@@ -130,7 +130,7 @@ public:
         m_height = height;
     }
 
-    EventType getType() const {
+    EventType getType() const override {
         return RESIZE_EVENT;
     }
 

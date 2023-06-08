@@ -14,9 +14,9 @@ public:
     ItemSorter();
     int size() const;
     int copyItems(Item *buffer, int idx, int n);
-    void onEvent(std::shared_ptr<Event> event);
-    void onLoop();
-    void onStart();
+    void onEvent(std::shared_ptr<Event> event) override;
+    void onLoop() override;
+    void onStart() override;
 
 private:
     bool m_sorterThreadActive = false;

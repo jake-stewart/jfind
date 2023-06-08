@@ -16,9 +16,9 @@ public:
     ItemReader(FILE *file);
     void setReadHints(bool readHints);
     bool read();
-    void onStart();
-    void onLoop();
-    void onEvent(std::shared_ptr<Event> event);
+    void onStart() override;
+    void onLoop() override;
+    void onEvent(std::shared_ptr<Event> event) override;
     void dispatchItems();
 
 private:
