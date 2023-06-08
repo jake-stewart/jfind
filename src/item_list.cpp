@@ -245,7 +245,6 @@ void ItemList::resize(int w, int h) {
             m_offset = m_cursor - m_nVisibleItems + 1;
         }
 
-        exit(1);
         drawItems();
     }
 }
