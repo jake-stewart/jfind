@@ -30,10 +30,9 @@ class ItemList {
     AnsiWrapper &ansi = AnsiWrapper::instance();
     Config& m_config = Config::instance();
 
-    void drawItem();
-    void drawName(int i);
-    void drawHint(int i);
-    void drawItems();
+    void drawName(int i) const;
+    void drawHint(int i) const;
+    void drawItems() const;
     void calcVisibleItems();
 
 public:
@@ -42,8 +41,8 @@ public:
     void allowScrolling(bool value);
     bool didScroll();
     void setSelected(int y);
-    Item* getSelected();
-    Item* get(int y);
+    Item* getSelected() const;
+    Item* get(int y) const;
     void resize(int w, int h);
     void scrollUp();
     void scrollDown();

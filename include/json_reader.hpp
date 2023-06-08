@@ -17,7 +17,7 @@ class JsonStringReaderStrategy : public JsonReaderStrategy {
         JsonStringReaderStrategy(std::string *value);
         JsonStringReaderStrategy* min(int minLen);
         JsonStringReaderStrategy* max(int maxLen);
-        bool read(const std::string& name, JsonElement *element);
+        bool read(const std::string& name, JsonElement *element) override;
 
     private:
         std::string* m_value;
@@ -30,7 +30,7 @@ class JsonIntReaderStrategy : public JsonReaderStrategy {
         JsonIntReaderStrategy(int *value);
         JsonIntReaderStrategy* min(int min);
         JsonIntReaderStrategy* max(int max);
-        bool read(const std::string& name, JsonElement *element);
+        bool read(const std::string& name, JsonElement *element) override;
 
     private:
         int* m_value;
@@ -41,7 +41,7 @@ class JsonIntReaderStrategy : public JsonReaderStrategy {
 class JsonBoolReaderStrategy : public JsonReaderStrategy {
     public:
         JsonBoolReaderStrategy(bool *value);
-        bool read(const std::string& name, JsonElement *element);
+        bool read(const std::string& name, JsonElement *element) override;
 
     private:
         bool* m_value;
@@ -51,7 +51,7 @@ class JsonStylesReaderStrategy : public JsonReaderStrategy {
     public:
         JsonStylesReaderStrategy(StyleManager *styleManager,
                 std::map<std::string, int*>& styles);
-        bool read(const std::string& name, JsonElement *element);
+        bool read(const std::string& name, JsonElement *element) override;
         bool readStyle(JsonElement *element, AnsiStyle *style);
         bool readColorRGB(ColorRGB *color, JsonString *str);
         bool readColor16(Color16 *color, JsonString *str);
@@ -67,7 +67,7 @@ class JsonReader {
     public:
         JsonReader(std::map<std::string, JsonReaderStrategy*>& options);
         bool read(JsonElement *element);
-        static std::string& getError();
+        static const std::string& getError();
         static int getErrorLine();
 
     private:

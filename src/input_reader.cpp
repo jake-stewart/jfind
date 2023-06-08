@@ -1,23 +1,25 @@
 #include <cstdio>
-#include <stdio.h>
-#include <string.h>
-#include <termios.h>
-#include <sys/time.h>
-#include <unistd.h>
-#include <sys/select.h>
-#include <errno.h>
+#include <cstring>
+#include <cerrno>
 #include <sstream>
 #include <map>
 #include <iostream>
 #include <csignal>
-#include <cerrno>
+
+extern "C" {
+#include <termios.h>
+#include <sys/time.h>
+#include <unistd.h>
+#include <sys/select.h>
+}
+
 #include "../include/input_reader.hpp"
 
 using std::chrono::system_clock;
 using std::chrono::milliseconds;
 using std::chrono::duration_cast;
 
-std::map<std::string, Key> createKeyLookup() {
+static std::map<std::string, Key> createKeyLookup() {
     std::map<std::string, Key> lookup;
     lookup["A"] = K_UP;
     lookup["B"] = K_DOWN;
@@ -60,7 +62,7 @@ std::map<std::string, Key> createKeyLookup() {
 
     return lookup;
 }
-const std::map<std::string, Key> ESC_KEY_LOOKUP = createKeyLookup();
+static const std::map<std::string, Key> ESC_KEY_LOOKUP = createKeyLookup();
 
 int utf8CharLen(unsigned char ch) {
     if (ch < 128) {
@@ -334,7 +336,7 @@ int InputReader::parseUtf8(char ch, Key *key) {
     return true;
 }
 
-bool is_started = false;
+static bool is_started = false;
 
 void InputReader::onLoop() {
     if (!is_started) {

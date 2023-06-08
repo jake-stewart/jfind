@@ -17,13 +17,15 @@
 #include <thread>
 #include <climits>
 #include <cstring>
+#include <csignal>
+extern "C" {
 #include <fcntl.h>
-#include <signal.h>
+}
 
-Config& config = Config::instance();
-AnsiWrapper& ansi = AnsiWrapper::instance();
-EventDispatch& eventDispatch = EventDispatch::instance();
-Logger logger = Logger("main");
+static Config& config = Config::instance();
+static AnsiWrapper& ansi = AnsiWrapper::instance();
+static EventDispatch& eventDispatch = EventDispatch::instance();
+static Logger logger = Logger("main");
 
 void printResult(Item *selected, const char *input) {
     if (selected) {

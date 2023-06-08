@@ -1,5 +1,5 @@
 #include "../include/logger.hpp"
-#include <stdarg.h>
+#include <cstdarg>
 
 bool Logger::c_enabled;
 std::mutex Logger::c_mut;

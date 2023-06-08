@@ -43,11 +43,11 @@ std::map<std::string, JsonReaderStrategy*> ConfigJsonReader::createOptions() {
     return options;
 }
 
-std::string& ConfigJsonReader::getError() {
+const std::string& ConfigJsonReader::getError() const {
     return m_error;
 }
 
-int ConfigJsonReader::getErrorLine() {
+int ConfigJsonReader::getErrorLine() const {
     return m_errorLine;
 }
 

@@ -48,7 +48,7 @@ bool HistoryManager::writeHistory(Item *selected) {
         try {
             fs::create_directories(parent);
         }
-        catch (std::exception) {
+        catch (const std::exception&) {
             fprintf(stderr,
                     "ERROR: could not create parent directories for '%s'\n",
                     expanded.c_str());

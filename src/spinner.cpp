@@ -4,14 +4,14 @@ using namespace std::chrono_literals;
 using std::chrono::milliseconds;
 using std::chrono::system_clock;
 
-const char *SPINNER[6] = {"⠇", "⠋", "⠙", "⠸", "⠴", "⠦"};
-const int SPINNER_SIZE = 6;
+static const char *SPINNER[6] = {"⠇", "⠋", "⠙", "⠸", "⠴", "⠦"};
+static const int SPINNER_SIZE = 6;
 
 Spinner::Spinner(FILE *file) {
     m_outputFile = file;
 }
 
-milliseconds Spinner::frameTimeRemaining() {
+milliseconds Spinner::frameTimeRemaining() const {
     milliseconds remaining = 150ms - duration_cast<milliseconds>(
             system_clock::now() - m_lastFrameTime);
     if (remaining <= 0ms) {
@@ -36,14 +36,14 @@ void Spinner::update() {
     m_lastFrameTime = system_clock::now();
 }
 
-void Spinner::draw() {
+void Spinner::draw() const {
     if (m_firstUpdateComplete) {
         ansi.move(m_x, m_y);
         fprintf(m_outputFile, "%s", SPINNER[m_frame]);
     }
 }
 
-bool Spinner::isSpinning() {
+bool Spinner::isSpinning() const {
     return m_isSpinning;
 }
 

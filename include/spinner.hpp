@@ -21,10 +21,10 @@ class Spinner {
 public:
     Spinner(FILE *file);
     void setPosition(int x, int y);
-    std::chrono::milliseconds frameTimeRemaining();
+    std::chrono::milliseconds frameTimeRemaining() const;
     void update();
-    void draw();
-    bool isSpinning();
+    void draw() const;
+    bool isSpinning() const;
     void setSpinning(bool value);
 };
 

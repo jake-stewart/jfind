@@ -1,10 +1,10 @@
 #include "../include/util.hpp"
 #include "../include/json_reader.hpp"
 
-std::string errorMsg;
-int errorLine = 0;
+static std::string errorMsg;
+static int errorLine = 0;
 
-void typeError(std::string name, std::string type) {
+static void typeError(std::string name, std::string type) {
     errorMsg = "The datatype for '" + name + "' must be "
         + (isVowel(type[0]) ? "an" : "a") + " " + type;
 }
@@ -237,7 +237,7 @@ bool JsonStylesReaderStrategy::readAttr(JsonArray *arr, AnsiStyle *style) {
     }
     auto value = arr->getValue();
 
-    for (int i = 0; i < value.size(); i++) { 
+    for (int i = 0; i < value.size(); i++) {
         if (value[i]->getType() != STRING) {
             errorMsg = "The datatype of an attr must be a string";
             errorLine = value[i]->getLine();
@@ -278,7 +278,7 @@ bool JsonStylesReaderStrategy::readAttr(JsonArray *arr, AnsiStyle *style) {
             return false;
         }
     }
-    
+
     return true;
 }
 
@@ -286,7 +286,7 @@ JsonReader::JsonReader(std::map<std::string, JsonReaderStrategy*>& options) {
     m_options = options;
 }
 
-std::string& JsonReader::getError() {
+const std::string& JsonReader::getError() {
     return errorMsg;
 }
 

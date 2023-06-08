@@ -1,6 +1,6 @@
 #include "../include/option_parser.hpp"
 
-std::vector<KeywordArg> parseKwargs(int argc, const char **argv) {
+static std::vector<KeywordArg> parseKwargs(int argc, const char **argv) {
     std::vector<KeywordArg> kwargs;
 
     for (int i = 1; i < argc; i++) {

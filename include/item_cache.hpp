@@ -10,8 +10,8 @@ class ItemCache {
         ItemCache(ItemSorter *sorter);
         void refresh();
         Item* get(int i);
-        int size();
-        int getReserve();
+        int size() const;
+        int getReserve() const;
         void setReserve(int n);
 
     private:

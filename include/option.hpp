@@ -6,19 +6,19 @@
 
 class Option {
     public:
-        const std::string& getKey();
+        const std::string& getKey() const;
         virtual bool parse(const char *value) = 0;
 
     protected:
         std::string m_key;
-        bool error(std::string message);
+        bool error(const std::string& message) const;
 };
 
 class BooleanOption : public Option {
     public:
         BooleanOption(std::string key, bool *value);
         BooleanOption* defaultTrue();
-        bool parse(const char *value);
+        bool parse(const char *value) override;
 
     private:
         bool *m_value;
@@ -29,7 +29,7 @@ class StringOption : public Option {
     public:
         StringOption(std::string key, std::string *value);
         StringOption* nonEmpty();
-        bool parse(const char *value);
+        bool parse(const char *value) override;
 
     private:
         std::string *m_value;
@@ -41,7 +41,7 @@ class IntegerOption : public Option {
         IntegerOption(std::string key, int *value);
         IntegerOption* min(int min);
         IntegerOption* max(int max);
-        bool parse(const char *value);
+        bool parse(const char *value) override;
 
     private:
         std::optional<int> m_min;

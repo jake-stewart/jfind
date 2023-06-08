@@ -54,7 +54,7 @@ void Utf8LineEditor::clear() {
     m_end.reset();
 }
 
-std::string& Utf8LineEditor::getText() {
+const std::string& Utf8LineEditor::getText() const {
     return m_string.bytes;
 }
 
@@ -75,7 +75,7 @@ void Utf8LineEditor::adjustBounds() {
     while (m_start.getCol() + m_width < m_end.getCol() && m_end.moveLeft());
 }
 
-bool Utf8LineEditor::requiresRedraw() {
+bool Utf8LineEditor::requiresRedraw() const {
     return m_requiresRedraw;
 }
 
@@ -100,6 +100,6 @@ void Utf8LineEditor::setWidth(int width) {
     m_width = width - 1;
 }
 
-int Utf8LineEditor::getCursorCol() {
+int Utf8LineEditor::getCursorCol() const {
     return m_cursor.getCol() - m_start.getCol();
 }

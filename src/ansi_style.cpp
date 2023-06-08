@@ -77,7 +77,7 @@ AnsiStyle& AnsiStyle::underline(UnderlineType type) {
     return *this;
 }
 
-std::string AnsiStyle::build() {
+std::string AnsiStyle::build() const {
     std::stringstream ss;
     ss << "\x1b[0";
 

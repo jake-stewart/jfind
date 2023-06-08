@@ -1,7 +1,9 @@
 #include "../include/ansi_wrapper.hpp"
 
+extern "C" {
 #include <sys/stat.h>
 #include <fcntl.h>
+}
 
 #define ANSI_ESC "\x1b["
 
@@ -17,51 +19,51 @@ AnsiWrapper& AnsiWrapper::instance() {
     return singleton;
 }
 
-void AnsiWrapper::move(unsigned int x, unsigned int y) {
+void AnsiWrapper::move(unsigned int x, unsigned int y) const {
     fprintf(m_outputFile, ANSI_ESC "%u;%uH", y + 1, x + 1);
 }
 
-void AnsiWrapper::moveHome() {
+void AnsiWrapper::moveHome() const {
     fprintf(m_outputFile, ANSI_ESC "H");
 }
 
-void AnsiWrapper::moveUp() {
+void AnsiWrapper::moveUp() const {
     fprintf(m_outputFile, ANSI_ESC "A");
 }
 
-void AnsiWrapper::moveDown() {
+void AnsiWrapper::moveDown() const {
     fprintf(m_outputFile, ANSI_ESC "B");
 }
 
-void AnsiWrapper::moveRight() {
+void AnsiWrapper::moveRight() const {
     fprintf(m_outputFile, ANSI_ESC "C");
 }
 
-void AnsiWrapper::moveLeft() {
+void AnsiWrapper::moveLeft() const {
     fprintf(m_outputFile, ANSI_ESC "D");
 }
 
-void AnsiWrapper::moveUp(unsigned int amount) {
+void AnsiWrapper::moveUp(unsigned int amount) const {
     fprintf(m_outputFile, ANSI_ESC "%uA", amount);
 }
 
-void AnsiWrapper::moveDown(unsigned int amount) {
+void AnsiWrapper::moveDown(unsigned int amount) const {
     fprintf(m_outputFile, ANSI_ESC "%uB", amount);
 }
 
-void AnsiWrapper::moveRight(unsigned int amount) {
+void AnsiWrapper::moveRight(unsigned int amount) const {
     fprintf(m_outputFile, ANSI_ESC "%uC", amount);
 }
 
-void AnsiWrapper::moveLeft(unsigned int amount) {
+void AnsiWrapper::moveLeft(unsigned int amount) const {
     fprintf(m_outputFile, ANSI_ESC "%uD", amount);
 }
 
-void AnsiWrapper::moveUpOrScroll() {
+void AnsiWrapper::moveUpOrScroll() const {
     fprintf(m_outputFile, "\x1bM");
 }
 
-void AnsiWrapper::moveDownOrScroll() {
+void AnsiWrapper::moveDownOrScroll() const {
     fprintf(m_outputFile, "\n");
 }
 
@@ -87,23 +89,23 @@ void AnsiWrapper::setAlternateBuffer(bool value) {
     fprintf(m_outputFile, ANSI_ESC "?1049%c", value ? 'h' : 'l');
 }
 
-void AnsiWrapper::clearTilEOL() {
+void AnsiWrapper::clearTilEOL() const {
     fprintf(m_outputFile, ANSI_ESC "K");
 }
 
-void AnsiWrapper::clearTilSOF() {
+void AnsiWrapper::clearTilSOF() const {
     fprintf(m_outputFile, ANSI_ESC "1J");
 }
 
-void AnsiWrapper::clearTilEOF() {
+void AnsiWrapper::clearTilEOF() const {
     fprintf(m_outputFile, ANSI_ESC "2J");
 }
 
-void AnsiWrapper::clearTerm() {
+void AnsiWrapper::clearTerm() const {
     fprintf(m_outputFile, ANSI_ESC "2J");
 }
 
-void AnsiWrapper::setCursor(bool value) {
+void AnsiWrapper::setCursor(bool value) const {
     fprintf(m_outputFile, ANSI_ESC "?25%c", value ? 'h' : 'l');
 }
 
@@ -115,11 +117,11 @@ void AnsiWrapper::setOutputFile(FILE *file) {
     m_outputFile = file;
 }
 
-void AnsiWrapper::saveCursor() {
+void AnsiWrapper::saveCursor() const {
     fprintf(m_outputFile, "\x1b" "7");
 }
 
-void AnsiWrapper::restoreCursor() {
+void AnsiWrapper::restoreCursor() const {
     fprintf(m_outputFile, "\x1b" "8");
 }
 
@@ -138,7 +140,7 @@ void AnsiWrapper::restoreTerm(void) {
     signal(SIGQUIT, SIG_DFL);
 }
 
-char outputBuffer[50000];
+static char outputBuffer[50000];
 
 void AnsiWrapper::initTerm(void) {
     setvbuf(m_outputFile, outputBuffer, _IOFBF, sizeof(outputBuffer));

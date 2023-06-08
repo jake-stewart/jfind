@@ -5,10 +5,14 @@
 #include "event_dispatch.hpp"
 #include "mouse_event.hpp"
 #include "logger.hpp"
+
 #include <string>
 #include <vector>
-#include <sys/select.h>
 #include <thread>
+
+extern "C" {
+#include <sys/select.h>
+}
 
 bool isContinuationByte(unsigned char ch);
 int utf8CharLen(unsigned char ch);
@@ -21,9 +25,9 @@ public:
     bool hasKey();
     void setFileDescriptor(int fileDescriptor);
 
-    void onLoop();
-    void preOnEvent(EventType type);
-    void onEvent(std::shared_ptr<Event> event);
+    void onLoop() override;
+    void preOnEvent(EventType type) override;
+    void onEvent(std::shared_ptr<Event> event) override;
 
     void onSigInt();
 

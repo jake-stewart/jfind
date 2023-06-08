@@ -15,9 +15,9 @@ public:
     UserInterface(FILE *outputFile, StyleManager *styleManager,
             ItemList *itemLis, Utf8LineEditor *editor);
     void handleInput(KeyEvent event);
-    Item* getSelected();
-    void onEvent(std::shared_ptr<Event> event);
-    void onLoop();
+    Item* getSelected() const;
+    void onEvent(std::shared_ptr<Event> event) override;
+    void onLoop() override;
 
 private:
     void redraw();

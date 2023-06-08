@@ -3,11 +3,11 @@
 #include <fstream>
 
 
-JsonElementType JsonElement::getType() {
+JsonElementType JsonElement::getType() const {
     return m_type;
 }
 
-int JsonElement::getLine() {
+int JsonElement::getLine() const {
     return m_line;
 }
 
@@ -93,7 +93,7 @@ std::map<std::string, JsonObjectEntry>& JsonObject::getValue() {
 std::string JsonObject::repr(int indent, int depth) {
     std::string repr = "{";
 
-    for (auto it = m_value.begin(); it != m_value.end(); ++it) { 
+    for (auto it = m_value.begin(); it != m_value.end(); ++it) {
         if (indent) {
             repr += "\n";
             for (int i = 0; i < indent * (depth + 1); i++) {
@@ -138,7 +138,7 @@ std::string JsonArray::repr(int indent, int depth) {
     std::string repr = "[";
 
     std::vector<JsonElement*>::iterator it;
-    for (it = m_value.begin(); it != m_value.end(); ++it) { 
+    for (it = m_value.begin(); it != m_value.end(); ++it) {
         if (indent) {
             repr += "\n";
             for (int i = 0; i < indent * (depth + 1); i++) {
@@ -190,15 +190,15 @@ bool JsonParser::parse(std::string json) {
     return valid;
 }
 
-std::string JsonParser::getError() {
+std::string JsonParser::getError() const {
     return m_error;
 }
 
-int JsonParser::getLine() {
+int JsonParser::getLine() const {
     return m_line;
 }
 
-JsonElement* JsonParser::getElement() {
+JsonElement* JsonParser::getElement() const {
     return m_elements.size() ? m_elements.back() : nullptr;
 }
 
@@ -401,7 +401,7 @@ bool JsonParser::parseNumber() {
         try {
             m_elements.push_back(new JsonInt(m_line, m_idx, std::stoi(value)));
         }
-        catch (std::out_of_range) {
+        catch (const std::out_of_range&) {
             m_error = "The number is out of range";
             return false;
         }

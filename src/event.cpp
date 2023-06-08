@@ -1,6 +1,6 @@
 #include "../include/event.hpp"
 
-const char *EVENT_NAMES[] = {
+static const char* const EVENT_NAMES[] = {
     "KEY_EVENT",
     "QUERY_CHANGE_EVENT",
     "NEW_ITEMS_EVENT",
@@ -11,6 +11,6 @@ const char *EVENT_NAMES[] = {
     "QUIT_EVENT",
 };
 
-const char **getEventNames() {
+const char* const* getEventNames() {
     return EVENT_NAMES;
 }

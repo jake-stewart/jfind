@@ -222,7 +222,7 @@ void UserInterface::onEvent(std::shared_ptr<Event> event) {
     }
 }
 
-Item* UserInterface::getSelected() {
+Item* UserInterface::getSelected() const {
     if (m_selected) {
         return m_itemList->getSelected();
     }
