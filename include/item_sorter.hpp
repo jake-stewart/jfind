@@ -1,15 +1,17 @@
 #ifndef ITEM_SORTER_HPP
 #define ITEM_SORTER_HPP
 
-#include "item.hpp"
 #include "event_dispatch.hpp"
+#include "item.hpp"
+#include "item_matcher.hpp"
 #include "logger.hpp"
-#include <vector>
 #include <fstream>
 #include <mutex>
 #include <thread>
+#include <vector>
 
-class ItemSorter : public EventListener {
+class ItemSorter : public EventListener
+{
 public:
     ItemSorter();
     int size() const;
@@ -19,6 +21,8 @@ public:
     void onStart() override;
 
 private:
+    ItemMatcher *m_matcher;
+
     bool m_sorterThreadActive = false;
     std::thread *m_sorterThread;
     void sorterThread();
@@ -32,7 +36,7 @@ private:
     void addNewItems();
     void sortItems();
 
-    EventDispatch& m_dispatch = EventDispatch::instance();
+    EventDispatch &m_dispatch = EventDispatch::instance();
     Logger m_logger = Logger("ItemSorter");
 
     std::mutex m_sorter_mut;

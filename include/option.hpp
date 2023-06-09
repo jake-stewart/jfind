@@ -1,8 +1,10 @@
 #ifndef OPTION_HPP
 #define OPTION_HPP
 
-#include <string>
+#include "util.hpp"
+#include <map>
 #include <optional>
+#include <string>
 
 class Option {
     public:
@@ -47,6 +49,44 @@ class IntegerOption : public Option {
         std::optional<int> m_min;
         std::optional<int> m_max;
         int *m_value;
+};
+
+template <typename T>
+class EnumOption : public Option {
+    public:
+        EnumOption(std::string key, T *value, std::map<std::string, T> lookup) {
+            m_lookup = lookup;
+            m_key = key;
+            m_value = value;
+        }
+
+        bool parse(const char *value) {
+            if (!value) {
+                return error("expects a value");
+            }
+            auto it = m_lookup.find(value);
+            if (it == m_lookup.end()) {
+                std::string message = "expects either ";
+                int i = 0;
+                for (auto it : m_lookup) {
+                    if (i == m_lookup.size() - 1) {
+                        message += " or ";
+                    }
+                    else if (i > 0) {
+                        message += ", ";
+                    }
+                    message += "'" + it.first + "'";
+                    i++;
+                }
+                return error(message);
+            }
+            *m_value = it->second;
+            return true;
+        }
+
+    private:
+        T *m_value;
+        std::map<std::string, T> m_lookup;
 };
 
 #endif
