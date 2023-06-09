@@ -20,6 +20,7 @@ bool ConfigOptionReader::read(int argc, const char **argv) {
                  {"fuzzy", FUZZY_MATCHER},
                  {"regex", REGEX_MATCHER}}
          ),
+         new BooleanOption("regex-ignore-case", &m_config.regexIgnoreCase),
          (new IntegerOption("history-limit", &m_config.historyLimit))->min(0)}};
 
     OptionParser optionParser(options);

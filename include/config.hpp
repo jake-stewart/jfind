@@ -24,6 +24,7 @@ struct Config {
     int searchRowStyle = NO_STYLE;
 
     MatcherType matcher = FUZZY_MATCHER;
+    bool regexIgnoreCase = false;
 
     std::string prompt = ">";
     int promptGap = 1;
