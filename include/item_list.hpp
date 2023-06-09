@@ -40,7 +40,7 @@ public:
             ItemCache *itemCache);
     void allowScrolling(bool value);
     bool didScroll();
-    void setSelected(int y);
+    bool setSelected(int y);
     Item* getSelected() const;
     Item* get(int y) const;
     void resize(int w, int h);

@@ -101,7 +101,9 @@ void UserInterface::handleMouse(MouseEvent event) {
                     }
                 }
                 else {
-                    if (event.numClicks == 2) {
+                    if (event.numClicks >= 2 &&
+                        m_itemList->get(event.y) == m_itemList->getSelected())
+                    {
                         m_selected = true;
                         m_dispatch.dispatch(std::make_shared<QuitEvent>());
                     }

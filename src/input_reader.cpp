@@ -260,6 +260,9 @@ int InputReader::parseMouse(std::string& seq, Key *key) {
                     m_clickCount++;
                     event.numClicks += m_clickCount;
                 }
+                else {
+                    m_clickCount = 0;
+                }
             }
             else {
                 m_clickCount = 0;

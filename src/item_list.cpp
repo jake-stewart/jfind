@@ -249,7 +249,10 @@ void ItemList::resize(int w, int h) {
     }
 }
 
-void ItemList::setSelected(int y) {
+bool ItemList::setSelected(int y) {
+    if (m_height - y > m_nVisibleItems) {
+        return false;
+    }
     int oldCursor = m_cursor;
     m_cursor = m_offset + (m_height - 1 - y);
     drawName(oldCursor);
@@ -258,10 +261,11 @@ void ItemList::setSelected(int y) {
         drawHint(oldCursor);
         drawHint(m_cursor);
     }
+    return true;
 }
 
 Item* ItemList::get(int y) const {
-    return m_itemCache->get(m_offset + y);
+    return m_itemCache->get(m_offset + (m_height - 1 - y));
 }
 
 bool ItemList::didScroll() {
