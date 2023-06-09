@@ -16,6 +16,9 @@
 Prior to this verison, `fzf` had a terrible scoring algorithm.
 Instead of switching back to `fzf`, I continue to use `jfind` due to the better performance and nice aesthetic.
 
+### Neovim Plugin
+You can use jfind as a neovim plugin. You can find the repo [here](https://github.com/jake-stewart/jfind.nvim).
+
 ### Install Instructions
 
     cmake -S . -B build
