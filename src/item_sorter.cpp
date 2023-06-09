@@ -1,10 +1,13 @@
 #include "../include/item_sorter.hpp"
-#include "../include/util.hpp"
+#include "../include/config.hpp"
+#include "../include/item_fuzzy_matcher.hpp"
 #include "../include/item_matcher.hpp"
+#include "../include/item_regex_matcher.hpp"
 #include "../include/thread_manager.hpp"
-#include <unordered_map>
-#include <cstring>
+#include "../include/util.hpp"
 #include <climits>
+#include <cstring>
+#include <unordered_map>
 
 using namespace std::chrono_literals;
 
@@ -75,6 +78,12 @@ void ItemSorter::setQuery() {
 }
 
 void ItemSorter::calcHeuristics(bool queryChanged) {
+    if (m_matcher->requiresFullRescore()) {
+        calcHeuristics(true, 0, m_items.size());
+        m_heuristicIdx = m_items.size();
+        return;
+    }
+
     if (queryChanged && m_heuristicIdx) {
         m_logger.log("fast calcHeuristics for %d items", m_heuristicIdx);
         calcHeuristics(false, 0, m_heuristicIdx);
@@ -87,15 +96,18 @@ void ItemSorter::calcHeuristics(bool queryChanged) {
     m_heuristicIdx = n;
 }
 
+#include <regex>
+#include "../include/item_regex_matcher.hpp"
+
 void ItemSorter::calcHeuristics(bool newItems, int start, int end)
 {
     std::function<void(Item*, int)> f;
-    ItemMatcher matcher;
-    std::vector<std::string> words = split(m_query, ' ');
-
     m_isSorted = m_query.size() > 0;
 
     if (m_isSorted) {
+        if (!m_matcher->setQuery(m_query)) {
+            return;
+        }
         f = [&] (Item *item, int n) {
             for (int i = 0; i < n; i++) {
                 if (m_queryChanged) {
@@ -105,7 +117,7 @@ void ItemSorter::calcHeuristics(bool newItems, int start, int end)
                     item++;
                     continue;
                 }
-                (*item).heuristic = matcher.calc((*item).text, words);
+                (*item).heuristic = m_matcher->calculateScore((*item).text);
                 item++;
             }
         };
@@ -174,6 +186,14 @@ void ItemSorter::sorterThread() {
 }
 
 void ItemSorter::onStart() {
+    switch (Config::instance().matcher) {
+        case FUZZY_MATCHER:
+            m_matcher = new ItemFuzzyMatcher();
+            break;
+        case REGEX_MATCHER:
+            m_matcher = new ItemRegexMatcher();
+            break;
+    }
     m_sorterThreadActive = true;
     m_sorterThread = new std::thread(&ItemSorter::sorterThread, this);
 }

@@ -3,6 +3,7 @@
 
 #include "json_parser.hpp"
 #include "style_manager.hpp"
+#include "item_matcher.hpp"
 #include <optional>
 
 class JsonReaderStrategy

@@ -1,5 +1,6 @@
-#include "../include/item_matcher.hpp"
+#include "../include/item_fuzzy_matcher.hpp"
 #include "../include/item.hpp"
+#include "../include/util.hpp"
 #include <climits>
 
 #define isupper(c) (c >= 'A' && c <= 'Z')
@@ -34,9 +35,18 @@ static inline int boundaryScore(const char *c) {
     return 0;
 }
 
-int ItemMatcher::calc(const char *text, std::vector<std::string>& queries) {
+bool ItemFuzzyMatcher::setQuery(std::string query) {
+    m_queries = split(query, ' ');
+    return true;
+}
+
+bool ItemFuzzyMatcher::requiresFullRescore() {
+    return false;
+}
+
+int ItemFuzzyMatcher::calculateScore(const char *text) {
     int total = 0;
-    for (std::string& query : queries) {
+    for (const std::string& query : m_queries) {
         int score = matchStart(text, query.c_str());
         if (score == BAD_HEURISTIC) return BAD_HEURISTIC;
         total += score;
@@ -44,7 +54,7 @@ int ItemMatcher::calc(const char *text, std::vector<std::string>& queries) {
     return total;
 }
 
-int ItemMatcher::matchStart(const char *tp, const char *qp) {
+int ItemFuzzyMatcher::matchStart(const char *tp, const char *qp) {
     int maxScore = BAD_HEURISTIC;
     int depth = 0;
     if (tolower(*tp) == *qp) {
@@ -72,7 +82,7 @@ int ItemMatcher::matchStart(const char *tp, const char *qp) {
     return maxScore;
 }
 
-int ItemMatcher::match(const char *tp, const char *qp, int dist, bool consec,
+int ItemFuzzyMatcher::match(const char *tp, const char *qp, int dist, bool consec,
                        int *depth)
 {
     int maxScore = BAD_HEURISTIC;

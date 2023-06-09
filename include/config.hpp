@@ -5,6 +5,7 @@
 #include <filesystem>
 #include "ansi_style.hpp"
 #include "style_manager.hpp"
+#include "item_matcher.hpp"
 
 namespace fs = std::filesystem;
 
@@ -21,6 +22,8 @@ struct Config {
     int searchPromptStyle = NO_STYLE;
     int searchStyle = NO_STYLE;
     int searchRowStyle = NO_STYLE;
+
+    MatcherType matcher = FUZZY_MATCHER;
 
     std::string prompt = ">";
     int promptGap = 1;

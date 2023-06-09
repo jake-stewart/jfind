@@ -1,17 +1,19 @@
 #ifndef ITEM_MATCHER_HPP
 #define ITEM_MATCHER_HPP
 
-#include <vector>
 #include <string>
 
-class ItemMatcher {
-    public:
-        int calc(const char *text, std::vector<std::string>& queries);
+enum MatcherType {
+    FUZZY_MATCHER,
+    REGEX_MATCHER
+};
 
-    private:
-        int matchStart(const char *tp, const char *qp);
-        int match(const char *tp, const char *qp, int distance,
-                bool consecutive, int *depth);
+class ItemMatcher
+{
+public:
+    virtual bool setQuery(std::string query) = 0;
+    virtual int calculateScore(const char *query) = 0;
+    virtual bool requiresFullRescore() = 0;
 };
 
 #endif
