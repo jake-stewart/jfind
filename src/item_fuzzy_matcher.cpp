@@ -36,7 +36,7 @@ static inline int boundaryScore(const char *c) {
 }
 
 bool ItemFuzzyMatcher::setQuery(std::string query) {
-    m_queries = split(query, ' ');
+    m_queries = split(toLower(query), ' ');
     return true;
 }
 
