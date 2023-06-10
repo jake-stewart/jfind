@@ -280,7 +280,6 @@ void ItemList::allowScrolling(bool value) {
 
 void ItemList::refresh() {
     m_offset = 0;
-    m_cursor = 0;
     std::vector<int> itemIds(m_nVisibleItems);
     for (int i = 0; i < m_nVisibleItems; i++) {
         itemIds[i] = m_itemCache->get(m_offset + i)->index;
