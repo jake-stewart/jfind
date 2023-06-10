@@ -110,6 +110,7 @@ void displayHelp(const char *name) {
     printf("    --select-both                 Print both the item and hint to stdout\n");
     printf("    --accept-non-match            Accept the user's query if nothing matches\n");
     printf("    --matcher=MATCHER             Select which matching algorithm to use (fuzzy or regex)\n");
+    printf("    --regex-case=SENSITIVITY      Set case sensitivity for regex matcher. (sensitive, insensitive, or smart)\n");
     printf("    --history=FILE                Read and write match history to FILE\n");
     printf("    --history-limit=INT           Number of items to store in the history file\n");
     printf("    --prompt=PROMPT               Set the query prompt to PROMPT\n");

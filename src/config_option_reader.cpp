@@ -20,7 +20,13 @@ bool ConfigOptionReader::read(int argc, const char **argv) {
                  {"fuzzy", FUZZY_MATCHER},
                  {"regex", REGEX_MATCHER}}
          ),
-         new BooleanOption("regex-ignore-case", &m_config.regexIgnoreCase),
+         new EnumOption<RegexCaseSensitivity>(
+             "regex-case", &m_config.regexCaseSensitivity,
+             std::map<std::string, RegexCaseSensitivity>{
+                {"sensitive", CASE_SENSITIVE},
+                {"insensitive", CASE_INSENSITIVE},
+                {"smart", SMART_CASE}}
+         ),
          (new IntegerOption("history-limit", &m_config.historyLimit))->min(0)}};
 
     OptionParser optionParser(options);

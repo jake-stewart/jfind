@@ -6,6 +6,7 @@
 #include "ansi_style.hpp"
 #include "style_manager.hpp"
 #include "item_matcher.hpp"
+#include "item_regex_matcher.hpp"
 
 namespace fs = std::filesystem;
 
@@ -24,7 +25,7 @@ struct Config {
     int searchRowStyle = NO_STYLE;
 
     MatcherType matcher = FUZZY_MATCHER;
-    bool regexIgnoreCase = false;
+    RegexCaseSensitivity regexCaseSensitivity = CASE_SENSITIVE;
 
     std::string prompt = ">";
     int promptGap = 1;
