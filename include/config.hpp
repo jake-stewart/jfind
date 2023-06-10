@@ -48,6 +48,9 @@ struct Config {
     int minHintSpacing = 5;
     int maxHintWidth = 60;
 
+    std::vector<int> additionalKeys;
+    bool showKey = false;
+
     static Config& instance() {
         static Config singleton;
         return singleton;

@@ -51,6 +51,20 @@ class IntegerOption : public Option {
         int *m_value;
 };
 
+
+class IntVectorOption : public Option {
+public:
+    IntVectorOption(std::string key, std::vector<int> *value);
+    IntVectorOption* min(int min);
+    IntVectorOption* max(int max);
+    bool parse(const char *value) override;
+
+private:
+    std::optional<int> m_min;
+    std::optional<int> m_max;
+    std::vector<int> *m_value;
+};
+
 template <typename T>
 class EnumOption : public Option {
     public:

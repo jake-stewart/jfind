@@ -148,13 +148,14 @@ void AnsiWrapper::initTerm(void) {
     // setvbuf(m_outputFile, NULL, _IONBF, 0);
 
     tcgetattr(m_inputFileNo, &m_origTermios);
-    termios raw = m_origTermios;
+    termios term = m_origTermios;
 
-    raw.c_iflag &= ~(ICRNL);  // differentiate newline and linefeed
-    raw.c_lflag &= ISIG;  // generate exit signals
-    raw.c_lflag &= ~(ECHO | ICANON);  // disable echo and cannonical mode
+    term.c_iflag &= ~(ICRNL);  // differentiate newline and linefeed
+    term.c_iflag &= ~IXON; // allow ctrl+s ctrl+q keys
+    term.c_lflag &= ISIG;  // generate exit signals
+    term.c_lflag &= ~(ECHO | ICANON);  // disable echo and cannonical mode
 
-    tcsetattr(m_inputFileNo, TCSANOW, &raw);
+    tcsetattr(m_inputFileNo, TCSANOW, &term);
 
     setAlternateBuffer(true);
     clearTerm();

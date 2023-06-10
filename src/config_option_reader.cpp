@@ -1,5 +1,6 @@
 #include "../include/config_option_reader.hpp"
 #include "../include/option_parser.hpp"
+#include "../include/key.hpp"
 
 bool ConfigOptionReader::read(int argc, const char **argv) {
     std::string historyFile;
@@ -14,6 +15,10 @@ bool ConfigOptionReader::read(int argc, const char **argv) {
          new StringOption("query", &m_config.query),
          new StringOption("history", &historyFile),
          new StringOption("log", &m_config.logFile),
+         (new IntVectorOption("additional-keys", &m_config.additionalKeys))
+             ->min(K_NULL)
+             ->max(K_ERROR),
+         (new BooleanOption("show-key", &m_config.showKey)),
          (new IntegerOption("history-limit", &m_config.historyLimit))->min(0)}};
 
     OptionParser optionParser(options);

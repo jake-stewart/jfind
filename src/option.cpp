@@ -1,6 +1,7 @@
 #include "../include/option.hpp"
 #include "../include/util.hpp"
 #include <cstring>
+#include <sstream>
 
 bool Option::error(const std::string& message) const {
     printf("The '--%s' option %s\n", m_key.c_str(), message.c_str());
@@ -85,12 +86,70 @@ bool IntegerOption::parse(const char *value) {
     }
 
     if (m_min.has_value() && num < m_min.value()) {
-        return error("value cannot be less than " + std::to_string(m_min.value()));
+        return error(
+            "value cannot be less than " + std::to_string(m_min.value())
+        );
     }
     if (m_max.has_value() && num > m_max.value()) {
-        return error("value cannot be greater than " + std::to_string(m_max.value()));
+        return error(
+            "value cannot be greater than " + std::to_string(m_max.value())
+        );
     }
 
     *m_value = num;
+    return true;
+}
+
+
+IntVectorOption::IntVectorOption(std::string key, std::vector<int> *value) {
+    m_key = key;
+    m_value = value;
+}
+
+IntVectorOption* IntVectorOption::min(int min) {
+    m_min = min;
+    return this;
+}
+
+IntVectorOption* IntVectorOption::max(int max) {
+    m_max = max;
+    return this;
+}
+
+bool IntVectorOption::parse(const char *value) {
+    m_value->clear();
+
+    std::istringstream iss(value);
+    std::string token;
+    
+    while (std::getline(iss, token, ',')) {
+        token.erase(0, token.find_first_not_of(" \t"));
+        token.erase(token.find_last_not_of(" \t") + 1);
+        
+        if (!isInteger(token.c_str())) {
+            return error("expects a list of integers");
+        }
+        int num;
+        try {
+            num = std::stoi(token);
+        }
+        catch (const std::out_of_range& exception) {
+            return error("received an out of range integer");
+        }
+
+        if (m_min.has_value() && num < m_min.value()) {
+            return error(
+                "values cannot be less than " + std::to_string(m_min.value())
+            );
+        }
+        if (m_max.has_value() && num > m_max.value()) {
+            return error(
+                "values cannot be greater than " + std::to_string(m_max.value())
+            );
+        }
+
+        m_value->push_back(num);
+    }
+
     return true;
 }

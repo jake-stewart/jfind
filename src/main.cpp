@@ -27,7 +27,10 @@ static AnsiWrapper& ansi = AnsiWrapper::instance();
 static EventDispatch& eventDispatch = EventDispatch::instance();
 static Logger logger = Logger("main");
 
-void printResult(Item *selected, const char *input) {
+void printResult(Key key, Item *selected, const char *input) {
+    if (config.showKey && (selected || config.acceptNonMatch)) {
+        printf("%d\n", key);
+    }
     if (selected) {
         if (!config.selectHint || config.selectBoth) {
             printf("%s\n", selected->text);
@@ -230,7 +233,9 @@ int main(int argc, const char **argv) {
     if (selected && historyManager) {
         historyManager->writeHistory(selected);
     }
-    printResult(selected, editor.getText().c_str());
+
+    printResult(userInterface.getSelectedKey(), selected,
+            editor.getText().c_str());
 
     Logger::close();
 
