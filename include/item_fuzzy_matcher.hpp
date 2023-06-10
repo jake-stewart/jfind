@@ -12,7 +12,7 @@ class ItemFuzzyMatcher : public ItemMatcher
 public:
     bool requiresFullRescore() override;
     bool setQuery(std::string query) override;
-    int calculateScore(const char *text) override;
+    int calculateScore(Item *item) override;
 
 private:
     int matchStart(const char *tp, const char *qp);

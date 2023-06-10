@@ -7,13 +7,19 @@
 #include <string>
 #include <vector>
 
+enum RegexCaseSensitivity {
+    CASE_SENSITIVE,
+    CASE_INSENSITIVE,
+    SMART_CASE,
+};
+
 class ItemRegexMatcher : public ItemMatcher
 {
     std::regex m_pattern;
 
 public:
     bool requiresFullRescore() override;
-    int calculateScore(const char *text) override;
+    int calculateScore(Item *item) override;
     bool setQuery(std::string query) override;
 };
 

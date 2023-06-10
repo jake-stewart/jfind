@@ -117,7 +117,7 @@ void ItemSorter::calcHeuristics(bool newItems, int start, int end)
                     item++;
                     continue;
                 }
-                (*item).heuristic = m_matcher->calculateScore((*item).text);
+                (*item).heuristic = m_matcher->calculateScore(item);
                 item++;
             }
         };

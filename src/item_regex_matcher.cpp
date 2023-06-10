@@ -9,12 +9,31 @@ bool ItemRegexMatcher::requiresFullRescore() {
     return true;
 }
 bool ItemRegexMatcher::setQuery(std::string query) {
+    bool caseSensitive;
+    switch (Config::instance().regexCaseSensitivity) {
+        case CASE_SENSITIVE:
+            caseSensitive = true;
+            break;
+        case CASE_INSENSITIVE:
+            caseSensitive = false;
+            break;
+        case SMART_CASE:
+            caseSensitive = false;
+            for (char c : query) {
+                if (isupper(c)) {
+                    caseSensitive = true;
+                    break;
+                }
+            }
+            break;
+    }
+
     try {
-        if (Config::instance().regexIgnoreCase) {
-            m_pattern = std::regex(query, std::regex_constants::icase);
+        if (caseSensitive) {
+            m_pattern = std::regex(query);
         }
         else {
-            m_pattern = std::regex(query);
+            m_pattern = std::regex(query, std::regex_constants::icase);
         }
         return true;
     }
@@ -23,10 +42,10 @@ bool ItemRegexMatcher::setQuery(std::string query) {
     }
 }
 
-int ItemRegexMatcher::calculateScore(const char *text) {
-    if (std::regex_search(text, m_pattern)) {
-        return 0;
+int ItemRegexMatcher::calculateScore(Item *item) {
+    if (std::regex_search(item->text, m_pattern)) {
+        return INT_MAX - item->index;
     }
-    return -INT_MAX;
+    return BAD_HEURISTIC;
 }
 
