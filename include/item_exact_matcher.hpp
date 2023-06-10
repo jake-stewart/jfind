@@ -12,7 +12,6 @@ class ItemExactMatcher : public ItemMatcher
 {
     std::string m_query;
     bool m_caseSensitive;
-    char* (*m_comparison)(const char*, const char*);
 
 public:
     bool requiresFullRescore() override;

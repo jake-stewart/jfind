@@ -13,16 +13,15 @@ bool ItemExactMatcher::requiresFullRescore() {
 
 bool ItemExactMatcher::setQuery(std::string query) {
     m_query = query;
-    bool caseSensitive;
     switch (Config::instance().caseSensitivity) {
         case CASE_SENSITIVE:
-            caseSensitive = true;
+            m_caseSensitive = true;
             break;
         case CASE_INSENSITIVE:
-            caseSensitive = false;
+            m_caseSensitive = false;
             break;
         case SMART_CASE:
-            caseSensitive = false;
+            m_caseSensitive = false;
             for (char c : query) {
                 if (isupper(c)) {
                     m_caseSensitive = true;
@@ -32,23 +31,26 @@ bool ItemExactMatcher::setQuery(std::string query) {
             break;
     }
 
-    if (caseSensitive) {
-        m_comparison = strcasestr;
-    }
-    else {
-        m_comparison = strstr;
-    }
-
     return true;
 }
 
 int ItemExactMatcher::calculateScore(Item *item) {
     // todo: add better heuristic
-    if (m_comparison(item->text, m_query.c_str())) {
-        return INT_MAX - strlen(item->text);
+    if (m_caseSensitive) {
+        if (strcasestr(item->text, m_query.c_str())) {
+            return INT_MAX - strlen(item->text);
+        }
+        else {
+            return BAD_HEURISTIC;
+        }
     }
     else {
-        return BAD_HEURISTIC;
+        if (strstr(item->text, m_query.c_str())) {
+            return INT_MAX - strlen(item->text);
+        }
+        else {
+            return BAD_HEURISTIC;
+        }
     }
 }
 
