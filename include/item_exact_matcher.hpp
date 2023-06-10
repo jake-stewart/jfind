@@ -2,14 +2,17 @@
 #define ITEM_REGEX_MATCHER_HPP
 
 #include "item_matcher.hpp"
+#include "case_sensitivity.hpp"
 #include <climits>
 #include <regex>
 #include <string>
 #include <vector>
 
-class ItemRegexMatcher : public ItemMatcher
+class ItemExactMatcher : public ItemMatcher
 {
-    std::regex m_pattern;
+    std::string m_query;
+    bool m_caseSensitive;
+    char* (*m_comparison)(const char*, const char*);
 
 public:
     bool requiresFullRescore() override;

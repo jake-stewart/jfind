@@ -72,3 +72,4 @@ bool isInteger(const char *str) {
     }
     return true;
 }
+

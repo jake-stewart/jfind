@@ -6,7 +6,8 @@
 
 enum MatcherType {
     FUZZY_MATCHER,
-    REGEX_MATCHER
+    REGEX_MATCHER,
+    EXACT_MATCHER,
 };
 
 class ItemMatcher

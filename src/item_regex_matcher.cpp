@@ -10,7 +10,7 @@ bool ItemRegexMatcher::requiresFullRescore() {
 }
 bool ItemRegexMatcher::setQuery(std::string query) {
     bool caseSensitive;
-    switch (Config::instance().regexCaseSensitivity) {
+    switch (Config::instance().caseSensitivity) {
         case CASE_SENSITIVE:
             caseSensitive = true;
             break;

@@ -14,19 +14,6 @@ bool ConfigOptionReader::read(int argc, const char **argv) {
          new StringOption("query", &m_config.query),
          new StringOption("history", &historyFile),
          new StringOption("log", &m_config.logFile),
-         new EnumOption<MatcherType>(
-             "matcher", &m_config.matcher,
-             std::map<std::string, MatcherType>{
-                 {"fuzzy", FUZZY_MATCHER},
-                 {"regex", REGEX_MATCHER}}
-         ),
-         new EnumOption<RegexCaseSensitivity>(
-             "regex-case", &m_config.regexCaseSensitivity,
-             std::map<std::string, RegexCaseSensitivity>{
-                {"sensitive", CASE_SENSITIVE},
-                {"insensitive", CASE_INSENSITIVE},
-                {"smart", SMART_CASE}}
-         ),
          (new IntegerOption("history-limit", &m_config.historyLimit))->min(0)}};
 
     OptionParser optionParser(options);

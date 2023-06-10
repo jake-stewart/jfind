@@ -9,13 +9,11 @@
 class ConfigJsonReader {
     public:
         bool read(std::ifstream &ifs);
-        const std::string& getError() const;
-        int getErrorLine() const;
+        const JsonError getError() const;
         ConfigJsonReader(StyleManager *styleManager);
 
     private:
-        std::string m_error;
-        int m_errorLine;
+        JsonError m_error;
         StyleManager *m_styleManager;
         Config& m_config = Config::instance();
 

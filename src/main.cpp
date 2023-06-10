@@ -64,8 +64,8 @@ bool readConfig(StyleManager *styleManager, int argc, const char **argv) {
     if (ifs.is_open()) {
         if (!configJsonReader.read(ifs)) {
             fprintf(stderr, "Error in config.json on line %d: %s\n",
-                configJsonReader.getErrorLine(),
-                configJsonReader.getError().c_str()
+                configJsonReader.getError().line,
+                configJsonReader.getError().message.c_str()
             );
             return false;
         }

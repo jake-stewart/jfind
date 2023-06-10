@@ -25,6 +25,21 @@ std::map<std::string, JsonReaderStrategy*> ConfigJsonReader::createOptions() {
     options["show_spinner"] = (
             new JsonBoolReaderStrategy(&m_config.showSpinner));
 
+     options["matcher"] = new JsonEnumReaderStrategy<MatcherType>(
+         &m_config.matcher,
+         std::map<std::string, MatcherType>{
+             {"fuzzy", FUZZY_MATCHER},
+             {"regex", REGEX_MATCHER},
+             {"exact", REGEX_MATCHER}}
+     );
+     options["case_mode"] = new JsonEnumReaderStrategy<CaseSensitivity>(
+         &m_config.caseSensitivity,
+         std::map<std::string, CaseSensitivity>{
+            {"sensitive", CASE_SENSITIVE},
+            {"insensitive", CASE_INSENSITIVE},
+            {"smart", SMART_CASE}}
+     );
+
     std::map<std::string, int*> styles;
     styles["item"] = &m_config.itemStyle;
     styles["active_item"] = &m_config.activeItemStyle;
@@ -43,19 +58,15 @@ std::map<std::string, JsonReaderStrategy*> ConfigJsonReader::createOptions() {
     return options;
 }
 
-const std::string& ConfigJsonReader::getError() const {
+const JsonError ConfigJsonReader::getError() const {
     return m_error;
-}
-
-int ConfigJsonReader::getErrorLine() const {
-    return m_errorLine;
 }
 
 bool ConfigJsonReader::readJsonFile(JsonElement **root, std::ifstream& ifs) {
     if (!ifs.is_open()) {
         root = nullptr;
-        m_error = "File was not open for reading";
-        m_errorLine = 0;
+        m_error.message = "File was not open for reading";
+        m_error.line = 0;
         return false;
     }
 
@@ -63,8 +74,8 @@ bool ConfigJsonReader::readJsonFile(JsonElement **root, std::ifstream& ifs) {
             (std::istreambuf_iterator<char>()));
     JsonParser jsonParser;
     if (!jsonParser.parse(json)) {
-        m_error = jsonParser.getError();
-        m_errorLine = jsonParser.getLine();
+        m_error.message = jsonParser.getError();
+        m_error.line = jsonParser.getLine();
         return false;
     }
 
@@ -88,7 +99,6 @@ bool ConfigJsonReader::read(std::ifstream& ifs) {
     JsonReader reader(options);
     if (!reader.read(root)) {
         m_error = reader.getError();
-        m_errorLine = reader.getErrorLine();
         return false;
     }
 
