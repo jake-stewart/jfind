@@ -1,5 +1,5 @@
-#ifndef ITEM_REGEX_MATCHER_HPP
-#define ITEM_REGEX_MATCHER_HPP
+#ifndef ITEM_EXACT_MATCHER_HPP
+#define ITEM_EXACT_MATCHER_HPP
 
 #include "item_matcher.hpp"
 #include "case_sensitivity.hpp"

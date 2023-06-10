@@ -3,6 +3,7 @@
 #include "../include/item_fuzzy_matcher.hpp"
 #include "../include/item_matcher.hpp"
 #include "../include/item_regex_matcher.hpp"
+#include "../include/item_exact_matcher.hpp"
 #include "../include/thread_manager.hpp"
 #include "../include/util.hpp"
 #include <climits>
@@ -192,6 +193,9 @@ void ItemSorter::onStart() {
             break;
         case REGEX_MATCHER:
             m_matcher = new ItemRegexMatcher();
+            break;
+        case EXACT_MATCHER:
+            m_matcher = new ItemExactMatcher();
             break;
     }
     m_sorterThreadActive = true;
