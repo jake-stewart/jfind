@@ -283,6 +283,6 @@ void ItemSorter::sortItems() {
         sort(m_firstItemsSize);
         std::copy(m_items.begin(), m_items.begin() + m_firstItemsSize,
                   m_firstItems);
-        m_dispatch.dispatch(std::make_shared<ItemsSortedEvent>());
+        m_dispatch.dispatch(std::make_shared<ItemsSortedEvent>(m_query));
     }
 }

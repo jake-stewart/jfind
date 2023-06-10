@@ -11,7 +11,6 @@ UserInterface::UserInterface(FILE *outputFile, StyleManager *styleManager, ItemL
 {
     m_outputFile = stdout;
     m_selected = false;
-    m_requiresRefresh = false;
     m_isReading = true;
     m_isSorting = false;
 
@@ -105,6 +104,7 @@ void UserInterface::handleMouse(MouseEvent event) {
                         m_itemList->get(event.y) == m_itemList->getSelected())
                     {
                         m_selected = true;
+                        m_selectedKey = K_MOUSE;
                         m_dispatch.dispatch(std::make_shared<QuitEvent>());
                     }
                     else {
@@ -120,6 +120,19 @@ void UserInterface::handleMouse(MouseEvent event) {
 
 void UserInterface::handleInput(KeyEvent event) {
     std::string query = m_editor->getText();
+
+    if (event.getKey() != K_UNKNOWN && event.getKey() != K_NULL) {
+        std::vector<int>& keys = Config::instance().additionalKeys;
+        for (int key : keys) {
+            if (key == event.getKey()) {
+                m_selectedKey = event.getKey();
+                m_selected = true;
+                m_dispatch.dispatch(std::make_shared<QuitEvent>());
+                return;
+            }
+        }
+    }
+
     switch (event.getKey()) {
         case K_ESCAPE:
         case K_CTRL_C: {
@@ -167,6 +180,7 @@ void UserInterface::handleInput(KeyEvent event) {
 
         case K_ENTER: {
             m_selected = true;
+            m_selectedKey = event.getKey();
             m_dispatch.dispatch(std::make_shared<QuitEvent>());
             break;
         }
@@ -186,6 +200,7 @@ void UserInterface::handleInput(KeyEvent event) {
     }
     if (m_editor->getText() != query) {
         m_isSorting = true;
+        m_resetCursor = true;
         m_dispatch.dispatch(std::make_shared<QueryChangeEvent>(m_editor->getText()));
     }
 
@@ -210,8 +225,9 @@ void UserInterface::onEvent(std::shared_ptr<Event> event) {
             break;
         }
         case ITEMS_SORTED_EVENT: {
-            m_isSorting = false;
+            ItemsSortedEvent *sortedEvent = (ItemsSortedEvent*)event.get();
             m_requiresRefresh = true;
+            m_isSorting = sortedEvent->getQuery() != m_editor->getText();
             break;
         }
         case ALL_ITEMS_READ_EVENT: {
@@ -231,6 +247,10 @@ Item* UserInterface::getSelected() const {
     return nullptr;
 }
 
+Key UserInterface::getSelectedKey() const {
+    return m_selectedKey;
+}
+
 void UserInterface::onLoop() {
     if (m_inputQueue.size()) {
         for (KeyEvent& event : m_inputQueue) {
@@ -242,7 +262,8 @@ void UserInterface::onLoop() {
         }
     }
     if (m_requiresRefresh) {
-        m_itemList->refresh();
+        m_itemList->refresh(m_resetCursor);
+        m_resetCursor = false;
         m_requiresRefresh = false;
     }
 
@@ -255,7 +276,8 @@ void UserInterface::onLoop() {
 
     if (!m_spinner.isSpinning()) {
         awaitEvent();
-    } else if (remaining > 0ms) {
+    }
+    else if (remaining > 0ms) {
         awaitEvent(remaining);
     }
 }

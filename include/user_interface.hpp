@@ -16,6 +16,7 @@ public:
             ItemList *itemLis, Utf8LineEditor *editor);
     void handleInput(KeyEvent event);
     Item* getSelected() const;
+    Key getSelectedKey() const;
     void onEvent(std::shared_ptr<Event> event) override;
     void onLoop() override;
 
@@ -41,10 +42,12 @@ private:
 
     std::vector<KeyEvent> m_inputQueue;
 
-    bool m_requiresRefresh;
+    bool m_resetCursor = false;
+    bool m_requiresRefresh = false;
     bool m_isSorting = false;
     bool m_isReading = true;
 
+    Key m_selectedKey = K_NULL;
     bool m_selected = false;
 
     int m_width = 0;

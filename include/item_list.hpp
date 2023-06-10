@@ -48,7 +48,7 @@ public:
     void scrollDown();
     void moveCursorUp();
     void moveCursorDown();
-    void refresh();
+    void refresh(bool resetCursor);
 };
 
 #endif

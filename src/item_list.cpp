@@ -278,7 +278,10 @@ void ItemList::allowScrolling(bool value) {
     m_allowScrolling = value;
 }
 
-void ItemList::refresh() {
+void ItemList::refresh(bool resetCursor) {
+    if (resetCursor) {
+        m_cursor = 0;
+    }
     m_offset = 0;
     std::vector<int> itemIds(m_nVisibleItems);
     for (int i = 0; i < m_nVisibleItems; i++) {

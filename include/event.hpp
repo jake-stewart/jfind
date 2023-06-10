@@ -74,7 +74,7 @@ public:
         return QUERY_CHANGE_EVENT;
     }
 
-    std::string getQuery() {
+    const std::string& getQuery() {
         return m_query;
     }
 };
@@ -97,24 +97,38 @@ public:
 };
 
 class AllItemsReadEvent : public Event {
+public:
     EventType getType() const override {
         return ALL_ITEMS_READ_EVENT;
     }
 };
 
 class QuitEvent : public Event {
+public:
     EventType getType() const override {
         return QUIT_EVENT;
     }
 };
 
 class ItemsAddedEvent : public Event {
+public:
     EventType getType() const override {
         return ITEMS_ADDED_EVENT;
     }
 };
 
 class ItemsSortedEvent : public Event {
+    std::string m_query;
+
+public:
+    ItemsSortedEvent(std::string query) {
+        m_query = query;
+    }
+
+    const std::string& getQuery() {
+        return m_query;
+    }
+
     EventType getType() const override {
         return ITEMS_SORTED_EVENT;
     }
