@@ -83,9 +83,9 @@ bool readConfig(StyleManager *styleManager, int argc, const char **argv) {
 
 void emitResizeEvent() {
     winsize ws;
-    if (ioctl(fileno(stderr), TIOCGWINSZ, &ws)) {
-        logger.log("failed to query terminal size");
+    if (ioctl(STDERR_FILENO, TIOCGWINSZ, &ws) == -1) {
         ansi.restoreTerm();
+        fprintf(stderr, "failed to query terminal size\n");
         exit(1);
     }
     eventDispatch.dispatch(
