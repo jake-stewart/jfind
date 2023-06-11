@@ -15,6 +15,7 @@ bool ConfigOptionReader::read(int argc, const char **argv) {
          new StringOption("query", &m_config.query),
          new StringOption("history", &historyFile),
          new StringOption("log", &m_config.logFile),
+         new StringOption("command", &m_config.command),
          (new IntVectorOption("additional-keys", &m_config.additionalKeys))
              ->min(K_NULL)
              ->max(K_ERROR),

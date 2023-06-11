@@ -1,14 +1,17 @@
 #include "../include/item_cache.hpp"
 
-ItemCache::ItemCache(ItemSorter *sorter) {
-    m_sorter = sorter;
-    m_cache.setDatasource([this] (Item *buffer, int idx, int n) {
-        return m_sorter->copyItems(buffer, idx, n);
-    });
+void ItemCache::setSizeCallback(std::function<int()> sizeCallback) {
+    m_sizeCallback = sizeCallback;
+}
+
+void ItemCache::setItemsCallback(
+    std::function<int(Item *buffer, int idx, int n)> itemsCallback
+) {
+    m_cache.setDatasource(itemsCallback);
 }
 
 void ItemCache::refresh() {
-    m_cachedSize = m_sorter->size();
+    m_cachedSize = m_sizeCallback();
     m_cache.refresh();
 }
 

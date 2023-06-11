@@ -17,6 +17,7 @@ public:
 
     Logger(const char *name);
     void log(const char *fmt, ...);
+    void logUnsafe(const char *fmt, ...);
 };
 
 #endif

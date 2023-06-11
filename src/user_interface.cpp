@@ -252,6 +252,7 @@ Key UserInterface::getSelectedKey() const {
 }
 
 void UserInterface::onLoop() {
+    m_logger.log("onLoop");
     if (m_inputQueue.size()) {
         for (KeyEvent& event : m_inputQueue) {
             handleInput(event);
@@ -275,9 +276,14 @@ void UserInterface::onLoop() {
     fflush(m_outputFile);
 
     if (!m_spinner.isSpinning()) {
+        m_logger.log("awaitEvent");
         awaitEvent();
     }
     else if (remaining > 0ms) {
+        m_logger.log("awaitEvent (with timeout)");
         awaitEvent(remaining);
+    }
+    else {
+        m_logger.log("did not awaitEvent");
     }
 }

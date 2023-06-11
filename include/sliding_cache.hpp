@@ -3,6 +3,7 @@
 
 #include <functional>
 #include "util.hpp"
+#include "logger.hpp"
 
 template <class T>
 class SlidingCache {
@@ -73,7 +74,7 @@ class SlidingCache {
         }
 
     private:
-        T *m_cache;
+        T *m_cache = nullptr;
         int m_reserve;
         int m_size;
         int m_offset;
@@ -81,8 +82,11 @@ class SlidingCache {
         std::function<int(T *buffer, int idx, int n)> m_datasource;
 
         void refresh(int offset) {
+            Logger logger("itemCache");
             int roundedOffset = offset - mod(offset, m_reserve);
+            logger.log("bruh1 %d %p", roundedOffset, m_cache);
             int n = m_datasource(m_cache, roundedOffset, m_reserve);
+            logger.log("bruh2 %d", n);
             if (n > 0) {
                 m_idx = 0;
                 m_offset = roundedOffset;

@@ -339,13 +339,7 @@ int InputReader::parseUtf8(char ch, Key *key) {
     return true;
 }
 
-static bool is_started = false;
-
 void InputReader::onLoop() {
-    if (!is_started) {
-        is_started = true;
-    }
-
     Key key;
     bool success = getKey(&key);
     if (success) {

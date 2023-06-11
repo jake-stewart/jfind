@@ -1,6 +1,7 @@
 #ifndef ITEM_LIST_HPP
 #define ITEM_LIST_HPP
 
+#include "logger.hpp"
 #include "item_cache.hpp"
 #include "style_manager.hpp"
 #include "config.hpp"

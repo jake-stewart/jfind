@@ -19,6 +19,7 @@ public:
     void onStart() override;
     void onLoop() override;
     void onEvent(std::shared_ptr<Event> event) override;
+    void preOnEvent(EventType eventType) override;
     void dispatchItems();
 
 private:

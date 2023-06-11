@@ -1,4 +1,5 @@
 #include "../include/item_sorter.hpp"
+#include "../include/item_generator.hpp"
 #include "../include/item_cache.hpp"
 #include "../include/config.hpp"
 #include "../include/util.hpp"
@@ -174,7 +175,7 @@ int main(int argc, const char **argv) {
         logger.log("--------------");
     }
 
-    if (isatty(STDIN_FILENO) || config.showHelp) {
+    if ((!config.command.size() && isatty(STDIN_FILENO)) || config.showHelp) {
         displayHelp(argv[0]);
         return 0;
     }
@@ -188,8 +189,35 @@ int main(int argc, const char **argv) {
         historyManager->readHistory();
     }
 
-    ItemSorter itemSorter;
-    ItemCache itemCache(&itemSorter);
+    ItemSorter *itemSorter;
+    ItemReader *itemReader;
+    ItemGenerator *itemGenerator;
+
+    ItemCache itemCache;
+
+    if (config.command.size()) {
+        itemGenerator = new ItemGenerator(config.command);
+
+        itemCache.setItemsCallback([itemGenerator] (Item *buffer, int idx, int n) {
+            return itemGenerator->copyItems(buffer, idx, n);
+        });
+        itemCache.setSizeCallback([itemGenerator] () {
+            return itemGenerator->size();
+        });
+    }
+    else {
+        itemSorter = new ItemSorter();
+        itemReader = new ItemReader(stdin);
+        itemReader->setReadHints(config.showHints);
+
+        itemCache.setItemsCallback([itemSorter] (Item *buffer, int idx, int n) {
+            return itemSorter->copyItems(buffer, idx, n);
+        });
+        itemCache.setSizeCallback([itemSorter] () {
+            return itemSorter->size();
+        });
+    }
+
 
     ItemList itemList(stderr, &styleManager, &itemCache);
 
@@ -206,9 +234,6 @@ int main(int argc, const char **argv) {
     // enable unicode
     setlocale(LC_ALL, "en_US.UTF-8");
 
-    ItemReader itemReader(stdin);
-    itemReader.setReadHints(config.showHints);
-
     ansi.setOutputFile(stderr);
 
     signal(SIGWINCH, signalHandler);
@@ -221,12 +246,19 @@ int main(int argc, const char **argv) {
 
     std::vector<std::thread*> threads;
     threads.push_back(new std::thread(&UserInterface::start, &userInterface));
-    threads.push_back(new std::thread(&ItemSorter::start, &itemSorter));
-    threads.push_back(new std::thread(&ItemReader::start, &itemReader));
+    if (config.command.size()) {
+        close(STDIN_FILENO);
+        threads.push_back(new std::thread(&ItemGenerator::start, itemGenerator));
+    }
+    else {
+        threads.push_back(new std::thread(&ItemSorter::start, itemSorter));
+        threads.push_back(new std::thread(&ItemReader::start, itemReader));
+    }
     threads.push_back(new std::thread(&InputReader::start, &inputReader));
     for (std::thread* thread : threads) {
         thread->join();
     }
+
 
     ansi.restoreTerm();
     Item *selected = userInterface.getSelected();

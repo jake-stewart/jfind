@@ -4,10 +4,14 @@
 #include <chrono>
 #include <thread>
 
+extern "C" {
+#include <unistd.h>
+#include <fcntl.h>
+}
+
 using namespace std::chrono_literals;
 using std::chrono::time_point;
 using std::chrono::system_clock;
-
 
 #define INTERVAL 50ms
 
@@ -157,6 +161,10 @@ void ItemReader::onStart() {
             &ItemReader::intervalThread, this);
 }
 
+void ItemReader::preOnEvent(EventType eventType) {
+    // todo make it quit faster
+}
+
 void ItemReader::onLoop() {
     if (m_itemsRead && m_intervalPassed) {
         m_intervalPassed = false;
@@ -165,7 +173,7 @@ void ItemReader::onLoop() {
     if (!read()) {
         if (m_itemsRead || !m_itemsBuf.getPrimary().size()) {
             dispatchItems();
-            m_dispatch.dispatch(std::make_shared<AllItemsReadEvent>());
+            m_dispatch.dispatch(std::make_shared<AllItemsReadEvent>(true));
             endInterval();
             end();
         }

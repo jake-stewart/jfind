@@ -33,6 +33,7 @@ struct Config {
     std::string activeSelector = "* ";
     std::string query = "";
     std::string logFile = "";
+    std::string command = "";
 
     bool showHelp = false;
     bool showHints = false;
