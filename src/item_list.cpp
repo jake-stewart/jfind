@@ -30,6 +30,7 @@ void ItemList::drawItems() const {
 
 void ItemList::drawName(int i) const {
     std::string name = std::string(m_itemCache->get(i)->text);
+    replace(name, '\t', ' ');
 
     if (name.size() > m_itemWidth) {
         name = name.substr(0, m_itemWidth - 1) + "…";
