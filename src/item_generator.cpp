@@ -1,7 +1,6 @@
 #include "../include/item_generator.hpp"
 #include "../include/config.hpp"
 #include <chrono>
-
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -104,12 +103,8 @@ void ItemGenerator::startChildProcess() {
         exit(EXIT_FAILURE);
     }
 
-    m_logger.log("reading first batch");
     readFirstBatch();
-    m_logger.log("read");
-    m_logger.log("dispatching");
     dispatchItems();
-    m_logger.log("dispatched");
 }
 
 void ItemGenerator::endChildProcess() {
@@ -120,21 +115,16 @@ void ItemGenerator::endChildProcess() {
     kill(m_child_pid, SIGTERM);
     close(m_pipefd[READ]);
     int status;
-    m_logger.log("waiting for pid");
     waitpid(m_child_pid, &status, 0);
-    m_logger.log("done waiting for pid");
 }
 
 bool ItemGenerator::readItem() {
     char *buf = nullptr;
     size_t size = 0;
 
-    m_logger.log("reading line");
     if (getline(&buf, &size, m_file) < 0) {
-        m_logger.log("reading line done but failed");
         return false;
     }
-    m_logger.log("reading line done");
     buf[strcspn(buf, "\n")] = 0;
 
     Item item;
