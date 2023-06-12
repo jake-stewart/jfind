@@ -140,6 +140,7 @@ void ItemSorter::calcHeuristics(bool newItems, int start, int end)
     m_sortIdx = 0;
 }
 
+#include <unistd.h>
 int ItemSorter::copyItems(Item *buffer, int idx, int n) {
     if (idx + n < 256) {
         if (idx + n > m_firstItemsSize) {
@@ -187,6 +188,7 @@ void ItemSorter::sorterThread() {
 }
 
 void ItemSorter::onStart() {
+    m_logger.log("started");
     switch (Config::instance().matcher) {
         case FUZZY_MATCHER:
             m_matcher = new ItemFuzzyMatcher();

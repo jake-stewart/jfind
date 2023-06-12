@@ -3,8 +3,9 @@
 
 #include "logger.hpp"
 #include "event_dispatch.hpp"
+#include "item_reader.hpp"
+#include "interval_thread.hpp"
 #include <mutex>
-#include <thread>
 
 class ItemGenerator : public EventListener {
 public:
@@ -18,18 +19,18 @@ public:
 
 private:
     std::mutex m_mut;
-    std::thread *m_intervalThread;
-    std::mutex m_intervalMut;
-    std::condition_variable m_intervalCv;
     std::string m_query = "";
+
+    IntervalThread m_interval;
 
     EventDispatch &m_dispatch = EventDispatch::instance();
     Logger m_logger = Logger("ItemGenerator");
     int m_pipefd[2];
-    FILE *m_file = nullptr;
     pid_t m_child_pid = -1;
-    int m_itemId = 0;
     std::vector<Item> m_items;
+
+    FILE *m_file;
+    ItemReader m_itemReader;
 
     bool m_queryChanged = false;
 
@@ -40,9 +41,6 @@ private:
     void dispatchItems();
     void readFirstBatch();
 
-    void intervalThread();
-    void endInterval();
-    void startInterval();
     bool readItem();
     void startChildProcess();
     void endChildProcess();

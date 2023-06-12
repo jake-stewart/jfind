@@ -19,6 +19,7 @@ public:
     Key getSelectedKey() const;
     void onEvent(std::shared_ptr<Event> event) override;
     void onLoop() override;
+    void onStart() override;
 
 private:
     void redraw();
@@ -33,7 +34,7 @@ private:
     Logger m_logger = Logger("UserInterface");
     StyleManager *m_styleManager;
     AnsiWrapper& ansi = AnsiWrapper::instance();
-    Config& m_config = Config::instance();
+    const Config& m_config = Config::instance();
     FILE *m_outputFile;
 
     ItemList *m_itemList;

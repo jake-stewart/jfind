@@ -12,7 +12,7 @@ struct Item {
     // text: what the user searches for
     // the text may contain a hint after its null terminator
     // this saves having to store another char pointer (8 bytes each)
-    char *text;
+    const char *text;
 
     // heuristic: the score of the item based on the current query
     // the heuristic is -INT_MAX if the text fails to match

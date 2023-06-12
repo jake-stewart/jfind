@@ -12,7 +12,7 @@
 #include "../include/style_manager.hpp"
 #include "../include/user_interface.hpp"
 #include "../include/event_dispatch.hpp"
-#include "../include/item_reader.hpp"
+#include "../include/file_item_reader.hpp"
 #include "../include/logger.hpp"
 
 #include <thread>
@@ -172,7 +172,6 @@ int main(int argc, const char **argv) {
 
     if (config.logFile.size()) {
         Logger::open(config.logFile.c_str());
-        logger.log("--------------");
     }
 
     if ((!config.command.size() && isatty(STDIN_FILENO)) || config.showHelp) {
@@ -190,7 +189,7 @@ int main(int argc, const char **argv) {
     }
 
     ItemSorter *itemSorter;
-    ItemReader *itemReader;
+    FileItemReader *itemReader;
     ItemGenerator *itemGenerator;
 
     ItemCache itemCache;
@@ -207,8 +206,7 @@ int main(int argc, const char **argv) {
     }
     else {
         itemSorter = new ItemSorter();
-        itemReader = new ItemReader(stdin);
-        itemReader->setReadHints(config.showHints);
+        itemReader = new FileItemReader(stdin);
 
         itemCache.setItemsCallback([itemSorter] (Item *buffer, int idx, int n) {
             return itemSorter->copyItems(buffer, idx, n);
@@ -252,7 +250,7 @@ int main(int argc, const char **argv) {
     }
     else {
         threads.push_back(new std::thread(&ItemSorter::start, itemSorter));
-        threads.push_back(new std::thread(&ItemReader::start, itemReader));
+        threads.push_back(new std::thread(&FileItemReader::start, itemReader));
     }
     threads.push_back(new std::thread(&InputReader::start, &inputReader));
     for (std::thread* thread : threads) {

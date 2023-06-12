@@ -33,6 +33,7 @@ std::string applyQuery(const std::string str, const std::string query) {
 }
 
 ItemGenerator::ItemGenerator(std::string command) {
+    m_interval.setInterval(INTERVAL);
     m_dispatch.subscribe(this, QUIT_EVENT);
     m_dispatch.subscribe(this, QUERY_CHANGE_EVENT);
 }
@@ -50,26 +51,16 @@ void ItemGenerator::readFirstBatch() {
 }
 
 void ItemGenerator::onStart() {
+    m_logger.log("started");
     startChildProcess();
 
-    m_intervalActive = true;
-    m_intervalThread = new std::thread(
-            &ItemGenerator::intervalThread, this);
-}
-
-void ItemGenerator::intervalThread() {
-    m_intervalPassed = false;
-    while (m_intervalActive) {
-        std::unique_lock lock(m_intervalMut);
-        m_intervalCv.wait_for(lock, INTERVAL);
-        m_intervalPassed = true;
-    }
+    m_interval.start();
 }
 
 void ItemGenerator::startChildProcess() {
     if (m_processActive) {
-        m_logger.log("already active");
-        exit(1);
+        m_logger.log("cannot start process with one active");
+        return;
     }
     m_processActive = true;
 
@@ -81,7 +72,7 @@ void ItemGenerator::startChildProcess() {
     m_child_pid = fork();
 
     if (m_child_pid < 0) {
-        m_logger.log("forking failed");
+        m_logger.log("forking failed pid=%d errno=%d", m_child_pid, errno);
         exit(EXIT_FAILURE);
     }
 
@@ -99,9 +90,10 @@ void ItemGenerator::startChildProcess() {
     close(m_pipefd[WRITE]);
     m_file = fdopen(m_pipefd[READ], "r");
     if (m_file == NULL) {
-        m_logger.log("fdopen failed");
+        m_logger.log("fdopen failed errno=%d", errno);
         exit(EXIT_FAILURE);
     }
+    m_itemReader.setFile(m_file);
 
     readFirstBatch();
     dispatchItems();
@@ -114,26 +106,18 @@ void ItemGenerator::endChildProcess() {
     m_processActive = false;
     kill(m_child_pid, SIGTERM);
     close(m_pipefd[READ]);
+    fclose(m_file);
     int status;
     waitpid(m_child_pid, &status, 0);
 }
 
 bool ItemGenerator::readItem() {
-    char *buf = nullptr;
-    size_t size = 0;
-
-    if (getline(&buf, &size, m_file) < 0) {
+    Item item;
+    bool success = m_itemReader.read(item);
+    if (!success) {
         return false;
     }
-    buf[strcspn(buf, "\n")] = 0;
-
-    Item item;
-    item.text = buf;
-    item.index = m_itemId++;
-
-    std::unique_lock lock(m_mut);
     m_items.push_back(item);
-
     return true;
 }
 
@@ -141,32 +125,20 @@ void ItemGenerator::dispatchItems() {
     m_dispatch.dispatch(std::make_shared<ItemsSortedEvent>(m_query));
 }
 
-void ItemGenerator::endInterval() {
-    if (!m_intervalActive) {
-        return;
-    }
-    {
-        std::unique_lock lock(m_intervalMut);
-        m_intervalActive = false;
-    }
-    m_intervalCv.notify_one();
-    m_intervalThread->join();
-    delete m_intervalThread;
-}
-
 void ItemGenerator::onLoop() {
-    if (m_intervalPassed) {
-        m_intervalPassed = false;
+    if (m_interval.ticked()) {
+        m_interval.restart();
 
         if (m_queryChanged) {
-            m_logger.log("query changed");
+            std::unique_lock lock(m_mut);
             m_queryChanged = false;
             endChildProcess();
-            {
-                std::unique_lock lock(m_mut);
-                m_items.clear();
+            for (const Item &item : m_items) {
+                delete item.text;
             }
+            m_items.clear();
             startChildProcess();
+            m_dispatch.dispatch(std::make_shared<AllItemsReadEvent>(false));
         }
 
         dispatchItems();
@@ -175,9 +147,10 @@ void ItemGenerator::onLoop() {
         bool reachedItemLimit;
         {
             std::unique_lock lock(m_mut);
-            reachedItemLimit = m_items.size() > 2048;
+            reachedItemLimit = m_items.size() > 128;
         }
         if (reachedItemLimit) {
+            m_dispatch.dispatch(std::make_shared<AllItemsReadEvent>(true));
             endChildProcess();
             awaitEvent();
         }
@@ -195,10 +168,10 @@ void ItemGenerator::onEvent(std::shared_ptr<Event> event) {
     switch (event->getType()) {
         case QUIT_EVENT:
             endChildProcess();
-            endInterval();
+            m_interval.end();
             break;
         case QUERY_CHANGE_EVENT: {
-
+            std::unique_lock lock(m_mut);
             QueryChangeEvent *queryChangeEvent
                 = (QueryChangeEvent *)event.get();
             m_query = queryChangeEvent->getQuery();

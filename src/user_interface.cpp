@@ -26,6 +26,10 @@ UserInterface::UserInterface(FILE *outputFile, StyleManager *styleManager, ItemL
     m_dispatch.subscribe(this, ALL_ITEMS_READ_EVENT);
 }
 
+void UserInterface::onStart() {
+    m_logger.log("started");
+}
+
 void UserInterface::drawPrompt() {
     ansi.move(0, m_height - 1);
     m_styleManager->set(m_config.searchRowStyle);
@@ -231,8 +235,12 @@ void UserInterface::onEvent(std::shared_ptr<Event> event) {
             break;
         }
         case ALL_ITEMS_READ_EVENT: {
-            m_itemList->allowScrolling(true);
-            m_isReading = false;
+            AllItemsReadEvent *itemsEvent = (AllItemsReadEvent*)event.get();
+            m_itemList->allowScrolling(itemsEvent->getValue());
+            m_isReading = !itemsEvent->getValue();
+            break;
+        }
+        case QUIT_EVENT: {
             break;
         }
         default:
@@ -252,7 +260,6 @@ Key UserInterface::getSelectedKey() const {
 }
 
 void UserInterface::onLoop() {
-    m_logger.log("onLoop");
     if (m_inputQueue.size()) {
         for (KeyEvent& event : m_inputQueue) {
             handleInput(event);
@@ -276,14 +283,9 @@ void UserInterface::onLoop() {
     fflush(m_outputFile);
 
     if (!m_spinner.isSpinning()) {
-        m_logger.log("awaitEvent");
         awaitEvent();
     }
     else if (remaining > 0ms) {
-        m_logger.log("awaitEvent (with timeout)");
         awaitEvent(remaining);
-    }
-    else {
-        m_logger.log("did not awaitEvent");
     }
 }

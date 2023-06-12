@@ -43,7 +43,9 @@ void ItemList::drawName(int i) const {
         ansi.clearTilEOL();
         if (m_config.activeSelector.size()) {
             m_styleManager->set(m_config.activeSelectorStyle);
-            fprintf(m_outputFile, "%s", m_config.activeSelector.c_str());
+            fprintf(
+                m_outputFile, "%s", m_config.activeSelector.c_str()
+            );
         }
         m_styleManager->set(m_config.activeItemStyle);
     }
@@ -62,7 +64,7 @@ void ItemList::drawName(int i) const {
 }
 
 void ItemList::drawHint(int i) const {
-    char *text = m_itemCache->get(i)->text;
+    const char *text = m_itemCache->get(i)->text;
     std::string hint = std::string(text + strlen(text) + 1);
 
     m_styleManager->set(i == m_cursor ? m_config.activeHintStyle
@@ -191,11 +193,12 @@ void ItemList::moveCursorDown() {
 }
 
 void ItemList::calcVisibleItems() {
-    m_nVisibleItems = m_itemCache->size() > m_height - 1
-        ? m_height - 1
-        : m_itemCache->size();
+    int size = m_itemCache->size();
+    m_nVisibleItems = size > m_height - 1 ? m_height - 1 : size;
+
     for (int i = 0; i < m_nVisibleItems; i++) {
-        if (m_itemCache->get(m_offset + i)->heuristic == BAD_HEURISTIC) {
+        Item *item = m_itemCache->get(m_offset + i);
+        if (item == nullptr || item->heuristic == BAD_HEURISTIC) {
             m_nVisibleItems = i;
             break;
         }

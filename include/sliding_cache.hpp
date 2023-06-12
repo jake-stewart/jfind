@@ -54,7 +54,8 @@ class SlidingCache {
 
             int idx = mod(i + m_idx - m_offset, m_reserve);
 
-            return &m_cache[idx];
+            T* x = &m_cache[idx];
+            return x;
         }
 
         void refresh() {
@@ -82,11 +83,8 @@ class SlidingCache {
         std::function<int(T *buffer, int idx, int n)> m_datasource;
 
         void refresh(int offset) {
-            Logger logger("itemCache");
             int roundedOffset = offset - mod(offset, m_reserve);
-            logger.log("bruh1 %d %p", roundedOffset, m_cache);
             int n = m_datasource(m_cache, roundedOffset, m_reserve);
-            logger.log("bruh2 %d", n);
             if (n > 0) {
                 m_idx = 0;
                 m_offset = roundedOffset;

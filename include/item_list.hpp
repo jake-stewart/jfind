@@ -29,7 +29,7 @@ class ItemList {
 
     Logger m_logger = Logger("ItemList");
     AnsiWrapper &ansi = AnsiWrapper::instance();
-    Config& m_config = Config::instance();
+    const Config& m_config = Config::instance();
 
     void drawName(int i) const;
     void drawHint(int i) const;

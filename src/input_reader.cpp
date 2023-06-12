@@ -339,6 +339,10 @@ int InputReader::parseUtf8(char ch, Key *key) {
     return true;
 }
 
+void InputReader::onStart() {
+    m_logger.log("started");
+}
+
 void InputReader::onLoop() {
     Key key;
     bool success = getKey(&key);

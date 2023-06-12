@@ -15,7 +15,6 @@ class ConfigJsonReader {
     private:
         JsonError m_error;
         StyleManager *m_styleManager;
-        Config& m_config = Config::instance();
 
         std::map<std::string, JsonReaderStrategy*> createOptions();
         bool readJsonFile(JsonElement **root, std::ifstream& ifs);

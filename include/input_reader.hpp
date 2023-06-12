@@ -26,6 +26,7 @@ public:
     void setFileDescriptor(int fileDescriptor);
 
     void onLoop() override;
+    void onStart() override;
     void preOnEvent(EventType type) override;
     void onEvent(std::shared_ptr<Event> event) override;
 
