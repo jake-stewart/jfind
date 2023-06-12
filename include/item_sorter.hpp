@@ -14,6 +14,7 @@ class ItemSorter : public EventListener
 {
 public:
     ItemSorter();
+    void setMatcher(ItemMatcher *matcher);
     int size() const;
     int copyItems(Item *buffer, int idx, int n);
     void onEvent(std::shared_ptr<Event> event) override;

@@ -20,7 +20,7 @@ class ItemList {
     int m_hintWidth = 0;
 
     bool m_didScroll = false;
-    bool m_allowScrolling = false;
+    bool m_allowScrolling = true;
 
     FILE *m_outputFile;
 
@@ -45,11 +45,13 @@ public:
     Item* getSelected() const;
     Item* get(int y) const;
     void resize(int w, int h);
-    void scrollUp();
-    void scrollDown();
-    void moveCursorUp();
-    void moveCursorDown();
+    bool scrollUp();
+    bool scrollDown();
+    bool moveCursorUp();
+    bool moveCursorDown();
     void refresh(bool resetCursor);
+
+    float getScrollPercentage() const;
 };
 
 #endif

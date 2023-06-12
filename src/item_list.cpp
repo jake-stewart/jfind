@@ -91,13 +91,13 @@ void ItemList::drawHint(int i) const {
     }
 }
 
-void ItemList::scrollUp() {
+bool ItemList::scrollUp() {
     if (!m_allowScrolling) {
-        return;
+        return false;
     }
     Item *item = m_itemCache->get(m_offset + m_height - 1);
     if (item == nullptr || item->heuristic == BAD_HEURISTIC) {
-        return;
+        return false;
     }
 
     m_offset += 1;
@@ -117,11 +117,12 @@ void ItemList::scrollUp() {
     }
 
     m_didScroll = true;
+    return true;
 }
 
-void ItemList::scrollDown() {
+bool ItemList::scrollDown() {
     if (!m_allowScrolling || m_offset <= 0) {
-        return;
+        return false;
     }
     m_offset -= 1;
     ansi.move(0, m_height - 1);
@@ -140,19 +141,20 @@ void ItemList::scrollDown() {
     }
 
     m_didScroll = true;
+    return true;
 }
 
-void ItemList::moveCursorUp() {
+bool ItemList::moveCursorUp() {
     Item *item = m_itemCache->get(m_cursor + 1);
     if (item == nullptr || item->heuristic == BAD_HEURISTIC) {
-        return;
+        return false;
     }
 
     m_cursor += 1;
     if (m_cursor - m_offset >= m_nVisibleItems) {
         if (!m_allowScrolling) {
             m_cursor -= 1;
-            return;
+            return false;
         }
         m_offset += 1;
         ansi.moveHome();
@@ -165,17 +167,18 @@ void ItemList::moveCursorUp() {
         drawHint(m_cursor - 1);
         drawHint(m_cursor);
     }
+    return true;
 }
 
-void ItemList::moveCursorDown() {
+bool ItemList::moveCursorDown() {
     if (m_cursor <= 0) {
-        return;
+        return false;
     }
     m_cursor -= 1;
     if (m_cursor - m_offset < 0) {
         if (!m_allowScrolling) {
             m_cursor += 1;
-            return;
+            return false;
         }
         m_offset -= 1;
 
@@ -190,6 +193,7 @@ void ItemList::moveCursorDown() {
         drawHint(m_cursor + 1);
         drawHint(m_cursor);
     }
+    return true;
 }
 
 void ItemList::calcVisibleItems() {
@@ -286,8 +290,8 @@ void ItemList::allowScrolling(bool value) {
 void ItemList::refresh(bool resetCursor) {
     if (resetCursor) {
         m_cursor = 0;
+        m_offset = 0;
     }
-    m_offset = 0;
     std::vector<int> itemIds(m_nVisibleItems);
     for (int i = 0; i < m_nVisibleItems; i++) {
         itemIds[i] = m_itemCache->get(m_offset + i)->index;
@@ -320,4 +324,8 @@ Item* ItemList::getSelected() const {
         return m_itemCache->get(m_cursor);
     }
     return nullptr;
+}
+
+float ItemList::getScrollPercentage() const {
+    return (float)m_cursor / m_nVisibleItems;
 }

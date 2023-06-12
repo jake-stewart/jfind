@@ -16,6 +16,7 @@ enum EventType {
     ITEMS_SORTED_EVENT,
     RESIZE_EVENT,
     QUIT_EVENT,
+    MORE_ITEMS_REQUEST_EVENT,
 };
 const char* const* getEventNames();
 
@@ -164,6 +165,12 @@ public:
 
     int getHeight() const {
         return m_height;
+    }
+};
+
+class MoreItemsRequestEvent : public Event {
+    EventType getType() const override {
+        return MORE_ITEMS_REQUEST_EVENT;
     }
 };
 

@@ -28,6 +28,7 @@ UserInterface::UserInterface(FILE *outputFile, StyleManager *styleManager, ItemL
 
 void UserInterface::onStart() {
     m_logger.log("started");
+    m_itemList->allowScrolling(m_threadsafeReading);
 }
 
 void UserInterface::drawPrompt() {
@@ -209,6 +210,10 @@ void UserInterface::handleInput(KeyEvent event) {
     }
 
     if (m_itemList->didScroll()) {
+        if (!m_requestedMoreItems && m_itemList->getScrollPercentage() > 0.9f) {
+            m_requestedMoreItems = true;
+            m_dispatch.dispatch(std::make_shared<MoreItemsRequestEvent>());
+        }
         drawPrompt();
         drawQuery();
     }
@@ -231,12 +236,14 @@ void UserInterface::onEvent(std::shared_ptr<Event> event) {
         case ITEMS_SORTED_EVENT: {
             ItemsSortedEvent *sortedEvent = (ItemsSortedEvent*)event.get();
             m_requiresRefresh = true;
+            m_requestedMoreItems = false;
             m_isSorting = sortedEvent->getQuery() != m_editor->getText();
             break;
         }
         case ALL_ITEMS_READ_EVENT: {
             AllItemsReadEvent *itemsEvent = (AllItemsReadEvent*)event.get();
-            m_itemList->allowScrolling(itemsEvent->getValue());
+            bool canScroll = m_threadsafeReading || itemsEvent->getValue();
+            m_itemList->allowScrolling(canScroll);
             m_isReading = !itemsEvent->getValue();
             break;
         }
@@ -288,4 +295,8 @@ void UserInterface::onLoop() {
     else if (remaining > 0ms) {
         awaitEvent(remaining);
     }
+}
+
+void UserInterface::setThreadsafeReading(bool value) {
+    m_threadsafeReading = value;
 }

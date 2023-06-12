@@ -20,6 +20,7 @@ public:
     void onEvent(std::shared_ptr<Event> event) override;
     void onLoop() override;
     void onStart() override;
+    void setThreadsafeReading(bool value);
 
 private:
     void redraw();
@@ -40,6 +41,9 @@ private:
     ItemList *m_itemList;
     Utf8LineEditor *m_editor;
     Spinner m_spinner;
+
+    bool m_threadsafeReading = false;
+    bool m_requestedMoreItems = false;
 
     std::vector<KeyEvent> m_inputQueue;
 

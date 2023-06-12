@@ -1,4 +1,8 @@
 #include "../include/item_sorter.hpp"
+#include "../include/item_matcher.hpp"
+#include "../include/item_fuzzy_matcher.hpp"
+#include "../include/item_regex_matcher.hpp"
+#include "../include/item_exact_matcher.hpp"
 #include "../include/item_generator.hpp"
 #include "../include/item_cache.hpp"
 #include "../include/config.hpp"
@@ -206,6 +210,20 @@ int main(int argc, const char **argv) {
     }
     else {
         itemSorter = new ItemSorter();
+        ItemMatcher *matcher;
+        switch (Config::instance().matcher) {
+            case FUZZY_MATCHER:
+                matcher = new ItemFuzzyMatcher();
+                break;
+            case REGEX_MATCHER:
+                matcher = new ItemRegexMatcher();
+                break;
+            case EXACT_MATCHER:
+                matcher = new ItemExactMatcher();
+                break;
+        }
+        itemSorter->setMatcher(matcher);
+
         itemReader = new FileItemReader(stdin);
 
         itemCache.setItemsCallback([itemSorter] (Item *buffer, int idx, int n) {
@@ -256,7 +274,6 @@ int main(int argc, const char **argv) {
     for (std::thread* thread : threads) {
         thread->join();
     }
-
 
     ansi.restoreTerm();
     Item *selected = userInterface.getSelected();

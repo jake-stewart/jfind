@@ -25,7 +25,8 @@ using std::chrono::system_clock;
 std::string applyQuery(const std::string str, const std::string query) {
     static const std::regex PLACEHOLDER_REGEX("\\{\\}");
     static const std::regex QUOTE_REGEX("'");
-    std::string quoted = "'" + std::regex_replace(query, QUOTE_REGEX, "'\"'\"'") + "'";
+    std::string quoted = "'" +
+        std::regex_replace(query, QUOTE_REGEX, "'\"'\"'") + "'";
     if (!std::regex_search(str, PLACEHOLDER_REGEX)) {
         return str + " " + quoted;
     }
@@ -38,16 +39,17 @@ ItemGenerator::ItemGenerator(std::string command) {
     m_dispatch.subscribe(this, QUERY_CHANGE_EVENT);
 }
 
-void ItemGenerator::readFirstBatch() {
+bool ItemGenerator::readFirstBatch() {
     time_point start = system_clock::now();
     for (int i = 0; i < 128; i++) {
         if (!readItem()) {
-            break;
+            return false;
         }
         if (system_clock::now() - start > INTERVAL) {
             break;
         }
     }
+    return true;
 }
 
 void ItemGenerator::onStart() {
@@ -58,57 +60,34 @@ void ItemGenerator::onStart() {
 }
 
 void ItemGenerator::startChildProcess() {
-    if (m_processActive) {
+    if (m_process.getState() != ProcessState::None) {
         m_logger.log("cannot start process with one active");
         return;
     }
-    m_processActive = true;
 
-    if (pipe(m_pipefd) == -1) {
-        m_logger.log("pipe failed");
+    std::string command = applyQuery(Config::instance().command, m_query);
+    const char* argv[] = {"/bin/sh", "-c", command.c_str(), NULL};
+    bool success = m_process.start((char**)argv);
+    if (!success) {
         exit(EXIT_FAILURE);
     }
 
-    m_child_pid = fork();
-
-    if (m_child_pid < 0) {
-        m_logger.log("forking failed pid=%d errno=%d", m_child_pid, errno);
-        exit(EXIT_FAILURE);
+    m_itemReader.setFile(m_process.getStdout());
+    if (readFirstBatch()) {
+        dispatchItems();
     }
-
-    if (m_child_pid == 0) {
-        close(m_pipefd[READ]);
-        if (dup2(m_pipefd[WRITE], STDOUT_FILENO) == -1) {
-            _exit(EXIT_FAILURE);
-        }
-        close(STDERR_FILENO);
-        std::string command = applyQuery(Config::instance().command, m_query);
-        execlp("/bin/sh", "sh", "-c", command.c_str(), NULL);
-        _exit(EXIT_FAILURE);
+    else {
+        endChildProcess();
     }
-
-    close(m_pipefd[WRITE]);
-    m_file = fdopen(m_pipefd[READ], "r");
-    if (m_file == NULL) {
-        m_logger.log("fdopen failed errno=%d", errno);
-        exit(EXIT_FAILURE);
-    }
-    m_itemReader.setFile(m_file);
-
-    readFirstBatch();
-    dispatchItems();
 }
 
 void ItemGenerator::endChildProcess() {
-    if (!m_processActive) {
+    if (m_process.getState() == ProcessState::None) {
         return;
     }
-    m_processActive = false;
-    kill(m_child_pid, SIGTERM);
-    close(m_pipefd[READ]);
-    fclose(m_file);
-    int status;
-    waitpid(m_child_pid, &status, 0);
+    if (!m_process.end()) {
+        exit(EXIT_FAILURE);
+    }
 }
 
 bool ItemGenerator::readItem() {
@@ -117,6 +96,7 @@ bool ItemGenerator::readItem() {
     if (!success) {
         return false;
     }
+    std::unique_lock lock(m_mut);
     m_items.push_back(item);
     return true;
 }
@@ -130,13 +110,16 @@ void ItemGenerator::onLoop() {
         m_interval.restart();
 
         if (m_queryChanged) {
-            std::unique_lock lock(m_mut);
-            m_queryChanged = false;
-            endChildProcess();
-            for (const Item &item : m_items) {
-                delete item.text;
+            {
+                std::unique_lock lock(m_mut);
+                m_queryChanged = false;
+                m_query = m_newQuery;
+                for (const Item &item : m_items) {
+                    delete item.text;
+                }
+                m_items.clear();
             }
-            m_items.clear();
+            endChildProcess();
             startChildProcess();
             m_dispatch.dispatch(std::make_shared<AllItemsReadEvent>(false));
         }
@@ -144,21 +127,23 @@ void ItemGenerator::onLoop() {
         dispatchItems();
     }
     if (readItem()) {
-        bool reachedItemLimit;
-        {
-            std::unique_lock lock(m_mut);
-            reachedItemLimit = m_items.size() > 2048;
-        }
-        if (reachedItemLimit) {
+        if (m_items.size() >= 4096) {
+            dispatchItems();
             m_dispatch.dispatch(std::make_shared<AllItemsReadEvent>(true));
+            if (m_queryChanged) {
+                return;
+            }
             endChildProcess();
             awaitEvent();
         }
     }
     else {
+        endChildProcess();
         dispatchItems();
         m_dispatch.dispatch(std::make_shared<AllItemsReadEvent>(true));
-        awaitEvent();
+        if (!m_queryChanged) {
+            awaitEvent();
+        }
     }
 }
 
@@ -174,7 +159,7 @@ void ItemGenerator::onEvent(std::shared_ptr<Event> event) {
             std::unique_lock lock(m_mut);
             QueryChangeEvent *queryChangeEvent
                 = (QueryChangeEvent *)event.get();
-            m_query = queryChangeEvent->getQuery();
+            m_newQuery = queryChangeEvent->getQuery();
             m_queryChanged = true;
             break;
         }

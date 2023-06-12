@@ -5,6 +5,7 @@
 #include "event_dispatch.hpp"
 #include "item_reader.hpp"
 #include "interval_thread.hpp"
+#include "process.hpp"
 #include <mutex>
 
 class ItemGenerator : public EventListener {
@@ -19,27 +20,25 @@ public:
 
 private:
     std::mutex m_mut;
-    std::string m_query = "";
+    std::string m_newQuery;
+    std::string m_query;
+
+    Process m_process;
 
     IntervalThread m_interval;
 
     EventDispatch &m_dispatch = EventDispatch::instance();
     Logger m_logger = Logger("ItemGenerator");
-    int m_pipefd[2];
-    pid_t m_child_pid = -1;
     std::vector<Item> m_items;
-
-    FILE *m_file;
     ItemReader m_itemReader;
 
     bool m_queryChanged = false;
 
-    bool m_processActive = false;
     bool m_intervalPassed = false;
     bool m_intervalActive = false;
 
     void dispatchItems();
-    void readFirstBatch();
+    bool readFirstBatch();
 
     bool readItem();
     void startChildProcess();

@@ -1,9 +1,6 @@
 #include "../include/item_sorter.hpp"
 #include "../include/config.hpp"
-#include "../include/item_fuzzy_matcher.hpp"
 #include "../include/item_matcher.hpp"
-#include "../include/item_regex_matcher.hpp"
-#include "../include/item_exact_matcher.hpp"
 #include "../include/thread_manager.hpp"
 #include "../include/util.hpp"
 #include <climits>
@@ -189,19 +186,12 @@ void ItemSorter::sorterThread() {
 
 void ItemSorter::onStart() {
     m_logger.log("started");
-    switch (Config::instance().matcher) {
-        case FUZZY_MATCHER:
-            m_matcher = new ItemFuzzyMatcher();
-            break;
-        case REGEX_MATCHER:
-            m_matcher = new ItemRegexMatcher();
-            break;
-        case EXACT_MATCHER:
-            m_matcher = new ItemExactMatcher();
-            break;
-    }
     m_sorterThreadActive = true;
     m_sorterThread = new std::thread(&ItemSorter::sorterThread, this);
+}
+
+void ItemSorter::setMatcher(ItemMatcher *matcher) {
+    m_matcher = matcher;
 }
 
 void ItemSorter::onLoop() {
