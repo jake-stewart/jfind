@@ -97,7 +97,7 @@ bool ItemGenerator::readItem() {
         return false;
     }
     std::unique_lock lock(m_mut);
-    m_items.getSecondary().push_back(item);
+    m_items.getPrimary().push_back(item);
     return true;
 }
 
