@@ -147,7 +147,7 @@ void ItemGenerator::onLoop() {
         bool reachedItemLimit;
         {
             std::unique_lock lock(m_mut);
-            reachedItemLimit = m_items.size() > 128;
+            reachedItemLimit = m_items.size() > 2048;
         }
         if (reachedItemLimit) {
             m_dispatch.dispatch(std::make_shared<AllItemsReadEvent>(true));
