@@ -1,6 +1,8 @@
 #include "../include/item_reader.hpp"
 #include "../include/config.hpp"
 
+#include <cstring>
+
 void ItemReader::setFile(FILE *file) {
     m_file = file;
 }
