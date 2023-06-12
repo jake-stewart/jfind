@@ -11,6 +11,7 @@
 extern "C" {
 #include <termios.h>
 #include <unistd.h>
+#include <sys/wait.h>
 }
 
 using namespace std::chrono_literals;
