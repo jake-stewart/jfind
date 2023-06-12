@@ -22,7 +22,7 @@ private:
     Logger m_logger = Logger("IntervalThread");
     std::chrono::duration<long double, std::milli> m_interval;
     bool m_active = false;
-    bool m_ticked;
+    bool m_ticked = false;
     std::mutex m_mut;
     std::condition_variable m_cv;
     std::thread m_thread;

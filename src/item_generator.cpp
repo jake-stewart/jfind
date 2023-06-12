@@ -115,7 +115,7 @@ void ItemGenerator::onLoop() {
                 m_queryChanged = false;
                 m_query = m_newQuery;
                 for (const Item &item : m_items) {
-                    delete item.text;
+                    free((void*)item.text);
                 }
                 m_items.clear();
             }
