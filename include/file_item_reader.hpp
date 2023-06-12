@@ -34,7 +34,7 @@ private:
     EventDispatch& m_dispatch = EventDispatch::instance();
     Logger m_logger = Logger("FileItemReader");
 
-    DoubleBuffer<std::vector<Item>> m_itemsBuf;
+    DoubleBuffer<std::vector<Item>> m_items;
 
     bool readFirstBatch();
     bool readWithHints();

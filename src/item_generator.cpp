@@ -97,7 +97,7 @@ bool ItemGenerator::readItem() {
         return false;
     }
     std::unique_lock lock(m_mut);
-    m_items.push_back(item);
+    m_items.getSecondary().push_back(item);
     return true;
 }
 
@@ -114,10 +114,11 @@ void ItemGenerator::onLoop() {
                 std::unique_lock lock(m_mut);
                 m_queryChanged = false;
                 m_query = m_newQuery;
-                for (const Item &item : m_items) {
+                m_items.swap();
+                for (const Item &item : m_items.getPrimary()) {
                     free((void*)item.text);
                 }
-                m_items.clear();
+                m_items.getPrimary().clear();
             }
             endChildProcess();
             startChildProcess();
@@ -127,7 +128,7 @@ void ItemGenerator::onLoop() {
         dispatchItems();
     }
     if (readItem()) {
-        if (m_items.size() >= 4096) {
+        if (m_items.getPrimary().size() >= 4096) {
             dispatchItems();
             m_dispatch.dispatch(std::make_shared<AllItemsReadEvent>(true));
             if (m_queryChanged) {
@@ -170,16 +171,17 @@ void ItemGenerator::onEvent(std::shared_ptr<Event> event) {
 
 int ItemGenerator::copyItems(Item *buffer, int idx, int n) {
     std::unique_lock lock(m_mut);
-    if (idx + n > m_items.size()) {
-        n = m_items.size() - idx;
+    std::vector<Item> &items = m_items.getPrimary();
+    if (idx + n > items.size()) {
+        n = items.size() - idx;
     }
     for (int i = 0; i < n; i++) {
-        buffer[i] = m_items[idx + i];
+        buffer[i] = items[idx + i];
     }
     return n;
 }
 
 int ItemGenerator::size() {
     std::unique_lock lock(m_mut);
-    return m_items.size();
+    return m_items.getPrimary().size();
 }

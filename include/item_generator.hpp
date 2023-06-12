@@ -5,6 +5,7 @@
 #include "event_dispatch.hpp"
 #include "item_reader.hpp"
 #include "interval_thread.hpp"
+#include "double_buffer.hpp"
 #include "process.hpp"
 #include <mutex>
 
@@ -29,7 +30,7 @@ private:
 
     EventDispatch &m_dispatch = EventDispatch::instance();
     Logger m_logger = Logger("ItemGenerator");
-    std::vector<Item> m_items;
+    DoubleBuffer<std::vector<Item>> m_items;
     ItemReader m_itemReader;
 
     bool m_queryChanged = false;

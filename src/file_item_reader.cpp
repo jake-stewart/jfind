@@ -25,7 +25,7 @@ bool FileItemReader::read() {
     if (!m_itemReader.read(item)) {
         return false;
     }
-    m_itemsBuf.getPrimary().push_back(item);
+    m_items.getPrimary().push_back(item);
     return true;
 }
 
@@ -45,13 +45,13 @@ void FileItemReader::onEvent(std::shared_ptr<Event> event) {
 }
 
 void FileItemReader::dispatchItems() {
-    if (!m_itemsBuf.getPrimary().size()) {
+    if (!m_items.getPrimary().size()) {
         return;
     }
     m_itemsRead = false;
-    m_itemsBuf.swap();
-    m_dispatch.dispatch(std::make_shared<NewItemsEvent>(&m_itemsBuf.getSecondary()));
-    m_itemsBuf.getPrimary().clear();
+    m_items.swap();
+    m_dispatch.dispatch(std::make_shared<NewItemsEvent>(&m_items.getSecondary()));
+    m_items.getPrimary().clear();
 }
 
 void FileItemReader::onStart() {
@@ -95,7 +95,7 @@ void FileItemReader::onLoop() {
         dispatchItems();
     }
     if (!read()) {
-        if (m_itemsBuf.getPrimary().size()) {
+        if (m_items.getPrimary().size()) {
             if (!m_itemsRead) {
                 awaitEvent();
             }
