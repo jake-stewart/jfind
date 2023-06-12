@@ -1,4 +1,5 @@
 #include "../include/item_list.hpp"
+#include <cstring>
 
 ItemList::ItemList(FILE *outputFile, StyleManager *styleManager,
             ItemCache *itemCache) {
