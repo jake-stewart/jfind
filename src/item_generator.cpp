@@ -23,6 +23,15 @@ using std::chrono::system_clock;
 #define READ 0
 #define WRITE 1
 
+ItemGenerator::~ItemGenerator() {
+    for (const Item &item : m_items.getPrimary()) {
+        free((void*)item.text);
+    }
+    for (const Item &item : m_items.getSecondary()) {
+        free((void*)item.text);
+    }
+}
+
 std::string applyQuery(const std::string str, const std::string query) {
     static const std::regex PLACEHOLDER_REGEX("\\{\\}");
     static const std::regex QUOTE_REGEX("'");

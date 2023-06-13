@@ -12,6 +12,7 @@
 class ItemGenerator : public EventListener {
 public:
     ItemGenerator(std::string command);
+    ~ItemGenerator();
     void onStart() override;
     void onLoop() override;
     void onEvent(std::shared_ptr<Event> event) override;
