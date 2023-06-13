@@ -15,6 +15,7 @@ public:
     ~ItemGenerator();
     void onStart() override;
     void onLoop() override;
+    void preOnEvent(EventType eventType) override;
     void onEvent(std::shared_ptr<Event> event) override;
 
     int copyItems(Item *buffer, int idx, int n);

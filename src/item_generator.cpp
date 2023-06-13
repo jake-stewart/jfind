@@ -54,7 +54,6 @@ bool ItemGenerator::readFirstBatch() {
     time_point start = system_clock::now();
     bool success;
     for (int i = 0; i < READ_BATCH; i++) {
-
         Item item;
         success = m_itemReader.read(item);
         if (!success) {
@@ -174,6 +173,10 @@ void ItemGenerator::onLoop() {
             awaitEvent();
         }
     }
+}
+
+void ItemGenerator::preOnEvent(EventType eventType) {
+    m_process.end();
 }
 
 void ItemGenerator::onEvent(std::shared_ptr<Event> event) {
