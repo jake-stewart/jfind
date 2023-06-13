@@ -99,10 +99,17 @@ bool ConfigJsonReader::read(std::ifstream& ifs) {
     std::map<std::string, JsonReaderStrategy*> options = createOptions();
 
     JsonReader reader(options);
-    if (!reader.read(root)) {
+    bool success = reader.read(root);
+
+    for (const auto &it : options) {
+        delete it.second;
+    }
+
+    if (!success) {
         m_error = reader.getError();
         return false;
     }
+
 
     return true;
 }
