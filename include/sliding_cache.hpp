@@ -17,7 +17,7 @@ class SlidingCache {
         }
 
         ~SlidingCache() {
-            delete m_cache;
+            delete[] m_cache;
         }
 
         void setDatasource(std::function<int(T *buffer, int idx, int n)>
