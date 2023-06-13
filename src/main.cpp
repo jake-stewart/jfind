@@ -198,8 +198,18 @@ int main(int argc, const char **argv) {
 
     ItemCache itemCache;
 
+
+    ItemList itemList(stderr, &styleManager, &itemCache);
+
+    Utf8LineEditor editor(stderr);
+    editor.input(config.query);
+
+    UserInterface userInterface(stderr, &styleManager, &itemList, &editor);
+
     if (config.command.size()) {
         itemGenerator = new ItemGenerator(config.command);
+
+        userInterface.setThreadsafeReading(true);
 
         itemCache.setItemsCallback([itemGenerator] (Item *buffer, int idx, int n) {
             return itemGenerator->copyItems(buffer, idx, n);
@@ -211,6 +221,7 @@ int main(int argc, const char **argv) {
     else {
         itemSorter = new ItemSorter();
         ItemMatcher *matcher;
+        userInterface.setThreadsafeReading(false);
         switch (Config::instance().matcher) {
             case FUZZY_MATCHER:
                 matcher = new ItemFuzzyMatcher();
@@ -233,14 +244,6 @@ int main(int argc, const char **argv) {
             return itemSorter->size();
         });
     }
-
-
-    ItemList itemList(stderr, &styleManager, &itemCache);
-
-    Utf8LineEditor editor(stderr);
-    editor.input(config.query);
-
-    UserInterface userInterface(stderr, &styleManager, &itemList, &editor);
 
     InputReader inputReader;
     int fd = open("/dev/tty", O_RDONLY);

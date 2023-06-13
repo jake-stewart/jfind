@@ -18,6 +18,7 @@ using std::chrono::time_point;
 using std::chrono::system_clock;
 
 #define INTERVAL 50ms
+#define READ_BATCH 128
 
 #define READ 0
 #define WRITE 1
@@ -37,26 +38,40 @@ ItemGenerator::ItemGenerator(std::string command) {
     m_interval.setInterval(INTERVAL);
     m_dispatch.subscribe(this, QUIT_EVENT);
     m_dispatch.subscribe(this, QUERY_CHANGE_EVENT);
+    m_dispatch.subscribe(this, ITEMS_REQUEST_EVENT);
 }
 
 bool ItemGenerator::readFirstBatch() {
     time_point start = system_clock::now();
-    for (int i = 0; i < 128; i++) {
-        if (!readItem()) {
-            return false;
+    bool success;
+    for (int i = 0; i < READ_BATCH; i++) {
+
+        Item item;
+        success = m_itemReader.read(item);
+        if (!success) {
+            break;
         }
+        m_items.getSecondary().push_back(item);
+
         if (system_clock::now() - start > INTERVAL) {
             break;
         }
     }
-    return true;
+    m_items.swap();
+    return success;
 }
 
 void ItemGenerator::onStart() {
     m_logger.log("started");
-    startChildProcess();
-
     m_interval.start();
+    startChildProcess();
+    if (readFirstBatch()) {
+        dispatchItems();
+    }
+    else {
+        endChildProcess();
+        awaitEvent();
+    }
 }
 
 void ItemGenerator::startChildProcess() {
@@ -72,13 +87,8 @@ void ItemGenerator::startChildProcess() {
         exit(EXIT_FAILURE);
     }
 
+    m_readMax = READ_BATCH;
     m_itemReader.setFile(m_process.getStdout());
-    if (readFirstBatch()) {
-        dispatchItems();
-    }
-    else {
-        endChildProcess();
-    }
 }
 
 void ItemGenerator::endChildProcess() {
@@ -105,38 +115,47 @@ void ItemGenerator::dispatchItems() {
     m_dispatch.dispatch(std::make_shared<ItemsSortedEvent>(m_query));
 }
 
-void ItemGenerator::onLoop() {
-    if (m_interval.ticked()) {
-        m_interval.restart();
-
-        if (m_queryChanged) {
-            {
-                std::unique_lock lock(m_mut);
-                m_queryChanged = false;
-                m_query = m_newQuery;
-                m_items.swap();
-                for (const Item &item : m_items.getPrimary()) {
-                    free((void*)item.text);
-                }
-                m_items.getPrimary().clear();
-            }
-            endChildProcess();
-            startChildProcess();
-            m_dispatch.dispatch(std::make_shared<AllItemsReadEvent>(false));
-        }
-
-        dispatchItems();
+void ItemGenerator::freeItems() {
+    for (const Item &item : m_items.getSecondary()) {
+        free((void*)item.text);
     }
-    if (readItem()) {
-        if (m_items.getPrimary().size() >= 4096) {
+    m_items.getSecondary().clear();
+}
+
+void ItemGenerator::onLoop() {
+    if (m_queryChanged) {
+        if (!m_interval.ticked()) {
+            awaitEvent(m_interval.getRemaining());
+            return;
+        }
+        m_interval.restart();
+        m_queryChanged = false;
+        m_query = m_newQuery;
+
+        freeItems();
+        startChildProcess();
+        bool success = readFirstBatch();
+        dispatchItems();
+        m_dispatch.dispatch(std::make_shared<AllItemsReadEvent>(!success));
+        if (!success) {
+            endChildProcess();
+            awaitEvent();
+        }
+    }
+    else if (readItem()) {
+        if (m_items.getPrimary().size() >= m_readMax) {
             dispatchItems();
             m_dispatch.dispatch(std::make_shared<AllItemsReadEvent>(true));
             if (m_queryChanged) {
                 return;
             }
-            endChildProcess();
+            m_process.suspend();
             awaitEvent();
         }
+        else if (m_interval.ticked()) {
+            dispatchItems();
+        }
+                
     }
     else {
         endChildProcess();
@@ -157,15 +176,29 @@ void ItemGenerator::onEvent(std::shared_ptr<Event> event) {
             m_interval.end();
             break;
         case QUERY_CHANGE_EVENT: {
-            std::unique_lock lock(m_mut);
             QueryChangeEvent *queryChangeEvent
                 = (QueryChangeEvent *)event.get();
             m_newQuery = queryChangeEvent->getQuery();
             m_queryChanged = true;
+            endChildProcess();
+            break;
+        }
+        case ITEMS_REQUEST_EVENT: {
+            std::unique_lock lock(m_mut);
+            if (m_items.getPrimary().size() >= m_readMax) {
+                m_readMax += READ_BATCH;
+                if (m_process.getState() == ProcessState::Suspended) {
+                    m_process.resume();
+                }
+            }
             break;
         }
         default:
             break;
+    }
+
+    if (m_process.getState() != ProcessState::Active) {
+        awaitEvent();
     }
 }
 

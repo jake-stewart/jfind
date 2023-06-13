@@ -288,8 +288,12 @@ void ItemList::allowScrolling(bool value) {
 }
 
 void ItemList::refresh(bool resetCursor) {
+    bool visibleItemsChanged = false;
     if (resetCursor) {
         m_cursor = 0;
+        if (m_offset != 0) {
+            visibleItemsChanged = true;
+        }
         m_offset = 0;
     }
     std::vector<int> itemIds(m_nVisibleItems);
@@ -299,11 +303,11 @@ void ItemList::refresh(bool resetCursor) {
 
     m_itemCache->refresh();
     calcVisibleItems();
-    bool visibleItemsChanged = m_nVisibleItems != itemIds.size();
+    visibleItemsChanged = visibleItemsChanged || m_nVisibleItems != itemIds.size();
 
     if (!visibleItemsChanged) {
         for (int i = 0; i < m_nVisibleItems; i++) {
-            Item *item = m_itemCache->get(i + m_offset);
+            Item *item = m_itemCache->get(m_offset + i);
             if (itemIds[i] != item->index) {
                 visibleItemsChanged = true;
                 break;
@@ -327,5 +331,5 @@ Item* ItemList::getSelected() const {
 }
 
 float ItemList::getScrollPercentage() const {
-    return (float)m_cursor / m_nVisibleItems;
+    return (float)(m_offset + m_nVisibleItems) / m_itemCache->size();
 }

@@ -42,7 +42,7 @@ private:
     Utf8LineEditor *m_editor;
     Spinner m_spinner;
 
-    bool m_threadsafeReading = false;
+    bool m_threadsafeReading = true;
     bool m_requestedMoreItems = false;
 
     std::vector<KeyEvent> m_inputQueue;

@@ -14,9 +14,9 @@ enum EventType {
     ALL_ITEMS_READ_EVENT,
     ITEMS_ADDED_EVENT,
     ITEMS_SORTED_EVENT,
+    ITEMS_REQUEST_EVENT,
     RESIZE_EVENT,
     QUIT_EVENT,
-    MORE_ITEMS_REQUEST_EVENT,
 };
 const char* const* getEventNames();
 
@@ -168,9 +168,9 @@ public:
     }
 };
 
-class MoreItemsRequestEvent : public Event {
+class ItemsRequestEvent : public Event {
     EventType getType() const override {
-        return MORE_ITEMS_REQUEST_EVENT;
+        return ITEMS_REQUEST_EVENT;
     }
 };
 

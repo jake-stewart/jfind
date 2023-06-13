@@ -26,8 +26,11 @@ UserInterface::UserInterface(FILE *outputFile, StyleManager *styleManager, ItemL
     m_dispatch.subscribe(this, ALL_ITEMS_READ_EVENT);
 }
 
+std::chrono::system_clock::time_point start;
+
 void UserInterface::onStart() {
     m_logger.log("started");
+    ::start = std::chrono::system_clock::now();
     m_itemList->allowScrolling(m_threadsafeReading);
 }
 
@@ -212,7 +215,7 @@ void UserInterface::handleInput(KeyEvent event) {
     if (m_itemList->didScroll()) {
         if (!m_requestedMoreItems && m_itemList->getScrollPercentage() > 0.9f) {
             m_requestedMoreItems = true;
-            m_dispatch.dispatch(std::make_shared<MoreItemsRequestEvent>());
+            m_dispatch.dispatch(std::make_shared<ItemsRequestEvent>());
         }
         drawPrompt();
         drawQuery();
@@ -277,6 +280,11 @@ void UserInterface::onLoop() {
         }
     }
     if (m_requiresRefresh) {
+        std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+        std::chrono::system_clock::time_point::duration duration = now - ::start;
+        std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
+        ::start = now;
+        m_logger.log("refreshed %lld seconds since last refresh", ms.count());
         m_itemList->refresh(m_resetCursor);
         m_resetCursor = false;
         m_requiresRefresh = false;

@@ -33,6 +33,7 @@ private:
     DoubleBuffer<std::vector<Item>> m_items;
     ItemReader m_itemReader;
 
+    int m_readMax;
     bool m_queryChanged = false;
 
     bool m_intervalPassed = false;
@@ -44,6 +45,8 @@ private:
     bool readItem();
     void startChildProcess();
     void endChildProcess();
+
+    void freeItems();
 };
 
 #endif
