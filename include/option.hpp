@@ -10,6 +10,7 @@ class Option {
     public:
         const std::string& getKey() const;
         virtual bool parse(const char *value) = 0;
+        virtual ~Option() {}
 
     protected:
         std::string m_key;

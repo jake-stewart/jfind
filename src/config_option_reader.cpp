@@ -26,6 +26,10 @@ bool ConfigOptionReader::read(int argc, const char **argv) {
     OptionParser optionParser(options);
     bool success = optionParser.parse(argc, argv);
 
+    for (const Option *option : options) {
+        delete option;
+    }
+
     config.historyFile = historyFile;
 
     return success;
