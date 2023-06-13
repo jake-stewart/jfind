@@ -64,9 +64,8 @@ const JsonError ConfigJsonReader::getError() const {
     return m_error;
 }
 
-bool ConfigJsonReader::readJsonFile(JsonElement **root, std::ifstream& ifs) {
+bool ConfigJsonReader::readJsonFile(JsonParser &parser, std::ifstream& ifs) {
     if (!ifs.is_open()) {
-        root = nullptr;
         m_error.message = "File was not open for reading";
         m_error.line = 0;
         return false;
@@ -74,23 +73,22 @@ bool ConfigJsonReader::readJsonFile(JsonElement **root, std::ifstream& ifs) {
 
     std::string json((std::istreambuf_iterator<char>(ifs)),
             (std::istreambuf_iterator<char>()));
-    JsonParser jsonParser;
-    if (!jsonParser.parse(json)) {
-        m_error.message = jsonParser.getError();
-        m_error.line = jsonParser.getLine();
+    if (!parser.parse(json)) {
+        m_error.message = parser.getError();
+        m_error.line = parser.getLine();
         return false;
     }
 
-    *root = jsonParser.getElement();
     return true;
 }
 
 bool ConfigJsonReader::read(std::ifstream& ifs) {
-    JsonElement *root;
+    JsonParser parser;
 
-    if (!readJsonFile(&root, ifs)) {
+    if (!readJsonFile(parser, ifs)) {
         return false;
     }
+    JsonElement *root = parser.getElement();
 
     if (root == nullptr) {
         return true;

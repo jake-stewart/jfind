@@ -17,7 +17,7 @@ class ConfigJsonReader {
         StyleManager *m_styleManager;
 
         std::map<std::string, JsonReaderStrategy*> createOptions();
-        bool readJsonFile(JsonElement **root, std::ifstream& ifs);
+        bool readJsonFile(JsonParser &parser, std::ifstream &ifs);
 };
 
 

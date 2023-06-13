@@ -2,7 +2,6 @@
 #include <regex>
 #include <fstream>
 
-
 JsonParser::~JsonParser() {
     for (const JsonElement *element : m_elements) {
         delete element;
