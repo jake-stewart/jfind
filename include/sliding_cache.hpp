@@ -16,6 +16,10 @@ class SlidingCache {
             m_offset = 0;
         }
 
+        ~SlidingCache() {
+            delete m_cache;
+        }
+
         void setDatasource(std::function<int(T *buffer, int idx, int n)>
                 datasource)
         {
