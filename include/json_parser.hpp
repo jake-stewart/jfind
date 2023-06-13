@@ -19,6 +19,7 @@ class JsonElement {
         virtual std::string repr(int indent, int depth) = 0;
         JsonElementType getType() const;
         int getLine() const;
+        virtual ~JsonElement() {}
 
     protected:
         JsonElementType m_type;
@@ -98,6 +99,7 @@ class JsonParser {
         std::string getError() const;
         JsonElement* getElement() const;
         int getLine() const;
+        ~JsonParser();
 
     private:
         std::string m_error;
