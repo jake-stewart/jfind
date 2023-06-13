@@ -5,6 +5,7 @@
 #include "event_dispatch.hpp"
 #include "mouse_event.hpp"
 #include "logger.hpp"
+#include "cancellable_reader.hpp"
 
 #include <string>
 #include <vector>
@@ -22,7 +23,6 @@ public:
     InputReader();
 
     bool getKey(Key *key);
-    bool hasKey();
     void setFileDescriptor(int fileDescriptor);
 
     void onLoop() override;
@@ -35,6 +35,8 @@ public:
 private:
     EventDispatch& m_dispatch = EventDispatch::instance();
     Logger m_logger = Logger("InputReader");
+
+    CancellableReader m_reader;
 
     // the file descriptor read for input
     int m_fileDescriptor;
@@ -59,6 +61,7 @@ private:
     int m_pipe[2];
 
     char getch();
+    bool hasKey();
     int parseEsc(Key *key);
     int parseAltKey(char ch, Key *key);
     int parseMouse(std::string& seq, Key *key);

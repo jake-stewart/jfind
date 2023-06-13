@@ -177,7 +177,7 @@ void ItemGenerator::onLoop() {
 
 void ItemGenerator::preOnEvent(EventType eventType) {
     if (eventType == QUIT_EVENT) {
-        m_process.end();
+        m_itemReader.cancel();
     }
 }
 

@@ -122,17 +122,13 @@ void InputReader::setFileDescriptor(int fileDescriptor) {
 }
 
 char InputReader::getch() {
-    fd_set read_fds, except_fds;
+    fd_set read_fds;
     FD_ZERO(&read_fds);
     FD_SET(m_fileDescriptor, &read_fds);
     FD_SET(m_pipe[0], &read_fds);
 
-    FD_ZERO(&except_fds);
-    FD_SET(m_fileDescriptor, &except_fds);
-    FD_SET(m_pipe[0], &except_fds);
-
     int maxfd = m_fileDescriptor > m_pipe[0] ? m_fileDescriptor : m_pipe[0];
-    int activity = select(maxfd + 1, &read_fds, nullptr, &except_fds, nullptr);
+    int activity = select(maxfd + 1, &read_fds, nullptr, nullptr, nullptr);
 
     switch (activity) {
         case -1:
@@ -362,7 +358,10 @@ void InputReader::onLoop() {
 }
 
 void InputReader::preOnEvent(EventType type) {
-    close(m_pipe[1]);
+    if (type == QUIT_EVENT) {
+        char byte;
+        write(m_pipe[1], &byte, 1);
+    }
 }
 
 void InputReader::onEvent(std::shared_ptr<Event> event) {

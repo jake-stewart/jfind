@@ -27,7 +27,6 @@ private:
     std::string m_query;
 
     Process m_process;
-
     IntervalThread m_interval;
 
     EventDispatch &m_dispatch = EventDispatch::instance();
