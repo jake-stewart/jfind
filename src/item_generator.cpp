@@ -176,7 +176,9 @@ void ItemGenerator::onLoop() {
 }
 
 void ItemGenerator::preOnEvent(EventType eventType) {
-    m_process.end();
+    if (eventType == QUIT_EVENT) {
+        m_process.end();
+    }
 }
 
 void ItemGenerator::onEvent(std::shared_ptr<Event> event) {
