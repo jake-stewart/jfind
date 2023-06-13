@@ -20,6 +20,7 @@ bool ItemReader::readWithoutHints(Item &item) {
     char *buf = nullptr;
 
     if (getline(&buf, &size, m_file) < 0) {
+        free((void*)buf);
         return false;
     }
 
@@ -36,9 +37,12 @@ bool ItemReader::readWithHints(Item &item) {
     char *secondBuf = nullptr;
 
     if (getline(&buf, &size, m_file) < 0) {
+        free((void*)buf);
         return false;
     }
     if (getline(&secondBuf, &size, m_file) < 0) {
+        free((void*)buf);
+        free((void*)secondBuf);
         return false;
     }
 
