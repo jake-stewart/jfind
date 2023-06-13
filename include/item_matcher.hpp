@@ -16,6 +16,7 @@ public:
     virtual bool setQuery(std::string query) = 0;
     virtual int calculateScore(Item *item) = 0;
     virtual bool requiresFullRescore() = 0;
+    virtual ~ItemMatcher() {}
 };
 
 #endif

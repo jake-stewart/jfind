@@ -193,6 +193,7 @@ int main(int argc, const char **argv) {
     }
 
     ItemSorter *itemSorter;
+    ItemMatcher *matcher;
     FileItemReader *itemReader;
     ItemGenerator *itemGenerator;
 
@@ -220,7 +221,6 @@ int main(int argc, const char **argv) {
     }
     else {
         itemSorter = new ItemSorter();
-        ItemMatcher *matcher;
         userInterface.setThreadsafeReading(false);
         switch (Config::instance().matcher) {
             case FUZZY_MATCHER:
@@ -276,18 +276,29 @@ int main(int argc, const char **argv) {
     threads.push_back(new std::thread(&InputReader::start, &inputReader));
     for (std::thread* thread : threads) {
         thread->join();
+        delete thread;
     }
 
     ansi.restoreTerm();
     Item *selected = userInterface.getSelected();
     if (selected && historyManager) {
         historyManager->writeHistory(selected);
+        delete historyManager;
     }
 
     printResult(userInterface.getSelectedKey(), selected,
             editor.getText().c_str());
 
     Logger::close();
+
+    if (config.command.size()) {
+        delete itemGenerator;
+    }
+    else {
+        delete itemSorter;
+        delete itemReader;
+        delete matcher;
+    }
 
     return 0;
 }
