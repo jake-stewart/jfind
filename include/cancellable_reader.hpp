@@ -5,16 +5,18 @@
 #include "logger.hpp"
 
 extern "C" {
+#include <sys/select.h>
 #include <poll.h>
 }
 
 class CancellableReader {
     FILE *m_file;
     int m_fd;
-    pollfd m_fds[2];
-    int m_pipe[2];
-    bool m_cancelled = false;
+
     Logger m_logger = Logger("CancellableReader");
+    int m_pipe[2];
+    fd_set m_fd_set;
+    int m_maxFd;
 
 public:
     CancellableReader();

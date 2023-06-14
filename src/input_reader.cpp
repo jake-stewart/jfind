@@ -110,18 +110,14 @@ InputReader::InputReader() {
 }
 
 void InputReader::setFileDescriptor(int fd) {
-    m_logger.log("SETTING FILE DESCRIPTOR FOR INPUT READER READER");
     m_reader.setFileDescriptor(fd);
 }
 
 bool InputReader::getch(char *c) {
-    m_logger.log("blocking...");
     if (m_reader.read(c, 1) < 0) {
-        m_logger.log("done");
         m_dispatch.dispatch(std::make_shared<QuitEvent>());
         return false;
     }
-    m_logger.log("done");
     return true;
 }
 
@@ -339,14 +335,12 @@ void InputReader::onLoop() {
         }
     }
     else {
-        m_logger.log("ending...");
         m_reader.cancel();
         end();
     }
 }
 
 void InputReader::preOnEvent(EventType type) {
-    m_logger.log("quit ?? ?? ?...");
     if (type == QUIT_EVENT) {
         m_reader.cancel();
     }
