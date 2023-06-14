@@ -15,9 +15,6 @@ ProcessState Process::getState() const {
 
 bool Process::start(char *const *argv) {
     switch (m_state) {
-        case ProcessState::Finished:
-            m_logger.log("Attempted to start finished process");
-            return false;
         case ProcessState::Suspended:
             m_logger.log("Attempted to start suspended process");
             return false;
@@ -66,9 +63,6 @@ bool Process::suspend() {
         case ProcessState::None:
             m_logger.log("Attempted to suspend null process");
             return false;
-        case ProcessState::Finished:
-            m_logger.log("Attempted to suspend finished process");
-            return false;
         case ProcessState::Suspended:
             m_logger.log("Attempted to suspend suspended process");
             return false;
@@ -92,9 +86,6 @@ bool Process::resume() {
         case ProcessState::None:
             m_logger.log("Attempted to resume null process");
             return false;
-        case ProcessState::Finished:
-            m_logger.log("Attempted to resume finished process");
-            return false;
         case ProcessState::Suspended:
             break;
     }
@@ -109,8 +100,8 @@ bool Process::resume() {
 
 bool Process::end() {
     switch (m_state) {
-        case ProcessState::Finished:
-            m_logger.log("Attempted to end finished process");
+        case ProcessState::None:
+            m_logger.log("Attempted to end null process");
             return false;
         default:
             break;

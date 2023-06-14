@@ -14,7 +14,6 @@ enum class ProcessState {
     None,
     Suspended,
     Active,
-    Finished,
 };
 
 class Process {
