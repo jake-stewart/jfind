@@ -41,13 +41,14 @@ private:
     bool m_intervalActive = false;
 
     void dispatchItems();
+    void dispatchAllRead(bool value);
+
     bool readFirstBatch();
-
     bool readItem();
-    void startChildProcess();
-    void endChildProcess();
 
-    void freeItems();
+    void startChildProcess();
+
+    void freeItems(std::vector<Item> &items);
 };
 
 #endif

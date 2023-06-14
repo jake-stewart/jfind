@@ -31,6 +31,12 @@ static Config& config = Config::instance();
 static AnsiWrapper& ansi = AnsiWrapper::instance();
 static EventDispatch& eventDispatch = EventDispatch::instance();
 static Logger logger = Logger("main");
+static StyleManager styleManager(stderr);
+static ItemCache itemCache;
+static ItemList itemList(stderr, &styleManager, &itemCache);
+static Utf8LineEditor editor(stderr);
+static HistoryManager *historyManager = nullptr;
+static UserInterface userInterface(stderr, &styleManager, &itemList, &editor);
 
 void printResult(Key key, Item *selected, const char *input) {
     if (config.showKey && (selected || config.acceptNonMatch)) {
@@ -47,6 +53,21 @@ void printResult(Key key, Item *selected, const char *input) {
     else if (config.acceptNonMatch) {
         printf("%s\n", input);
     }
+}
+
+void finish() {
+    ansi.restoreTerm();
+    Item *selected = userInterface.getSelected();
+    if (selected && historyManager) {
+        historyManager->writeHistory(selected);
+        delete historyManager;
+    }
+
+    printResult(userInterface.getSelectedKey(), selected,
+            editor.getText().c_str());
+
+    logger.log("done");
+    Logger::close();
 }
 
 void createStyles(StyleManager *styleManager) {
@@ -100,7 +121,9 @@ void emitResizeEvent() {
 void signalHandler(int sig) {
     switch (sig) {
         case SIGINT:
-            eventDispatch.dispatch(std::make_shared<QuitEvent>());
+        case SIGTERM:
+            finish();
+            exit(0);
             break;
         case SIGWINCH:
             emitResizeEvent();
@@ -167,9 +190,8 @@ void displayHelp(const char *name) {
     printf("    seq 100 | %s\n", name);
 }
 
-int main(int argc, const char **argv) {
-    StyleManager styleManager(stderr);
 
+int main(int argc, const char **argv) {
     if (!readConfig(&styleManager, argc, argv)) {
         return 1;
     }
@@ -185,7 +207,6 @@ int main(int argc, const char **argv) {
 
     createStyles(&styleManager);
 
-    HistoryManager *historyManager = nullptr;
     if (!config.historyFile.empty()) {
         historyManager = new HistoryManager(config.historyFile);
         historyManager->setHistoryLimit(config.historyLimit);
@@ -197,15 +218,7 @@ int main(int argc, const char **argv) {
     FileItemReader *itemReader;
     ItemGenerator *itemGenerator;
 
-    ItemCache itemCache;
-
-
-    ItemList itemList(stderr, &styleManager, &itemCache);
-
-    Utf8LineEditor editor(stderr);
     editor.input(config.query);
-
-    UserInterface userInterface(stderr, &styleManager, &itemList, &editor);
 
     if (config.command.size()) {
         itemGenerator = new ItemGenerator(config.command);
@@ -257,6 +270,7 @@ int main(int argc, const char **argv) {
 
     signal(SIGWINCH, signalHandler);
     signal(SIGINT, signalHandler);
+    signal(SIGTERM, signalHandler);
 
     ansi.initTerm();
     ansi.enableMouse();
@@ -279,17 +293,7 @@ int main(int argc, const char **argv) {
         delete thread;
     }
 
-    ansi.restoreTerm();
-    Item *selected = userInterface.getSelected();
-    if (selected && historyManager) {
-        historyManager->writeHistory(selected);
-        delete historyManager;
-    }
-
-    printResult(userInterface.getSelectedKey(), selected,
-            editor.getText().c_str());
-
-    Logger::close();
+    finish();
 
     if (config.command.size()) {
         delete itemGenerator;

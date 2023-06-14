@@ -24,12 +24,8 @@ using std::chrono::system_clock;
 #define WRITE 1
 
 ItemGenerator::~ItemGenerator() {
-    for (const Item &item : m_items.getPrimary()) {
-        free((void*)item.text);
-    }
-    for (const Item &item : m_items.getSecondary()) {
-        free((void*)item.text);
-    }
+    freeItems(m_items.getPrimary());
+    freeItems(m_items.getSecondary());
 }
 
 std::string applyQuery(const std::string str, const std::string query) {
@@ -56,11 +52,10 @@ bool ItemGenerator::readFirstBatch() {
     for (int i = 0; i < READ_BATCH; i++) {
         Item item;
         success = m_itemReader.read(item);
-        if (!success) {
+        if (success) {
             break;
         }
         m_items.getSecondary().push_back(item);
-
         if (system_clock::now() - start > INTERVAL) {
             break;
         }
@@ -69,65 +64,70 @@ bool ItemGenerator::readFirstBatch() {
     return success;
 }
 
-void ItemGenerator::onStart() {
-    m_logger.log("started");
-    m_interval.start();
-    startChildProcess();
-    if (readFirstBatch()) {
-        dispatchItems();
-    }
-    else {
-        endChildProcess();
-        awaitEvent();
-    }
-}
-
-void ItemGenerator::startChildProcess() {
-    if (m_process.getState() != ProcessState::None) {
-        m_logger.log("cannot start process with one active");
-        return;
-    }
-
-    std::string command = applyQuery(Config::instance().command, m_query);
-    const char* argv[] = {"/bin/sh", "-c", command.c_str(), NULL};
-    bool success = m_process.start((char**)argv);
-    if (!success) {
-        exit(EXIT_FAILURE);
-    }
-
-    m_readMax = READ_BATCH;
-    m_itemReader.setFile(m_process.getStdout());
-}
-
-void ItemGenerator::endChildProcess() {
-    if (m_process.getState() == ProcessState::None) {
-        return;
-    }
-    if (!m_process.end()) {
-        exit(EXIT_FAILURE);
-    }
-}
-
 bool ItemGenerator::readItem() {
     Item item;
     bool success = m_itemReader.read(item);
     if (!success) {
         return false;
     }
+
+    {
     std::unique_lock lock(m_mut);
     m_items.getPrimary().push_back(item);
+    }
+
+    if (m_items.getPrimary().size() >= m_readMax) {
+        dispatchItems();
+        dispatchAllRead(true);
+        if (m_queryChanged) {
+            return true;
+        }
+        m_process.suspend();
+        awaitEvent();
+    }
+    else if (m_interval.ticked()) {
+        dispatchItems();
+    }
     return true;
+}
+
+
+void ItemGenerator::onStart() {
+    m_logger.log("started");
+    m_interval.start();
+    startChildProcess();
+}
+
+void ItemGenerator::startChildProcess() {
+    std::string command = applyQuery(Config::instance().command, m_query);
+    const char* argv[] = {"/bin/sh", "-c", command.c_str(), NULL};
+    if (!m_process.start((char**)argv)) {
+        exit(EXIT_FAILURE);
+    }
+    m_readMax = READ_BATCH;
+    m_itemReader.setFile(m_process.getStdout());
+    bool success = readFirstBatch();
+    dispatchItems();
+    dispatchAllRead(!success);
+    if (!success) {
+        m_process.end();
+        awaitEvent();
+    }
 }
 
 void ItemGenerator::dispatchItems() {
     m_dispatch.dispatch(std::make_shared<ItemsSortedEvent>(m_query));
 }
 
-void ItemGenerator::freeItems() {
-    for (const Item &item : m_items.getSecondary()) {
+void ItemGenerator::dispatchAllRead(bool value) {
+    m_dispatch.dispatch(std::make_shared<AllItemsReadEvent>(value));
+}
+
+void ItemGenerator::freeItems(std::vector<Item> &items) {
+    for (const Item &item : items) {
         free((void*)item.text);
     }
-    m_items.getSecondary().clear();
+    items.clear();
 }
 
 void ItemGenerator::onLoop() {
@@ -140,35 +140,18 @@ void ItemGenerator::onLoop() {
         m_queryChanged = false;
         m_query = m_newQuery;
 
-        freeItems();
+        freeItems(m_items.getSecondary());
         startChildProcess();
-        bool success = readFirstBatch();
-        dispatchItems();
-        m_dispatch.dispatch(std::make_shared<AllItemsReadEvent>(!success));
-        if (!success) {
-            endChildProcess();
-            awaitEvent();
-        }
+        return;
     }
-    else if (readItem()) {
-        if (m_items.getPrimary().size() >= m_readMax) {
-            dispatchItems();
-            m_dispatch.dispatch(std::make_shared<AllItemsReadEvent>(true));
-            if (m_queryChanged) {
-                return;
-            }
-            m_process.suspend();
-            awaitEvent();
-        }
-        else if (m_interval.ticked()) {
-            dispatchItems();
-        }
-                
+
+    bool success = readItem();
+    if (success) {
     }
     else {
-        endChildProcess();
+        m_process.end();
         dispatchItems();
-        m_dispatch.dispatch(std::make_shared<AllItemsReadEvent>(true));
+        dispatchAllRead(true);
         if (!m_queryChanged) {
             awaitEvent();
         }
@@ -186,7 +169,7 @@ void ItemGenerator::onEvent(std::shared_ptr<Event> event) {
 
     switch (event->getType()) {
         case QUIT_EVENT:
-            endChildProcess();
+            m_process.end();
             m_interval.end();
             break;
         case QUERY_CHANGE_EVENT: {
@@ -194,16 +177,14 @@ void ItemGenerator::onEvent(std::shared_ptr<Event> event) {
                 = (QueryChangeEvent *)event.get();
             m_newQuery = queryChangeEvent->getQuery();
             m_queryChanged = true;
-            endChildProcess();
+            m_process.end();
             break;
         }
         case ITEMS_REQUEST_EVENT: {
             std::unique_lock lock(m_mut);
             if (m_items.getPrimary().size() >= m_readMax) {
                 m_readMax += READ_BATCH;
-                if (m_process.getState() == ProcessState::Suspended) {
-                    m_process.resume();
-                }
+                m_process.resume();
             }
             break;
         }

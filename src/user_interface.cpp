@@ -113,7 +113,7 @@ void UserInterface::handleMouse(MouseEvent event) {
                     {
                         m_selected = true;
                         m_selectedKey = K_MOUSE;
-                        m_dispatch.dispatch(std::make_shared<QuitEvent>());
+                        raise(SIGINT);
                     }
                     else {
                         m_itemList->setSelected(event.y);
@@ -135,7 +135,7 @@ void UserInterface::handleInput(KeyEvent event) {
             if (key == event.getKey()) {
                 m_selectedKey = event.getKey();
                 m_selected = true;
-                m_dispatch.dispatch(std::make_shared<QuitEvent>());
+                raise(SIGINT);
                 return;
             }
         }
@@ -144,7 +144,7 @@ void UserInterface::handleInput(KeyEvent event) {
     switch (event.getKey()) {
         case K_ESCAPE:
         case K_CTRL_C: {
-            m_dispatch.dispatch(std::make_shared<QuitEvent>());
+            raise(SIGINT);
             break;
         }
         case 32 ... 126:
@@ -189,7 +189,7 @@ void UserInterface::handleInput(KeyEvent event) {
         case K_ENTER: {
             m_selected = true;
             m_selectedKey = event.getKey();
-            m_dispatch.dispatch(std::make_shared<QuitEvent>());
+            raise(SIGINT);
             break;
         }
 

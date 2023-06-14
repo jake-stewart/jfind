@@ -70,7 +70,9 @@ void FileItemReader::onStart() {
 }
 
 void FileItemReader::preOnEvent(EventType eventType) {
-    // todo make it quit faster
+    if (eventType == QUIT_EVENT) {
+        m_itemReader.cancel();
+    }
 }
 
 bool FileItemReader::readFirstBatch() {
