@@ -71,8 +71,8 @@ void FileItemReader::onStart() {
 }
 
 void FileItemReader::preOnEvent(EventType eventType) {
-    close(fileno(m_file));
     if (eventType == QUIT_EVENT) {
+        close(fileno(m_file));
         m_itemReader.cancel();
     }
 }
