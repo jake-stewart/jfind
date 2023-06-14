@@ -87,7 +87,6 @@ bool isContinuationByte(unsigned char ch) {
 bool InputReader::getKey(Key *key) {
     char c;
     if (!getch(&c)) {
-        m_logger.log("WOKEN UP");
         return false;
     }
     switch (c) {

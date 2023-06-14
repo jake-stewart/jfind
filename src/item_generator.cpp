@@ -52,7 +52,7 @@ bool ItemGenerator::readFirstBatch() {
     for (int i = 0; i < READ_BATCH; i++) {
         Item item;
         success = m_itemReader.read(item);
-        if (success) {
+        if (!success) {
             break;
         }
         m_items.getSecondary().push_back(item);

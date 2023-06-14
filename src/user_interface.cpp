@@ -283,7 +283,7 @@ void UserInterface::onLoop() {
         std::chrono::system_clock::time_point::duration duration = now - ::start;
         std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
         ::start = now;
-        m_logger.log("refreshed %lld seconds since last refresh", ms.count());
+        m_logger.log("refreshed after %lldms", ms.count());
         m_itemList->refresh(m_resetCursor);
         m_resetCursor = false;
         m_requiresRefresh = false;
