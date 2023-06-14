@@ -159,7 +159,7 @@ void AnsiWrapper::initTerm(void) {
     setAlternateBuffer(true);
     clearTerm();
     moveHome();
-    fflush(m_outputFile);
+    // fflush(m_outputFile);
 }
 
 void AnsiWrapper::closeStdin() {

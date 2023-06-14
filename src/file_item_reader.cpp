@@ -14,6 +14,7 @@ using std::chrono::time_point;
 using std::chrono::system_clock;
 
 FileItemReader::FileItemReader(FILE *file) {
+    m_file = file;
     m_interval.setInterval(50ms);
     m_itemReader.setFile(file);
     m_dispatch.subscribe(this, QUIT_EVENT);
@@ -70,6 +71,7 @@ void FileItemReader::onStart() {
 }
 
 void FileItemReader::preOnEvent(EventType eventType) {
+    close(fileno(m_file));
     if (eventType == QUIT_EVENT) {
         m_itemReader.cancel();
     }

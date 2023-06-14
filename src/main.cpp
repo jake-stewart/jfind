@@ -212,12 +212,16 @@ int main(int argc, const char **argv) {
 
         userInterface.setThreadsafeReading(true);
 
-        itemCache.setItemsCallback([itemGenerator] (Item *buffer, int idx, int n) {
-            return itemGenerator->copyItems(buffer, idx, n);
-        });
-        itemCache.setSizeCallback([itemGenerator] () {
-            return itemGenerator->size();
-        });
+        itemCache.setItemsCallback(
+            [itemGenerator] (Item *buffer, int idx, int n) {
+                return itemGenerator->copyItems(buffer, idx, n);
+            }
+        );
+        itemCache.setSizeCallback(
+            [itemGenerator] () {
+                return itemGenerator->size();
+            }
+        );
     }
     else {
         itemSorter = new ItemSorter();
@@ -237,12 +241,16 @@ int main(int argc, const char **argv) {
 
         itemReader = new FileItemReader(stdin);
 
-        itemCache.setItemsCallback([itemSorter] (Item *buffer, int idx, int n) {
-            return itemSorter->copyItems(buffer, idx, n);
-        });
-        itemCache.setSizeCallback([itemSorter] () {
-            return itemSorter->size();
-        });
+        itemCache.setItemsCallback(
+            [itemSorter] (Item *buffer, int idx, int n) {
+                return itemSorter->copyItems(buffer, idx, n);
+            }
+        );
+        itemCache.setSizeCallback(
+            [itemSorter] () {
+                return itemSorter->size();
+            }
+        );
     }
 
     InputReader inputReader;
@@ -263,28 +271,28 @@ int main(int argc, const char **argv) {
     ansi.setCursor(true);
     emitResizeEvent();
 
-    std::vector<std::thread*> threads;
-    threads.push_back(new std::thread(&UserInterface::start, &userInterface));
+    std::vector<std::thread> threads;
+    threads.push_back(std::thread(&UserInterface::start, &userInterface));
     if (config.command.size()) {
         close(STDIN_FILENO);
-        threads.push_back(new std::thread(&ItemGenerator::start, itemGenerator));
+        threads.push_back(std::thread(&ItemGenerator::start, itemGenerator));
     }
     else {
-        threads.push_back(new std::thread(&ItemSorter::start, itemSorter));
-        threads.push_back(new std::thread(&FileItemReader::start, itemReader));
+        threads.push_back(std::thread(&ItemSorter::start, itemSorter));
+        threads.push_back(std::thread(&FileItemReader::start, itemReader));
     }
-    threads.push_back(new std::thread(&InputReader::start, &inputReader));
-    for (std::thread* thread : threads) {
-        thread->join();
-        delete thread;
+    threads.push_back(std::thread(&InputReader::start, &inputReader));
+    for (std::thread &thread : threads) {
+        thread.join();
     }
 
-    ansi.restoreTerm();
     Item *selected = userInterface.getSelected();
     if (selected && historyManager) {
         historyManager->writeHistory(selected);
         delete historyManager;
     }
+
+    ansi.restoreTerm();
 
     printResult(userInterface.getSelectedKey(), selected,
             editor.getText().c_str());

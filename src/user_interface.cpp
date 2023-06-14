@@ -143,10 +143,9 @@ void UserInterface::handleInput(KeyEvent event) {
 
     switch (event.getKey()) {
         case K_ESCAPE:
-        case K_CTRL_C: {
             m_dispatch.dispatch(std::make_shared<QuitEvent>());
             break;
-        }
+
         case 32 ... 126:
             m_editor->input(event.getKey());
             break;

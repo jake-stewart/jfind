@@ -27,6 +27,7 @@ private:
     void endInterval();
 
     bool m_itemsRead = true;
+    FILE *m_file;
 
     ItemReader m_itemReader;
     IntervalThread m_interval;
