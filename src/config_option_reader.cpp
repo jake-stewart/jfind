@@ -21,7 +21,21 @@ bool ConfigOptionReader::read(int argc, const char **argv) {
              ->min(K_NULL)
              ->max(K_ERROR),
          (new BooleanOption("show-key", &config.showKey)),
-         (new IntegerOption("history-limit", &config.historyLimit))->min(0)}};
+         (new IntegerOption("history-limit", &config.historyLimit))->min(0),
+         new EnumOption<MatcherType>(
+             "matcher", &config.matcher,
+             std::map<std::string, MatcherType>{
+                 {"fuzzy", FUZZY_MATCHER},
+                 {"regex", REGEX_MATCHER},
+                 {"exact", EXACT_MATCHER}}
+         ),
+         new EnumOption<CaseSensitivity>(
+             "case-mode", &config.caseSensitivity,
+             std::map<std::string, CaseSensitivity>{
+                 {"sensitive", CASE_SENSITIVE},
+                 {"insensitive", CASE_INSENSITIVE},
+                 {"smart", SMART_CASE}}
+         )}};
 
     OptionParser optionParser(options);
     bool success = optionParser.parse(argc, argv);
