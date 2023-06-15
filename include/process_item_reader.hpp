@@ -8,10 +8,11 @@
 #include "double_buffer.hpp"
 #include "process.hpp"
 #include <mutex>
+#include <string>
 
 class ProcessItemReader : public EventListener {
 public:
-    ProcessItemReader(std::string command);
+    ProcessItemReader(std::string command, std::string startQuery);
     ~ProcessItemReader();
     void onStart() override;
     void onLoop() override;

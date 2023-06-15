@@ -208,7 +208,7 @@ int main(int argc, const char **argv) {
     UserInterface userInterface(stderr, &styleManager, &itemList, &editor);
 
     if (config.command.size()) {
-        processItemReader = new ProcessItemReader(config.command);
+        processItemReader = new ProcessItemReader(config.command, config.query);
 
         userInterface.setThreadsafeReading(true);
 
@@ -224,7 +224,7 @@ int main(int argc, const char **argv) {
         );
     }
     else {
-        itemSorter = new ItemSorter();
+        itemSorter = new ItemSorter(config.query);
         userInterface.setThreadsafeReading(false);
         switch (Config::instance().matcher) {
             case FUZZY_MATCHER:

@@ -23,11 +23,6 @@ using std::chrono::system_clock;
 #define READ 0
 #define WRITE 1
 
-ProcessItemReader::~ProcessItemReader() {
-    freeItems(m_items.getPrimary());
-    freeItems(m_items.getSecondary());
-}
-
 std::string applyQuery(const std::string str, const std::string query) {
     static const std::regex PLACEHOLDER_REGEX("\\{\\}");
     static const std::regex QUOTE_REGEX("'");
@@ -39,7 +34,15 @@ std::string applyQuery(const std::string str, const std::string query) {
     return std::regex_replace(str, PLACEHOLDER_REGEX, quoted);
 }
 
-ProcessItemReader::ProcessItemReader(std::string command) {
+ProcessItemReader::~ProcessItemReader() {
+    freeItems(m_items.getPrimary());
+    freeItems(m_items.getSecondary());
+}
+
+ProcessItemReader::ProcessItemReader(
+    std::string command, std::string startQuery
+) {
+    m_query = startQuery;
     m_interval.setInterval(INTERVAL);
     m_dispatch.subscribe(this, QUIT_EVENT);
     m_dispatch.subscribe(this, QUERY_CHANGE_EVENT);

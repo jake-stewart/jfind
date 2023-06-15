@@ -9,7 +9,8 @@
 
 using namespace std::chrono_literals;
 
-ItemSorter::ItemSorter() {
+ItemSorter::ItemSorter(std::string startQuery) {
+    m_query = startQuery;
     m_isSorted = false;
     m_queryChanged = false;
     m_heuristicIdx = 0;
