@@ -1,28 +1,28 @@
-#include "../include/item_sorter.hpp"
-#include "../include/item_matcher.hpp"
-#include "../include/item_fuzzy_matcher.hpp"
-#include "../include/item_regex_matcher.hpp"
-#include "../include/item_exact_matcher.hpp"
-#include "../include/item_generator.hpp"
-#include "../include/item_cache.hpp"
+#include "../include/ansi_wrapper.hpp"
 #include "../include/config.hpp"
-#include "../include/util.hpp"
-#include "../include/history_manager.hpp"
 #include "../include/config_json_reader.hpp"
 #include "../include/config_option_reader.hpp"
-#include "../include/ansi_wrapper.hpp"
-#include "../include/item_list.hpp"
-#include "../include/utf8_line_editor.hpp"
-#include "../include/style_manager.hpp"
-#include "../include/user_interface.hpp"
 #include "../include/event_dispatch.hpp"
 #include "../include/file_item_reader.hpp"
+#include "../include/history_manager.hpp"
+#include "../include/item_cache.hpp"
+#include "../include/item_exact_matcher.hpp"
+#include "../include/item_fuzzy_matcher.hpp"
+#include "../include/item_list.hpp"
+#include "../include/item_matcher.hpp"
+#include "../include/item_regex_matcher.hpp"
+#include "../include/item_sorter.hpp"
 #include "../include/logger.hpp"
-
-#include <thread>
+#include "../include/process_item_reader.hpp"
+#include "../include/style_manager.hpp"
+#include "../include/user_interface.hpp"
+#include "../include/utf8_line_editor.hpp"
+#include "../include/util.hpp"
 #include <climits>
-#include <cstring>
 #include <csignal>
+#include <cstring>
+#include <thread>
+
 extern "C" {
 #include <fcntl.h>
 }
@@ -194,8 +194,8 @@ int main(int argc, const char **argv) {
 
     ItemSorter *itemSorter;
     ItemMatcher *matcher;
-    FileItemReader *itemReader;
-    ItemGenerator *itemGenerator;
+    FileItemReader *fileItemReader;
+    ProcessItemReader *processItemReader;
 
     ItemCache itemCache;
 
@@ -208,18 +208,18 @@ int main(int argc, const char **argv) {
     UserInterface userInterface(stderr, &styleManager, &itemList, &editor);
 
     if (config.command.size()) {
-        itemGenerator = new ItemGenerator(config.command);
+        processItemReader = new ProcessItemReader(config.command);
 
         userInterface.setThreadsafeReading(true);
 
         itemCache.setItemsCallback(
-            [itemGenerator] (Item *buffer, int idx, int n) {
-                return itemGenerator->copyItems(buffer, idx, n);
+            [processItemReader] (Item *buffer, int idx, int n) {
+                return processItemReader->copyItems(buffer, idx, n);
             }
         );
         itemCache.setSizeCallback(
-            [itemGenerator] () {
-                return itemGenerator->size();
+            [processItemReader] () {
+                return processItemReader->size();
             }
         );
     }
@@ -239,7 +239,7 @@ int main(int argc, const char **argv) {
         }
         itemSorter->setMatcher(matcher);
 
-        itemReader = new FileItemReader(stdin);
+        fileItemReader = new FileItemReader(stdin);
 
         itemCache.setItemsCallback(
             [itemSorter] (Item *buffer, int idx, int n) {
@@ -275,11 +275,11 @@ int main(int argc, const char **argv) {
     threads.push_back(std::thread(&UserInterface::start, &userInterface));
     if (config.command.size()) {
         close(STDIN_FILENO);
-        threads.push_back(std::thread(&ItemGenerator::start, itemGenerator));
+        threads.push_back(std::thread(&ProcessItemReader::start, processItemReader));
     }
     else {
         threads.push_back(std::thread(&ItemSorter::start, itemSorter));
-        threads.push_back(std::thread(&FileItemReader::start, itemReader));
+        threads.push_back(std::thread(&FileItemReader::start, fileItemReader));
     }
     threads.push_back(std::thread(&InputReader::start, &inputReader));
     for (std::thread &thread : threads) {
@@ -301,11 +301,11 @@ int main(int argc, const char **argv) {
     Logger::close();
 
     if (config.command.size()) {
-        delete itemGenerator;
+        delete processItemReader;
     }
     else {
         delete itemSorter;
-        delete itemReader;
+        delete fileItemReader;
         delete matcher;
     }
 

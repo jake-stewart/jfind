@@ -1,4 +1,4 @@
-#include "../include/item_generator.hpp"
+#include "../include/process_item_reader.hpp"
 #include "../include/config.hpp"
 #include <chrono>
 #include <cstdio>
@@ -23,7 +23,7 @@ using std::chrono::system_clock;
 #define READ 0
 #define WRITE 1
 
-ItemGenerator::~ItemGenerator() {
+ProcessItemReader::~ProcessItemReader() {
     freeItems(m_items.getPrimary());
     freeItems(m_items.getSecondary());
 }
@@ -39,14 +39,14 @@ std::string applyQuery(const std::string str, const std::string query) {
     return std::regex_replace(str, PLACEHOLDER_REGEX, quoted);
 }
 
-ItemGenerator::ItemGenerator(std::string command) {
+ProcessItemReader::ProcessItemReader(std::string command) {
     m_interval.setInterval(INTERVAL);
     m_dispatch.subscribe(this, QUIT_EVENT);
     m_dispatch.subscribe(this, QUERY_CHANGE_EVENT);
     m_dispatch.subscribe(this, ITEMS_REQUEST_EVENT);
 }
 
-bool ItemGenerator::readFirstBatch() {
+bool ProcessItemReader::readFirstBatch() {
     time_point start = system_clock::now();
     bool success;
     for (int i = 0; i < READ_BATCH; i++) {
@@ -64,7 +64,7 @@ bool ItemGenerator::readFirstBatch() {
     return success;
 }
 
-bool ItemGenerator::readItem() {
+bool ProcessItemReader::readItem() {
     Item item;
     bool success = m_itemReader.read(item);
     if (!success) {
@@ -92,13 +92,13 @@ bool ItemGenerator::readItem() {
 }
 
 
-void ItemGenerator::onStart() {
+void ProcessItemReader::onStart() {
     m_logger.log("started");
     m_interval.start();
     startChildProcess();
 }
 
-void ItemGenerator::startChildProcess() {
+void ProcessItemReader::startChildProcess() {
     std::string command = applyQuery(Config::instance().command, m_query);
     const char* argv[] = {"/bin/sh", "-c", command.c_str(), NULL};
     if (!m_process.start((char**)argv)) {
@@ -115,22 +115,22 @@ void ItemGenerator::startChildProcess() {
     }
 }
 
-void ItemGenerator::dispatchItems() {
+void ProcessItemReader::dispatchItems() {
     m_dispatch.dispatch(std::make_shared<ItemsSortedEvent>(m_query));
 }
 
-void ItemGenerator::dispatchAllRead(bool value) {
+void ProcessItemReader::dispatchAllRead(bool value) {
     m_dispatch.dispatch(std::make_shared<AllItemsReadEvent>(value));
 }
 
-void ItemGenerator::freeItems(std::vector<Item> &items) {
+void ProcessItemReader::freeItems(std::vector<Item> &items) {
     for (const Item &item : items) {
         free((void*)item.text);
     }
     items.clear();
 }
 
-void ItemGenerator::onLoop() {
+void ProcessItemReader::onLoop() {
     if (m_queryChanged) {
         if (!m_interval.ticked()) {
             awaitEvent(m_interval.getRemaining());
@@ -158,13 +158,13 @@ void ItemGenerator::onLoop() {
     }
 }
 
-void ItemGenerator::preOnEvent(EventType eventType) {
+void ProcessItemReader::preOnEvent(EventType eventType) {
     if (eventType == QUIT_EVENT) {
         m_itemReader.cancel();
     }
 }
 
-void ItemGenerator::onEvent(std::shared_ptr<Event> event) {
+void ProcessItemReader::onEvent(std::shared_ptr<Event> event) {
     m_logger.log("received %s", getEventNames()[event->getType()]);
 
     switch (event->getType()) {
@@ -197,7 +197,7 @@ void ItemGenerator::onEvent(std::shared_ptr<Event> event) {
     }
 }
 
-int ItemGenerator::copyItems(Item *buffer, int idx, int n) {
+int ProcessItemReader::copyItems(Item *buffer, int idx, int n) {
     std::unique_lock lock(m_mut);
     std::vector<Item> &items = m_items.getPrimary();
     if (idx + n > items.size()) {
@@ -209,7 +209,7 @@ int ItemGenerator::copyItems(Item *buffer, int idx, int n) {
     return n;
 }
 
-int ItemGenerator::size() {
+int ProcessItemReader::size() {
     std::unique_lock lock(m_mut);
     return m_items.getPrimary().size();
 }

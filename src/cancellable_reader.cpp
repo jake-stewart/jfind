@@ -28,7 +28,6 @@ ssize_t CancellableReader::getline(char **buf, size_t *size) {
         return -1;
     }
     if (FD_ISSET(m_pipe[0], &m_fd_set)) {
-        m_logger.log("cancel is set");
         return -1;
     }
     return ::getline(buf, size, m_file);

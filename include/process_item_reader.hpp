@@ -9,10 +9,10 @@
 #include "process.hpp"
 #include <mutex>
 
-class ItemGenerator : public EventListener {
+class ProcessItemReader : public EventListener {
 public:
-    ItemGenerator(std::string command);
-    ~ItemGenerator();
+    ProcessItemReader(std::string command);
+    ~ProcessItemReader();
     void onStart() override;
     void onLoop() override;
     void preOnEvent(EventType eventType) override;
@@ -30,7 +30,7 @@ private:
     IntervalThread m_interval;
 
     EventDispatch &m_dispatch = EventDispatch::instance();
-    Logger m_logger = Logger("ItemGenerator");
+    Logger m_logger = Logger("ProcessItemReader");
     DoubleBuffer<std::vector<Item>> m_items;
     ItemReader m_itemReader;
 
