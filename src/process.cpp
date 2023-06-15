@@ -1,5 +1,5 @@
 #include "../include/process.hpp"
-
+#include <cstdlib>
 #include <csignal>
 
 #define READ 0
