@@ -1,0 +1,41 @@
+name: ci
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+concurrency:
+  # Cancels pending runs when a PR gets updated.
+  group: ${{ github.head_ref || github.run_id }}-${{ github.actor }}
+  cancel-in-progress: true
+jobs:
+  clang-x86_64-linux-release:
+    timeout-minutes: 20
+    runs-on: ubuntu-latest
+    env:
+      ARCH: "x86_64"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Build and Test
+        run: sh ci/gcc-x86_64-linux-release.sh
+  gcc-x86_64-linux-release:
+    timeout-minutes: 20
+    runs-on: ubuntu-latest
+    env:
+      ARCH: "x86_64"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Build and Test
+        run: sh ci/clang-x86_64-linux-release.sh
+  # clang-x86_64-macos-debug:
+  #   timeout-minutes: 20
+  #   runs-on: macos-latest
+  #   env:
+  #     ARCH: "x86_64"
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v3
+  #     - name: Build and Test
+  #       run: sh ci/x86_64-macos-debug.sh
