@@ -6,6 +6,7 @@
 #include <climits>
 #include <cstring>
 #include <unordered_map>
+#include <unistd.h>
 
 using namespace std::chrono_literals;
 
@@ -138,7 +139,6 @@ void ItemSorter::calcHeuristics(bool newItems, int start, int end)
     m_sortIdx = 0;
 }
 
-#include <unistd.h>
 int ItemSorter::copyItems(Item *buffer, int idx, int n) {
     if (idx + n < 256) {
         if (idx + n > m_firstItemsSize) {
