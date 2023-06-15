@@ -38,6 +38,9 @@ private:
     const Config& m_config = Config::instance();
     FILE *m_outputFile;
 
+    bool m_firstUpdate = true;
+    std::chrono::system_clock::time_point m_lastUpdateTime;
+
     ItemList *m_itemList;
     Utf8LineEditor *m_editor;
     Spinner m_spinner;

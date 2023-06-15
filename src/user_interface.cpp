@@ -26,11 +26,9 @@ UserInterface::UserInterface(FILE *outputFile, StyleManager *styleManager, ItemL
     m_dispatch.subscribe(this, ALL_ITEMS_READ_EVENT);
 }
 
-std::chrono::system_clock::time_point start;
-
 void UserInterface::onStart() {
     m_logger.log("started");
-    ::start = std::chrono::system_clock::now();
+    m_lastUpdateTime = std::chrono::system_clock::now();
     m_itemList->allowScrolling(m_threadsafeReading);
 }
 
@@ -279,10 +277,20 @@ void UserInterface::onLoop() {
         }
     }
     if (m_requiresRefresh) {
-        std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
-        std::chrono::system_clock::time_point::duration duration = now - ::start;
-        std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
-        ::start = now;
+        std::chrono::system_clock::time_point
+            now = std::chrono::system_clock::now();
+        std::chrono::system_clock::time_point::duration
+            duration = now - m_lastUpdateTime;
+        std::chrono::milliseconds ms = std::chrono::duration_cast<
+            std::chrono::milliseconds>(duration);
+
+        if (ms < 50ms && !m_firstUpdate) {
+            awaitEvent(50ms - ms);
+            return;
+        }
+
+        m_lastUpdateTime = now;
+        m_firstUpdate = false;
         m_logger.log("refreshed after %lldms", ms.count());
         m_itemList->refresh(m_resetCursor);
         m_resetCursor = false;
