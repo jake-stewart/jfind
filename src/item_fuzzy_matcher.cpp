@@ -10,7 +10,7 @@
 #define tolower(c) (isupper(c) ? c + 32 : c)
 
 static const int MATCH_BONUS = 1;
-static const int BOUNDARY_BONUS = 100;
+static const int INNER_WORD_BOUNDARY_BONUS = 100;
 static const int NEW_WORD_BONUS = 101;
 static const int START_LINE_BONUS = 102;
 static const int CONSECUTIVE_BONUS = 200;
@@ -27,11 +27,11 @@ static inline int boundaryScore(const char *c) {
             return NEW_WORD_BONUS;
         }
         if (!isupper(*(c - 1)) || islower(*(c + 1))) {
-            return BOUNDARY_BONUS;
+            return INNER_WORD_BOUNDARY_BONUS;
         }
     }
     else if ((isdigit(*c)) && !isdigit(*(c - 1))) {
-        return BOUNDARY_BONUS;
+        return INNER_WORD_BOUNDARY_BONUS;
     }
     return 0;
 }
@@ -88,7 +88,7 @@ int ItemFuzzyMatcher::match(const char *tp, const char *qp, int dist, bool conse
 {
     int maxScore = BAD_HEURISTIC;
     while (*tp) {
-        bool boundary = boundaryScore(tp);
+        int boundary = boundaryScore(tp);
         dist += boundary > 0;
         if (tolower(*tp) == *qp) {
             int score = 0;

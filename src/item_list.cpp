@@ -59,8 +59,8 @@ void ItemList::drawName(int i) const {
         m_styleManager->set(m_config.itemStyle);
     }
 
-    fprintf(m_outputFile, "%s", name.c_str());
-    // fprintf(m_outputFile, "%s %d", name.c_str(), m_itemCache->get(i)->heuristic);
+    // fprintf(m_outputFile, "%s", name.c_str());
+    fprintf(m_outputFile, "%s %d", name.c_str(), m_itemCache->get(i)->heuristic);
 }
 
 void ItemList::drawHint(int i) const {
