@@ -168,8 +168,6 @@ int ItemSorter::copyItems(Item *buffer, int idx, int n) {
 void ItemSorter::sorterThread() {
     std::unique_lock items_lock(m_items_mut);
     while (m_sorterThreadActive) {
-        addNewItems();
-        sortItems();
         {
             std::unique_lock lock(m_sorter_mut);
             items_lock.unlock();
@@ -181,6 +179,8 @@ void ItemSorter::sorterThread() {
             }
             items_lock.lock();
         }
+        addNewItems();
+        sortItems();
     }
 }
 
