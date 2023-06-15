@@ -12,5 +12,6 @@ std::filesystem::path expandUserPath(std::string user_path);
 int mod(int n, int m);
 bool isVowel(char c);
 bool isInteger(const char *str);
+void replace(std::string& str, char from, char to);
 
 #endif

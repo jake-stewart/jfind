@@ -2,6 +2,11 @@
 #include <regex>
 #include <fstream>
 
+JsonParser::~JsonParser() {
+    for (const JsonElement *element : m_elements) {
+        delete element;
+    }
+}
 
 JsonElementType JsonElement::getType() const {
     return m_type;

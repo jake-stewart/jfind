@@ -85,76 +85,43 @@ bool isContinuationByte(unsigned char ch) {
 }
 
 bool InputReader::getKey(Key *key) {
-    char ch = getch();
-    switch (ch) {
+    char c;
+    if (!getch(&c)) {
+        return false;
+    }
+    switch (c) {
         case -1:
             *key = K_ERROR;
-            return false;
+            return true;
         case K_ESCAPE:
             return parseEsc(key);
         case 1 ... (K_ESCAPE - 1):
         case (K_ESCAPE + 1) ... 127:
-            *key = (Key)ch;
+            *key = (Key)c;
             return true;
         default:
-            return parseUtf8(ch, key);
+            return parseUtf8(c, key);
     }
-}
-
-bool InputReader::hasKey() {
-    FD_ZERO(&m_set);
-    FD_SET(m_fileDescriptor, &m_set);
-    int sel = select(m_fileDescriptor + 1, &m_set, NULL, NULL, &m_timeout);
-    return sel > 0;
 }
 
 InputReader::InputReader() {
-    m_timeout.tv_sec = 0;
-    m_timeout.tv_usec = 0;
-    m_fileDescriptor = STDIN_FILENO;
-
-    pipe(m_pipe);
     m_dispatch.subscribe(this, QUIT_EVENT);
 }
 
-void InputReader::setFileDescriptor(int fileDescriptor) {
-    m_fileDescriptor = fileDescriptor;
+void InputReader::setFileDescriptor(int fd) {
+    m_reader.setFileDescriptor(fd);
 }
 
-char InputReader::getch() {
-    fd_set read_fds, except_fds;
-    FD_ZERO(&read_fds);
-    FD_SET(m_fileDescriptor, &read_fds);
-    FD_SET(m_pipe[0], &read_fds);
-
-    FD_ZERO(&except_fds);
-    FD_SET(m_fileDescriptor, &except_fds);
-    FD_SET(m_pipe[0], &except_fds);
-
-    int maxfd = m_fileDescriptor > m_pipe[0] ? m_fileDescriptor : m_pipe[0];
-    int activity = select(maxfd + 1, &read_fds, nullptr, &except_fds, nullptr);
-
-    switch (activity) {
-        case -1:
-        case 0:
-            m_logger.log("select error");
-            m_dispatch.dispatch(std::make_shared<QuitEvent>());
-            break;
+bool InputReader::getch(char *c) {
+    if (m_reader.read(c, 1) < 0) {
+        m_dispatch.dispatch(std::make_shared<QuitEvent>());
+        return false;
     }
-
-    if (FD_ISSET(m_fileDescriptor, &read_fds)) {
-        char ch;
-        if (read(m_fileDescriptor, &ch, 1) != 1) {
-            return -1;
-        }
-        return ch;
-    }
-
-    return -1;
+    return true;
 }
 
-int InputReader::parseEsc(Key *key) {
-    if (!hasKey()) {
+bool InputReader::parseEsc(Key *key) {
+    if (m_reader.blocked()) {
         *key = K_ESCAPE;
         return true;
     }
@@ -162,23 +129,28 @@ int InputReader::parseEsc(Key *key) {
     std::stringstream ss;
 
     do {
-        ss << getch();
+        char c;
+        if (!getch(&c)) {
+            return false;
+        }
+        ss << c;
     }
-    while (hasKey());
+    while (!m_reader.blocked());
 
     std::string seq = ss.str();
     if (seq.size() == 1) {
-        return parseAltKey(seq[0], key);
+        parseAltKey(seq[0], key);
     }
     else if (seq.size() > 2 && seq[0] == '[' && seq[1] == '<') {
-        return parseMouse(seq, key);
+        parseMouse(seq, key);
     }
     else {
-        return parseEsqSeq(seq, key);
+        parseEscSeq(seq, key);
     }
+    return true;
 }
 
-int InputReader::parseMouse(std::string& seq, Key *key) {
+void InputReader::parseMouse(std::string& seq, Key *key) {
     int length;
     int idx = 0;
 
@@ -276,61 +248,63 @@ int InputReader::parseMouse(std::string& seq, Key *key) {
 
     if (!m_mouseEvents.size()) {
         *key = K_UNKNOWN;
-        return false;
     }
 
     *key = K_MOUSE;
-    return true;
 }
 
-int InputReader::parseAltKey(char ch, Key *key) {
-    switch (ch) {
+void InputReader::parseAltKey(char c, Key *key) {
+    switch (c) {
         case 9:
             *key = K_ALT_TAB;
-            return true;
+            break;
         case 13:
             *key = K_ALT_ENTER;
-            return true;
+            break;
         case 32 ... 90:
         case 92 ... 127:
-            *key = (Key)(K_ALT_SPACE + ch - 32);
-            return true;
+            *key = (Key)(K_ALT_SPACE + c - 32);
+            break;
         default:
             *key = K_UNKNOWN;
-            return false;
+            break;
     }
 }
 
-int InputReader::parseEsqSeq(std::string& seq, Key *key) {
+void InputReader::parseEscSeq(std::string& seq, Key *key) {
     std::map<std::string, Key>::const_iterator it;
     it = ESC_KEY_LOOKUP.find(seq);
     if (it == ESC_KEY_LOOKUP.end()) {
         *key = K_UNKNOWN;
-        return false;
     }
-    *key = it->second;
-    return true;
+    else {
+        *key = it->second;
+    }
 }
 
-int InputReader::parseUtf8(char ch, Key *key) {
+bool InputReader::parseUtf8(char ch, Key *key) {
     int length = utf8CharLen(ch);
     if (length < 2) {
         *key = K_UNKNOWN;
-        return false;
+        return true;
     }
 
     m_widechar[0] = ch;
 
     int i;
     for (i = 1; i < length; i++) {
-        if (!hasKey()) {
+        if (m_reader.blocked()) { // todo test
             *key = K_UNKNOWN;
+            return true;
+        }
+        char c;
+        if (!getch(&c)) {
             return false;
         }
-        m_widechar[i] = getch();
+        m_widechar[i] = c;
         if (!isContinuationByte(m_widechar[i])) {
             *key = K_UNKNOWN;
-            return false;
+            return true;
         }
     }
     m_widechar[i] = 0;
@@ -339,13 +313,11 @@ int InputReader::parseUtf8(char ch, Key *key) {
     return true;
 }
 
-static bool is_started = false;
+void InputReader::onStart() {
+    m_logger.log("started");
+}
 
 void InputReader::onLoop() {
-    if (!is_started) {
-        is_started = true;
-    }
-
     Key key;
     bool success = getKey(&key);
     if (success) {
@@ -361,10 +333,16 @@ void InputReader::onLoop() {
                 break;
         }
     }
+    else {
+        m_reader.cancel();
+        end();
+    }
 }
 
 void InputReader::preOnEvent(EventType type) {
-    close(m_pipe[1]);
+    if (type == QUIT_EVENT) {
+        m_reader.cancel();
+    }
 }
 
 void InputReader::onEvent(std::shared_ptr<Event> event) {

@@ -6,9 +6,6 @@
 class ConfigOptionReader {
     public:
         bool read(int argc, const char **argv);
-
-    private:
-        Config& m_config = Config::instance();
 };
 
 #endif

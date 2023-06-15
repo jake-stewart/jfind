@@ -26,6 +26,12 @@ UserInterface::UserInterface(FILE *outputFile, StyleManager *styleManager, ItemL
     m_dispatch.subscribe(this, ALL_ITEMS_READ_EVENT);
 }
 
+void UserInterface::onStart() {
+    m_logger.log("started");
+    m_lastUpdateTime = std::chrono::system_clock::now();
+    m_itemList->allowScrolling(m_threadsafeReading);
+}
+
 void UserInterface::drawPrompt() {
     ansi.move(0, m_height - 1);
     m_styleManager->set(m_config.searchRowStyle);
@@ -135,10 +141,9 @@ void UserInterface::handleInput(KeyEvent event) {
 
     switch (event.getKey()) {
         case K_ESCAPE:
-        case K_CTRL_C: {
             m_dispatch.dispatch(std::make_shared<QuitEvent>());
             break;
-        }
+
         case 32 ... 126:
             m_editor->input(event.getKey());
             break;
@@ -205,6 +210,10 @@ void UserInterface::handleInput(KeyEvent event) {
     }
 
     if (m_itemList->didScroll()) {
+        if (!m_requestedMoreItems && m_itemList->getScrollPercentage() > 0.9f) {
+            m_requestedMoreItems = true;
+            m_dispatch.dispatch(std::make_shared<ItemsRequestEvent>());
+        }
         drawPrompt();
         drawQuery();
     }
@@ -227,12 +236,18 @@ void UserInterface::onEvent(std::shared_ptr<Event> event) {
         case ITEMS_SORTED_EVENT: {
             ItemsSortedEvent *sortedEvent = (ItemsSortedEvent*)event.get();
             m_requiresRefresh = true;
+            m_requestedMoreItems = false;
             m_isSorting = sortedEvent->getQuery() != m_editor->getText();
             break;
         }
         case ALL_ITEMS_READ_EVENT: {
-            m_itemList->allowScrolling(true);
-            m_isReading = false;
+            AllItemsReadEvent *itemsEvent = (AllItemsReadEvent*)event.get();
+            bool canScroll = m_threadsafeReading || itemsEvent->getValue();
+            m_itemList->allowScrolling(canScroll);
+            m_isReading = !itemsEvent->getValue();
+            break;
+        }
+        case QUIT_EVENT: {
             break;
         }
         default:
@@ -262,6 +277,21 @@ void UserInterface::onLoop() {
         }
     }
     if (m_requiresRefresh) {
+        std::chrono::system_clock::time_point
+            now = std::chrono::system_clock::now();
+        std::chrono::system_clock::time_point::duration
+            duration = now - m_lastUpdateTime;
+        std::chrono::milliseconds ms = std::chrono::duration_cast<
+            std::chrono::milliseconds>(duration);
+
+        if (ms < 50ms && !m_firstUpdate) {
+            awaitEvent(50ms - ms);
+            return;
+        }
+
+        m_lastUpdateTime = now;
+        m_firstUpdate = false;
+        m_logger.log("refreshed after %lldms", ms.count());
         m_itemList->refresh(m_resetCursor);
         m_resetCursor = false;
         m_requiresRefresh = false;
@@ -280,4 +310,8 @@ void UserInterface::onLoop() {
     else if (remaining > 0ms) {
         awaitEvent(remaining);
     }
+}
+
+void UserInterface::setThreadsafeReading(bool value) {
+    m_threadsafeReading = value;
 }

@@ -1,6 +1,7 @@
 #ifndef ITEM_LIST_HPP
 #define ITEM_LIST_HPP
 
+#include "logger.hpp"
 #include "item_cache.hpp"
 #include "style_manager.hpp"
 #include "config.hpp"
@@ -19,7 +20,7 @@ class ItemList {
     int m_hintWidth = 0;
 
     bool m_didScroll = false;
-    bool m_allowScrolling = false;
+    bool m_allowScrolling = true;
 
     FILE *m_outputFile;
 
@@ -28,7 +29,7 @@ class ItemList {
 
     Logger m_logger = Logger("ItemList");
     AnsiWrapper &ansi = AnsiWrapper::instance();
-    Config& m_config = Config::instance();
+    const Config& m_config = Config::instance();
 
     void drawName(int i) const;
     void drawHint(int i) const;
@@ -44,11 +45,13 @@ public:
     Item* getSelected() const;
     Item* get(int y) const;
     void resize(int w, int h);
-    void scrollUp();
-    void scrollDown();
-    void moveCursorUp();
-    void moveCursorDown();
+    bool scrollUp();
+    bool scrollDown();
+    bool moveCursorUp();
+    bool moveCursorDown();
     void refresh(bool resetCursor);
+
+    float getScrollPercentage() const;
 };
 
 #endif

@@ -12,6 +12,7 @@
 static const int MATCH_BONUS = 1;
 static const int BOUNDARY_BONUS = 100;
 static const int NEW_WORD_BONUS = 101;
+static const int START_LINE_BONUS = 102;
 static const int CONSECUTIVE_BONUS = 200;
 static const int DISTANCE_PENALTY = -50;
 
@@ -63,7 +64,7 @@ int ItemFuzzyMatcher::matchStart(const char *tp, const char *qp) {
             score = match(tp + 1, qp + 1, 1, true, &depth);
             if (score == BAD_HEURISTIC) return maxScore;
         }
-        maxScore = score + MATCH_BONUS + BOUNDARY_BONUS;
+        maxScore = score + MATCH_BONUS + START_LINE_BONUS;
     }
     tp++;
     while (*tp) {

@@ -19,6 +19,8 @@ public:
     Key getSelectedKey() const;
     void onEvent(std::shared_ptr<Event> event) override;
     void onLoop() override;
+    void onStart() override;
+    void setThreadsafeReading(bool value);
 
 private:
     void redraw();
@@ -33,12 +35,18 @@ private:
     Logger m_logger = Logger("UserInterface");
     StyleManager *m_styleManager;
     AnsiWrapper& ansi = AnsiWrapper::instance();
-    Config& m_config = Config::instance();
+    const Config& m_config = Config::instance();
     FILE *m_outputFile;
+
+    bool m_firstUpdate = true;
+    std::chrono::system_clock::time_point m_lastUpdateTime;
 
     ItemList *m_itemList;
     Utf8LineEditor *m_editor;
     Spinner m_spinner;
+
+    bool m_threadsafeReading = true;
+    bool m_requestedMoreItems = false;
 
     std::vector<KeyEvent> m_inputQueue;
 

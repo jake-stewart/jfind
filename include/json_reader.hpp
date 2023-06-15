@@ -17,6 +17,7 @@ class JsonReaderStrategy
 {
     public:
         virtual bool read(const std::string& name, JsonElement *element, JsonError *error) = 0;
+        virtual ~JsonReaderStrategy() {};
 
     private:
 };

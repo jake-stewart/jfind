@@ -73,3 +73,10 @@ bool isInteger(const char *str) {
     return true;
 }
 
+void replace(std::string& str, char from, char to) {
+    for (size_t i = 0; i < str.length(); i++) {
+        if (str[i] == from) {
+            str[i] = to;
+        }
+    }
+}

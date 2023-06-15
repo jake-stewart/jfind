@@ -5,6 +5,7 @@
 #include "event_dispatch.hpp"
 #include "mouse_event.hpp"
 #include "logger.hpp"
+#include "cancellable_reader.hpp"
 
 #include <string>
 #include <vector>
@@ -14,18 +15,18 @@ extern "C" {
 #include <sys/select.h>
 }
 
-bool isContinuationByte(unsigned char ch);
-int utf8CharLen(unsigned char ch);
+bool isContinuationByte(unsigned char c);
+int utf8CharLen(unsigned char c);
 
 class InputReader : public EventListener {
 public:
     InputReader();
 
     bool getKey(Key *key);
-    bool hasKey();
-    void setFileDescriptor(int fileDescriptor);
+    void setFileDescriptor(int fd);
 
     void onLoop() override;
+    void onStart() override;
     void preOnEvent(EventType type) override;
     void onEvent(std::shared_ptr<Event> event) override;
 
@@ -35,8 +36,7 @@ private:
     EventDispatch& m_dispatch = EventDispatch::instance();
     Logger m_logger = Logger("InputReader");
 
-    // the file descriptor read for input
-    int m_fileDescriptor;
+    CancellableReader m_reader;
 
     // payload for events which require more than just
     // the Key enum value
@@ -47,22 +47,12 @@ private:
     int m_clickCount = 0;
     MouseButton m_lastClickButton = MB_NONE;
 
-    // when reading for user input, the thread is blocked
-    // if a quit event occurs, we have to unblock the thread
-    // to do this, the thread reads using select on both
-    // the input file descriptor and an internal pipe.
-    // when quitting, this internal pipe is closed, waking
-    // up select and allowing the thread to see the quit event
-    fd_set m_set;
-    timeval m_timeout;
-    int m_pipe[2];
-
-    char getch();
-    int parseEsc(Key *key);
-    int parseAltKey(char ch, Key *key);
-    int parseMouse(std::string& seq, Key *key);
-    int parseEsqSeq(std::string& seq, Key *key);
-    int parseUtf8(char ch, Key *key);
+    bool getch(char *c);
+    bool parseEsc(Key *key);
+    void parseAltKey(char c, Key *key);
+    void parseMouse(std::string& seq, Key *key);
+    void parseEscSeq(std::string& seq, Key *key);
+    bool parseUtf8(char c, Key *key);
 };
 
 #endif

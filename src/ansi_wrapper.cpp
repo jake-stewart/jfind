@@ -134,7 +134,6 @@ void AnsiWrapper::restoreTerm(void) {
     setAlternateBuffer(false);
     fflush(m_outputFile);
     tcsetattr(m_inputFileNo, TCSANOW, &m_origTermios);
-
     signal(SIGWINCH, SIG_DFL);
     signal(SIGTERM, SIG_DFL);
     signal(SIGQUIT, SIG_DFL);
@@ -160,7 +159,7 @@ void AnsiWrapper::initTerm(void) {
     setAlternateBuffer(true);
     clearTerm();
     moveHome();
-    fflush(m_outputFile);
+    // fflush(m_outputFile);
 }
 
 void AnsiWrapper::closeStdin() {

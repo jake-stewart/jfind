@@ -38,4 +38,3 @@ void Logger::log(const char *fmt, ...) {
     fprintf(c_fp, "\n");
     fflush(c_fp);
 }
-

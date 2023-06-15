@@ -14,6 +14,7 @@ enum EventType {
     ALL_ITEMS_READ_EVENT,
     ITEMS_ADDED_EVENT,
     ITEMS_SORTED_EVENT,
+    ITEMS_REQUEST_EVENT,
     RESIZE_EVENT,
     QUIT_EVENT,
 };
@@ -97,9 +98,19 @@ public:
 };
 
 class AllItemsReadEvent : public Event {
+    bool m_value;
+
 public:
+    AllItemsReadEvent(bool value) {
+        m_value = value;
+    }
+
     EventType getType() const override {
         return ALL_ITEMS_READ_EVENT;
+    }
+
+    bool getValue() {
+        return m_value;
     }
 };
 
@@ -154,6 +165,12 @@ public:
 
     int getHeight() const {
         return m_height;
+    }
+};
+
+class ItemsRequestEvent : public Event {
+    EventType getType() const override {
+        return ITEMS_REQUEST_EVENT;
     }
 };
 

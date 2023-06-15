@@ -3,6 +3,7 @@
 
 #include <functional>
 #include "util.hpp"
+#include "logger.hpp"
 
 template <class T>
 class SlidingCache {
@@ -13,6 +14,10 @@ class SlidingCache {
             m_size = 0;
             m_idx = 0;
             m_offset = 0;
+        }
+
+        ~SlidingCache() {
+            delete[] m_cache;
         }
 
         void setDatasource(std::function<int(T *buffer, int idx, int n)>
@@ -53,7 +58,8 @@ class SlidingCache {
 
             int idx = mod(i + m_idx - m_offset, m_reserve);
 
-            return &m_cache[idx];
+            T* x = &m_cache[idx];
+            return x;
         }
 
         void refresh() {
@@ -73,7 +79,7 @@ class SlidingCache {
         }
 
     private:
-        T *m_cache;
+        T *m_cache = nullptr;
         int m_reserve;
         int m_size;
         int m_offset;

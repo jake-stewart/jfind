@@ -1,23 +1,28 @@
-#include "../include/item_sorter.hpp"
-#include "../include/item_cache.hpp"
+#include "../include/ansi_wrapper.hpp"
 #include "../include/config.hpp"
-#include "../include/util.hpp"
-#include "../include/history_manager.hpp"
 #include "../include/config_json_reader.hpp"
 #include "../include/config_option_reader.hpp"
-#include "../include/ansi_wrapper.hpp"
+#include "../include/event_dispatch.hpp"
+#include "../include/file_item_reader.hpp"
+#include "../include/history_manager.hpp"
+#include "../include/item_cache.hpp"
+#include "../include/item_exact_matcher.hpp"
+#include "../include/item_fuzzy_matcher.hpp"
 #include "../include/item_list.hpp"
-#include "../include/utf8_line_editor.hpp"
+#include "../include/item_matcher.hpp"
+#include "../include/item_regex_matcher.hpp"
+#include "../include/item_sorter.hpp"
+#include "../include/logger.hpp"
+#include "../include/process_item_reader.hpp"
 #include "../include/style_manager.hpp"
 #include "../include/user_interface.hpp"
-#include "../include/event_dispatch.hpp"
-#include "../include/item_reader.hpp"
-#include "../include/logger.hpp"
-
-#include <thread>
+#include "../include/utf8_line_editor.hpp"
+#include "../include/util.hpp"
 #include <climits>
-#include <cstring>
 #include <csignal>
+#include <cstring>
+#include <thread>
+
 extern "C" {
 #include <fcntl.h>
 }
@@ -112,12 +117,17 @@ void displayHelp(const char *name) {
     printf("    --select-hint                 Print the hint to stdout\n");
     printf("    --select-both                 Print both the item and hint to stdout\n");
     printf("    --accept-non-match            Accept the user's query if nothing matches\n");
-    printf("    --matcher=MATCHER             Select which matching algorithm to use (fuzzy or regex)\n");
-    printf("    --regex-case=SENSITIVITY      Set case sensitivity for regex matcher. (sensitive, insensitive, or smart)\n");
+    printf("    --matcher=MATCHER             Override matching algorithm to MATCHER (fuzzy or regex)\n");
+    printf("    --case-mode=SENSITIVITY       Override case sensitivity to SENSITIVITY (sensitive, insensitive, or smart)\n");
     printf("    --history=FILE                Read and write match history to FILE\n");
     printf("    --history-limit=INT           Number of items to store in the history file\n");
     printf("    --prompt=PROMPT               Set the query prompt to PROMPT\n");
     printf("    --query=QUERY                 Set the starting query to QUERY\n");
+    printf("    --command                     Use COMMAND to filter items. See the COMMAND section for details\n");
+    printf("    --additional-keys=KEY_LIST    Accept the item at the cursor if a key in KEY_LIST is pressed.\n");
+    printf("                                  KEY_LIST is provided as a comma separated list of ascii codes.\n");
+    printf("    --show-key                    Print the keycode which was used to select an item.\n");
+    printf("                                  Unless provided in --additional-keys, mouse and enter will both return 0\n");
     printf("\n");
     printf("CONFIG (~/.config/jfind/config.json):\n");
     printf("    selector: STRING              The selector of an unselected item\n");
@@ -130,6 +140,8 @@ void displayHelp(const char *name) {
     printf("    max_hint_width: INT           Maximum width a hint can grow to\n");
     printf("    show_spinner: BOOL            Show a spinner animation at the bottom right when loading\n");
     printf("    style: STYLE OBJECT           Custom styles. See STYLES for keys, and STYLE OBJECT for values\n");
+    printf("    matcher: MATCHER              Default matching algorithm (fuzzy or regex)\n");
+    printf("    case_mode: SENSITIVITY        Default case sensitivity (sensitive, insensitive, or smart)\n");
     printf("\n");
     printf("STYLES:\n");
     printf("    item                          An unselected item\n");
@@ -158,6 +170,11 @@ void displayHelp(const char *name) {
     printf("    bold, italic, blink, reverse,\n");
     printf("    underline, curly_underline, double_underline, dotted_underline, dashed_underline\n");
     printf("\n");
+    printf("COMMAND:\n");
+    printf("    You can use the --command flag to run spawn a process whenever the query changes.\n");
+    printf("    The stdout of this process will be displayed as items in jfind.\n");
+    printf("    For an interactive example, run 'jfind --command=\"seq {}\"'.\n");
+    printf("\n");
     printf("Input should be piped into jfind for it to be useful. You can try the following example:\n");
     printf("    seq 100 | %s\n", name);
 }
@@ -171,10 +188,9 @@ int main(int argc, const char **argv) {
 
     if (config.logFile.size()) {
         Logger::open(config.logFile.c_str());
-        logger.log("--------------");
     }
 
-    if (isatty(STDIN_FILENO) || config.showHelp) {
+    if ((!config.command.size() && isatty(STDIN_FILENO)) || config.showHelp) {
         displayHelp(argv[0]);
         return 0;
     }
@@ -188,8 +204,13 @@ int main(int argc, const char **argv) {
         historyManager->readHistory();
     }
 
-    ItemSorter itemSorter;
-    ItemCache itemCache(&itemSorter);
+    ItemSorter *itemSorter;
+    ItemMatcher *matcher;
+    FileItemReader *fileItemReader;
+    ProcessItemReader *processItemReader;
+
+    ItemCache itemCache;
+
 
     ItemList itemList(stderr, &styleManager, &itemCache);
 
@@ -198,6 +219,52 @@ int main(int argc, const char **argv) {
 
     UserInterface userInterface(stderr, &styleManager, &itemList, &editor);
 
+    if (config.command.size()) {
+        processItemReader = new ProcessItemReader(config.command, config.query);
+
+        userInterface.setThreadsafeReading(true);
+
+        itemCache.setItemsCallback(
+            [processItemReader] (Item *buffer, int idx, int n) {
+                return processItemReader->copyItems(buffer, idx, n);
+            }
+        );
+        itemCache.setSizeCallback(
+            [processItemReader] () {
+                return processItemReader->size();
+            }
+        );
+    }
+    else {
+        itemSorter = new ItemSorter(config.query);
+        userInterface.setThreadsafeReading(false);
+        switch (Config::instance().matcher) {
+            case FUZZY_MATCHER:
+                matcher = new ItemFuzzyMatcher();
+                break;
+            case REGEX_MATCHER:
+                matcher = new ItemRegexMatcher();
+                break;
+            case EXACT_MATCHER:
+                matcher = new ItemExactMatcher();
+                break;
+        }
+        itemSorter->setMatcher(matcher);
+
+        fileItemReader = new FileItemReader(stdin);
+
+        itemCache.setItemsCallback(
+            [itemSorter] (Item *buffer, int idx, int n) {
+                return itemSorter->copyItems(buffer, idx, n);
+            }
+        );
+        itemCache.setSizeCallback(
+            [itemSorter] () {
+                return itemSorter->size();
+            }
+        );
+    }
+
     InputReader inputReader;
     int fd = open("/dev/tty", O_RDONLY);
     ansi.setInputFileNo(fd);
@@ -205,9 +272,6 @@ int main(int argc, const char **argv) {
 
     // enable unicode
     setlocale(LC_ALL, "en_US.UTF-8");
-
-    ItemReader itemReader(stdin);
-    itemReader.setReadHints(config.showHints);
 
     ansi.setOutputFile(stderr);
 
@@ -219,25 +283,43 @@ int main(int argc, const char **argv) {
     ansi.setCursor(true);
     emitResizeEvent();
 
-    std::vector<std::thread*> threads;
-    threads.push_back(new std::thread(&UserInterface::start, &userInterface));
-    threads.push_back(new std::thread(&ItemSorter::start, &itemSorter));
-    threads.push_back(new std::thread(&ItemReader::start, &itemReader));
-    threads.push_back(new std::thread(&InputReader::start, &inputReader));
-    for (std::thread* thread : threads) {
-        thread->join();
+    std::vector<std::thread> threads;
+    threads.push_back(std::thread(&UserInterface::start, &userInterface));
+    if (config.command.size()) {
+        close(STDIN_FILENO);
+        threads.push_back(std::thread(&ProcessItemReader::start, processItemReader));
+    }
+    else {
+        threads.push_back(std::thread(&ItemSorter::start, itemSorter));
+        threads.push_back(std::thread(&FileItemReader::start, fileItemReader));
+    }
+    threads.push_back(std::thread(&InputReader::start, &inputReader));
+    for (std::thread &thread : threads) {
+        thread.join();
     }
 
-    ansi.restoreTerm();
     Item *selected = userInterface.getSelected();
     if (selected && historyManager) {
         historyManager->writeHistory(selected);
+        delete historyManager;
     }
+
+    ansi.restoreTerm();
 
     printResult(userInterface.getSelectedKey(), selected,
             editor.getText().c_str());
 
+    logger.log("done");
     Logger::close();
+
+    if (config.command.size()) {
+        delete processItemReader;
+    }
+    else {
+        delete itemSorter;
+        delete fileItemReader;
+        delete matcher;
+    }
 
     return 0;
 }

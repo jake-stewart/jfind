@@ -1,9 +1,6 @@
 #include "../include/item_sorter.hpp"
 #include "../include/config.hpp"
-#include "../include/item_fuzzy_matcher.hpp"
 #include "../include/item_matcher.hpp"
-#include "../include/item_regex_matcher.hpp"
-#include "../include/item_exact_matcher.hpp"
 #include "../include/thread_manager.hpp"
 #include "../include/util.hpp"
 #include <climits>
@@ -12,7 +9,8 @@
 
 using namespace std::chrono_literals;
 
-ItemSorter::ItemSorter() {
+ItemSorter::ItemSorter(std::string startQuery) {
+    m_query = startQuery;
     m_isSorted = false;
     m_queryChanged = false;
     m_heuristicIdx = 0;
@@ -140,6 +138,7 @@ void ItemSorter::calcHeuristics(bool newItems, int start, int end)
     m_sortIdx = 0;
 }
 
+#include <unistd.h>
 int ItemSorter::copyItems(Item *buffer, int idx, int n) {
     if (idx + n < 256) {
         if (idx + n > m_firstItemsSize) {
@@ -170,8 +169,6 @@ int ItemSorter::copyItems(Item *buffer, int idx, int n) {
 void ItemSorter::sorterThread() {
     std::unique_lock items_lock(m_items_mut);
     while (m_sorterThreadActive) {
-        addNewItems();
-        sortItems();
         {
             std::unique_lock lock(m_sorter_mut);
             items_lock.unlock();
@@ -183,23 +180,19 @@ void ItemSorter::sorterThread() {
             }
             items_lock.lock();
         }
+        addNewItems();
+        sortItems();
     }
 }
 
 void ItemSorter::onStart() {
-    switch (Config::instance().matcher) {
-        case FUZZY_MATCHER:
-            m_matcher = new ItemFuzzyMatcher();
-            break;
-        case REGEX_MATCHER:
-            m_matcher = new ItemRegexMatcher();
-            break;
-        case EXACT_MATCHER:
-            m_matcher = new ItemExactMatcher();
-            break;
-    }
+    m_logger.log("started");
     m_sorterThreadActive = true;
     m_sorterThread = new std::thread(&ItemSorter::sorterThread, this);
+}
+
+void ItemSorter::setMatcher(ItemMatcher *matcher) {
+    m_matcher = matcher;
 }
 
 void ItemSorter::onLoop() {
