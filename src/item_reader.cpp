@@ -4,7 +4,7 @@
 #include <cstring>
 
 void ItemReader::setFile(FILE *file) {
-    m_reader.setFile(file);
+    m_file = file;
 }
 
 bool ItemReader::read(Item &item) {
@@ -19,7 +19,7 @@ bool ItemReader::readWithoutHints(Item &item) {
     size_t size;
     char *buf = nullptr;
 
-    if (m_reader.getline(&buf, &size) < 0) {
+    if (getline(&buf, &size, m_file) < 0) {
         free((void*)buf);
         return false;
     }
@@ -36,11 +36,11 @@ bool ItemReader::readWithHints(Item &item) {
     char *buf = nullptr;
     char *secondBuf = nullptr;
 
-    if (m_reader.getline(&buf, &size) < 0) {
+    if (getline(&buf, &size, m_file) < 0) {
         free((void*)buf);
         return false;
     }
-    if (m_reader.getline(&secondBuf, &size) < 0) {
+    if (getline(&secondBuf, &size, m_file) < 0) {
         free((void*)buf);
         free((void*)secondBuf);
         return false;
@@ -63,5 +63,5 @@ bool ItemReader::readWithHints(Item &item) {
 }
 
 void ItemReader::cancel() {
-    m_reader.cancel();
+    // m_reader.cancel();
 }

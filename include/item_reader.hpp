@@ -8,7 +8,7 @@
 class ItemReader
 {
     int m_itemId = 0;
-    CancellableReader m_reader;
+    FILE *m_file;
 
 public:
     void setFile(FILE *file);

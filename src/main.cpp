@@ -32,6 +32,7 @@ static AnsiWrapper& ansi = AnsiWrapper::instance();
 static EventDispatch& eventDispatch = EventDispatch::instance();
 static Logger logger = Logger("main");
 
+static InputReader inputReader;
 static StyleManager styleManager(stderr);
 static HistoryManager *historyManager = nullptr;
 static ItemCache itemCache;
@@ -108,8 +109,8 @@ void signalHandler(int sig) {
     switch (sig) {
         case SIGTERM:
             ansi.restoreTerm();
-            printResult(userInterface.getSelectedKey(), userInterface.getSelected(),
-                    editor.getText().c_str());
+            // printResult(userInterface.getSelectedKey(), userInterface.getSelected(),
+            //         editor.getText().c_str());
             logger.log("done");
             Logger::close();
             exit(0);
@@ -276,7 +277,6 @@ int main(int argc, const char **argv) {
         );
     }
 
-    InputReader inputReader;
     int fd = open("/dev/tty", O_RDONLY);
     ansi.setInputFileNo(fd);
     inputReader.setFileDescriptor(fd);
