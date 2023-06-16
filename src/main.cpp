@@ -32,6 +32,13 @@ static AnsiWrapper& ansi = AnsiWrapper::instance();
 static EventDispatch& eventDispatch = EventDispatch::instance();
 static Logger logger = Logger("main");
 
+static StyleManager styleManager(stderr);
+static HistoryManager *historyManager = nullptr;
+static ItemCache itemCache;
+static ItemList itemList(stderr, &styleManager, &itemCache);
+static Utf8LineEditor editor(stderr);
+static UserInterface userInterface(stderr, &styleManager, &itemList, &editor);
+
 void printResult(Key key, Item *selected, const char *input) {
     if (config.showKey && (selected || config.acceptNonMatch)) {
         printf("%d\n", key);
@@ -99,11 +106,25 @@ void emitResizeEvent() {
 
 void signalHandler(int sig) {
     switch (sig) {
+        case SIGTERM:
+            ansi.restoreTerm();
+            printResult(userInterface.getSelectedKey(), userInterface.getSelected(),
+                    editor.getText().c_str());
+            logger.log("done");
+            Logger::close();
+            exit(0);
+            break;
         case SIGINT:
-            eventDispatch.dispatch(std::make_shared<QuitEvent>());
+            eventDispatch.dispatch(std::make_shared<KeyEvent>(K_CTRL_C));
+            // logger.log("received SIGINT");
+            // eventDispatch.dispatch(std::make_shared<QuitEvent>());
             break;
         case SIGWINCH:
+            logger.log("received SIGWINCH");
             emitResizeEvent();
+            break;
+        default:
+            logger.log("received unknown signal %d", sig);
             break;
     }
 }
@@ -180,7 +201,11 @@ void displayHelp(const char *name) {
 }
 
 int main(int argc, const char **argv) {
-    StyleManager styleManager(stderr);
+
+    ItemSorter *itemSorter;
+    ItemMatcher *matcher;
+    FileItemReader *fileItemReader;
+    ProcessItemReader *processItemReader;
 
     if (!readConfig(&styleManager, argc, argv)) {
         return 1;
@@ -197,27 +222,13 @@ int main(int argc, const char **argv) {
 
     createStyles(&styleManager);
 
-    HistoryManager *historyManager = nullptr;
     if (!config.historyFile.empty()) {
         historyManager = new HistoryManager(config.historyFile);
         historyManager->setHistoryLimit(config.historyLimit);
         historyManager->readHistory();
     }
 
-    ItemSorter *itemSorter;
-    ItemMatcher *matcher;
-    FileItemReader *fileItemReader;
-    ProcessItemReader *processItemReader;
-
-    ItemCache itemCache;
-
-
-    ItemList itemList(stderr, &styleManager, &itemCache);
-
-    Utf8LineEditor editor(stderr);
     editor.input(config.query);
-
-    UserInterface userInterface(stderr, &styleManager, &itemList, &editor);
 
     if (config.command.size()) {
         processItemReader = new ProcessItemReader(config.command, config.query);
@@ -276,6 +287,7 @@ int main(int argc, const char **argv) {
     ansi.setOutputFile(stderr);
 
     signal(SIGWINCH, signalHandler);
+    signal(SIGTERM, signalHandler);
     signal(SIGINT, signalHandler);
 
     ansi.initTerm();
@@ -308,7 +320,6 @@ int main(int argc, const char **argv) {
 
     printResult(userInterface.getSelectedKey(), selected,
             editor.getText().c_str());
-
     logger.log("done");
     Logger::close();
 

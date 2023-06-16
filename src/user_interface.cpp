@@ -111,7 +111,8 @@ void UserInterface::handleMouse(MouseEvent event) {
                     {
                         m_selected = true;
                         m_selectedKey = K_MOUSE;
-                        m_dispatch.dispatch(std::make_shared<QuitEvent>());
+                        // m_dispatch.dispatch(std::make_shared<QuitEvent>());
+                        raise(SIGTERM);
                     }
                     else {
                         m_itemList->setSelected(event.y);
@@ -133,7 +134,8 @@ void UserInterface::handleInput(KeyEvent event) {
             if (key == event.getKey()) {
                 m_selectedKey = event.getKey();
                 m_selected = true;
-                m_dispatch.dispatch(std::make_shared<QuitEvent>());
+                // m_dispatch.dispatch(std::make_shared<QuitEvent>());
+                raise(SIGTERM);
                 return;
             }
         }
@@ -141,7 +143,9 @@ void UserInterface::handleInput(KeyEvent event) {
 
     switch (event.getKey()) {
         case K_ESCAPE:
-            m_dispatch.dispatch(std::make_shared<QuitEvent>());
+        case K_CTRL_C:
+            raise(SIGTERM);
+            // m_dispatch.dispatch(std::make_shared<QuitEvent>());
             break;
 
         case 32 ... 126:
@@ -186,7 +190,8 @@ void UserInterface::handleInput(KeyEvent event) {
         case K_ENTER: {
             m_selected = true;
             m_selectedKey = event.getKey();
-            m_dispatch.dispatch(std::make_shared<QuitEvent>());
+            // m_dispatch.dispatch(std::make_shared<QuitEvent>());
+            raise(SIGTERM);
             break;
         }
 
@@ -284,8 +289,8 @@ void UserInterface::onLoop() {
         std::chrono::milliseconds ms = std::chrono::duration_cast<
             std::chrono::milliseconds>(duration);
 
-        if (ms < 50ms && !m_firstUpdate) {
-            awaitEvent(50ms - ms);
+        if (ms < 10ms && !m_firstUpdate) {
+            awaitEvent(10ms - ms);
             return;
         }
 
