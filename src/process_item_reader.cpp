@@ -74,23 +74,8 @@ bool ProcessItemReader::readItem() {
         return false;
     }
 
-    {
     std::unique_lock lock(m_mut);
     m_items.getPrimary().push_back(item);
-    }
-
-    if (m_items.getPrimary().size() >= m_readMax) {
-        dispatchItems();
-        dispatchAllRead(true);
-        if (m_queryChanged) {
-            return true;
-        }
-        m_process.suspend();
-        awaitEvent();
-    }
-    else if (m_interval.ticked()) {
-        dispatchItems();
-    }
     return true;
 }
 
@@ -148,15 +133,27 @@ void ProcessItemReader::onLoop() {
         return;
     }
 
+    if (m_process.getState() != ProcessState::Active) {
+        return awaitEvent();
+    }
+
     bool success = readItem();
     if (success) {
+        if (m_items.getPrimary().size() >= m_readMax) {
+            dispatchItems();
+            dispatchAllRead(true);
+            m_process.suspend();
+        }
+        else if (m_interval.ticked()) {
+            dispatchItems();
+        }
     }
     else {
         m_process.end();
         dispatchItems();
         dispatchAllRead(true);
         if (!m_queryChanged) {
-            awaitEvent();
+            return awaitEvent();
         }
     }
 }
@@ -193,10 +190,6 @@ void ProcessItemReader::onEvent(std::shared_ptr<Event> event) {
         }
         default:
             break;
-    }
-
-    if (m_process.getState() != ProcessState::Active) {
-        awaitEvent();
     }
 }
 
