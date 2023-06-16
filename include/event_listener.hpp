@@ -4,10 +4,11 @@
 #include "event.hpp"
 #include <chrono>
 #include <condition_variable>
-#include <mutex>
 #include <memory>
+#include <mutex>
 
-class EventListener {
+class EventListener
+{
     bool m_active = false;
     std::vector<std::shared_ptr<Event>> m_events;
     std::mutex m_mut;
@@ -32,19 +33,19 @@ protected:
     }
 
     void awaitEvent(std::chrono::milliseconds timeout) {
-        std::chrono::time_point<std::chrono::system_clock> until
-            = std::chrono::system_clock::now() + timeout;
+        std::chrono::time_point<std::chrono::system_clock>
+            until = std::chrono::system_clock::now() + timeout;
         std::unique_lock lock(m_cv_mut);
         while (std::chrono::system_clock::now() < until && !m_events.size()) {
             m_cv.wait_until(lock, until);
         }
     }
 
-    virtual void onEvent(std::shared_ptr<Event> event) {};
+    virtual void onEvent(std::shared_ptr<Event> event){};
     virtual void onLoop() {
         return awaitEvent();
     };
-    virtual void onStart() {};
+    virtual void onStart(){};
 
 public:
     void start() {

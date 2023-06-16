@@ -1,11 +1,11 @@
 #ifndef INTERVAL_THREAD_HPP
 #define INTERVAL_THREAD_HPP
 
+#include "logger.hpp"
 #include <chrono>
 #include <condition_variable>
 #include <mutex>
 #include <thread>
-#include "logger.hpp"
 
 class IntervalThread
 {

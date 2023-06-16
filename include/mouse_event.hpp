@@ -12,7 +12,8 @@ enum MouseButton {
     MB_SCROLL_LEFT = 67,
 };
 
-struct MouseEvent {
+struct MouseEvent
+{
     MouseButton button;
     int numClicks;
     bool dragged;

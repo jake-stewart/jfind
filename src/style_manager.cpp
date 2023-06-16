@@ -4,7 +4,7 @@ StyleManager::StyleManager(FILE *outputFile) {
     m_outputFile = outputFile;
 }
 
-int StyleManager::add(AnsiStyle& style) {
+int StyleManager::add(AnsiStyle &style) {
     std::string escSeq = style.build();
     std::map<std::string, int>::const_iterator it;
 

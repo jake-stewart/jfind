@@ -1,23 +1,23 @@
+#include <cerrno>
+#include <csignal>
 #include <cstdio>
 #include <cstring>
-#include <cerrno>
-#include <sstream>
-#include <map>
 #include <iostream>
-#include <csignal>
+#include <map>
+#include <sstream>
 
 extern "C" {
-#include <termios.h>
-#include <sys/time.h>
-#include <unistd.h>
 #include <sys/select.h>
+#include <sys/time.h>
+#include <termios.h>
+#include <unistd.h>
 }
 
 #include "../include/input_reader.hpp"
 
-using std::chrono::system_clock;
-using std::chrono::milliseconds;
 using std::chrono::duration_cast;
+using std::chrono::milliseconds;
+using std::chrono::system_clock;
 
 static std::map<std::string, Key> createKeyLookup() {
     std::map<std::string, Key> lookup;
@@ -95,8 +95,8 @@ bool InputReader::getKey(Key *key) {
             return true;
         case K_ESCAPE:
             return parseEsc(key);
-        case 1 ... (K_ESCAPE - 1):
-        case (K_ESCAPE + 1) ... 127:
+        case 1 ...(K_ESCAPE - 1):
+        case (K_ESCAPE + 1)... 127:
             *key = (Key)c;
             return true;
         default:
@@ -129,8 +129,7 @@ bool InputReader::parseEsc(Key *key) {
             return false;
         }
         ss << c;
-    }
-    while (!m_reader.blocked());
+    } while (!m_reader.blocked());
 
     std::string seq = ss.str();
     if (seq.size() == 1) {
@@ -145,7 +144,7 @@ bool InputReader::parseEsc(Key *key) {
     return true;
 }
 
-void InputReader::parseMouse(std::string& seq, Key *key) {
+void InputReader::parseMouse(std::string &seq, Key *key) {
     int length;
     int idx = 0;
 
@@ -155,8 +154,10 @@ void InputReader::parseMouse(std::string& seq, Key *key) {
         MouseEvent event;
         int button;
         char pressed;
-        int results = sscanf(seq.c_str() + idx, "[<%d;%d;%d%c%n", &button,
-                             &event.x, &event.y, &pressed, &length);
+        int results = sscanf(
+            seq.c_str() + idx, "[<%d;%d;%d%c%n", &button, &event.x, &event.y,
+            &pressed, &length
+        );
         idx += length + 1;
 
         if (results != 4) {
@@ -215,14 +216,16 @@ void InputReader::parseMouse(std::string& seq, Key *key) {
                 continue;
         }
 
-        if (event.pressed == false && event.button != m_lastClickButton || event.dragged) {
+        if (event.pressed == false && event.button != m_lastClickButton ||
+            event.dragged) {
             m_clickCount = 0;
             m_lastClickButton = MB_NONE;
         }
         else if (event.pressed) {
             if (event.button == m_lastClickButton) {
                 milliseconds delta = duration_cast<milliseconds>(
-                        system_clock::now() - m_lastClickTime);
+                    system_clock::now() - m_lastClickTime
+                );
                 if (delta.count() < 250) {
                     m_clickCount++;
                     event.numClicks += m_clickCount;
@@ -266,7 +269,7 @@ void InputReader::parseAltKey(char c, Key *key) {
     }
 }
 
-void InputReader::parseEscSeq(std::string& seq, Key *key) {
+void InputReader::parseEscSeq(std::string &seq, Key *key) {
     std::map<std::string, Key>::const_iterator it;
     it = ESC_KEY_LOOKUP.find(seq);
     if (it == ESC_KEY_LOOKUP.end()) {

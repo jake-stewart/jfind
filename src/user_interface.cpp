@@ -1,14 +1,16 @@
 #include "../include/user_interface.hpp"
-#include <string>
-#include <cstring>
 #include <chrono>
+#include <cstring>
+#include <string>
 
 using namespace std::chrono_literals;
 using std::chrono::milliseconds;
 
-UserInterface::UserInterface(FILE *outputFile, StyleManager *styleManager, ItemList *itemList, Utf8LineEditor *editor)
-    : m_spinner(outputFile)
-{
+UserInterface::UserInterface(
+    FILE *outputFile, StyleManager *styleManager, ItemList *itemList,
+    Utf8LineEditor *editor
+)
+    : m_spinner(outputFile) {
     m_outputFile = stdout;
     m_selected = false;
     m_isReading = true;
@@ -71,8 +73,10 @@ void UserInterface::updateSpinner() {
 }
 
 void UserInterface::focusEditor() {
-    ansi.move(m_config.prompt.size() + m_config.promptGap
-            + m_editor->getCursorCol(), m_height - 1);
+    ansi.move(
+        m_config.prompt.size() + m_config.promptGap + m_editor->getCursorCol(),
+        m_height - 1
+    );
 }
 
 void UserInterface::onResize(int w, int h) {
@@ -81,7 +85,9 @@ void UserInterface::onResize(int w, int h) {
 
     m_itemList->resize(w, h);
     m_editor->setWidth(m_width - 1);
-    m_spinner.setPosition(m_config.prompt.size() == 1 ? 0 : m_width - 1, m_height - 1);
+    m_spinner.setPosition(
+        m_config.prompt.size() == 1 ? 0 : m_width - 1, m_height - 1
+    );
 
     drawPrompt();
     drawQuery();
@@ -106,8 +112,7 @@ void UserInterface::handleMouse(MouseEvent event) {
                 }
                 else {
                     if (event.numClicks >= 2 &&
-                        m_itemList->get(event.y) == m_itemList->getSelected())
-                    {
+                        m_itemList->get(event.y) == m_itemList->getSelected()) {
                         m_selected = true;
                         m_selectedKey = K_MOUSE;
                         raise(SIGTERM);
@@ -127,7 +132,7 @@ void UserInterface::handleInput(KeyEvent event) {
     std::string query = m_editor->getText();
 
     if (event.getKey() != K_UNKNOWN && event.getKey() != K_NULL) {
-        std::vector<int>& keys = Config::instance().additionalKeys;
+        std::vector<int> &keys = Config::instance().additionalKeys;
         for (int key : keys) {
             if (key == event.getKey()) {
                 m_selectedKey = event.getKey();
@@ -206,7 +211,9 @@ void UserInterface::handleInput(KeyEvent event) {
     if (m_editor->getText() != query) {
         m_isSorting = true;
         m_resetCursor = true;
-        m_dispatch.dispatch(std::make_shared<QueryChangeEvent>(m_editor->getText()));
+        m_dispatch.dispatch(
+            std::make_shared<QueryChangeEvent>(m_editor->getText())
+        );
     }
 
     if (m_itemList->didScroll()) {
@@ -217,31 +224,30 @@ void UserInterface::handleInput(KeyEvent event) {
         drawPrompt();
         drawQuery();
     }
-
 }
 
 void UserInterface::onEvent(std::shared_ptr<Event> event) {
     m_logger.log("received %s", getEventNames()[event->getType()]);
     switch (event->getType()) {
         case KEY_EVENT: {
-            KeyEvent *keyEvent = (KeyEvent*)event.get();
+            KeyEvent *keyEvent = (KeyEvent *)event.get();
             m_inputQueue.push_back(*keyEvent);
             break;
         }
         case RESIZE_EVENT: {
-            ResizeEvent *resizeEvent = (ResizeEvent*)event.get();
+            ResizeEvent *resizeEvent = (ResizeEvent *)event.get();
             onResize(resizeEvent->getWidth(), resizeEvent->getHeight());
             break;
         }
         case ITEMS_SORTED_EVENT: {
-            ItemsSortedEvent *sortedEvent = (ItemsSortedEvent*)event.get();
+            ItemsSortedEvent *sortedEvent = (ItemsSortedEvent *)event.get();
             m_requiresRefresh = true;
             m_requestedMoreItems = false;
             m_isSorting = sortedEvent->getQuery() != m_editor->getText();
             break;
         }
         case ALL_ITEMS_READ_EVENT: {
-            AllItemsReadEvent *itemsEvent = (AllItemsReadEvent*)event.get();
+            AllItemsReadEvent *itemsEvent = (AllItemsReadEvent *)event.get();
             bool canScroll = m_threadsafeReading || itemsEvent->getValue();
             m_itemList->allowScrolling(canScroll);
             m_isReading = !itemsEvent->getValue();
@@ -252,7 +258,7 @@ void UserInterface::onEvent(std::shared_ptr<Event> event) {
     }
 }
 
-Item* UserInterface::getSelected() const {
+Item *UserInterface::getSelected() const {
     if (m_selected) {
         return m_itemList->getSelected();
     }
@@ -265,7 +271,7 @@ Key UserInterface::getSelectedKey() const {
 
 void UserInterface::onLoop() {
     if (m_inputQueue.size()) {
-        for (KeyEvent& event : m_inputQueue) {
+        for (KeyEvent &event : m_inputQueue) {
             handleInput(event);
         }
         m_inputQueue.clear();
@@ -276,10 +282,11 @@ void UserInterface::onLoop() {
     if (m_requiresRefresh) {
         std::chrono::system_clock::time_point
             now = std::chrono::system_clock::now();
-        std::chrono::system_clock::time_point::duration
-            duration = now - m_lastUpdateTime;
-        std::chrono::milliseconds ms = std::chrono::duration_cast<
-            std::chrono::milliseconds>(duration);
+        std::chrono::system_clock::time_point::duration duration = now -
+            m_lastUpdateTime;
+        std::chrono::milliseconds
+            ms = std::chrono::duration_cast<std::chrono::milliseconds>(duration
+            );
 
         if (ms < 10ms && !m_firstUpdate) {
             awaitEvent(10ms - ms);

@@ -1,6 +1,6 @@
 #include "../include/json_parser.hpp"
-#include <regex>
 #include <fstream>
+#include <regex>
 
 JsonParser::~JsonParser() {
     for (const JsonElement *element : m_elements) {
@@ -23,7 +23,7 @@ JsonString::JsonString(int line, int idx, std::string value) {
     m_type = STRING;
 }
 
-std::string& JsonString::getValue() {
+std::string &JsonString::getValue() {
     return m_value;
 }
 
@@ -36,7 +36,6 @@ std::string JsonString::repr(int indent, int depth) {
     return '"' + escaped + '"';
 }
 
-
 JsonInt::JsonInt(int line, int idx, int value) {
     m_line = line;
     m_idx = idx;
@@ -44,14 +43,13 @@ JsonInt::JsonInt(int line, int idx, int value) {
     m_type = INT;
 }
 
-int& JsonInt::getValue() {
+int &JsonInt::getValue() {
     return m_value;
 }
 
 std::string JsonInt::repr(int indent, int depth) {
     return std::to_string(m_value);
 }
-
 
 JsonFloat::JsonFloat(int line, int idx, double value) {
     m_line = line;
@@ -60,14 +58,13 @@ JsonFloat::JsonFloat(int line, int idx, double value) {
     m_type = FLOAT;
 }
 
-double& JsonFloat::getValue() {
+double &JsonFloat::getValue() {
     return m_value;
 }
 
 std::string JsonFloat::repr(int indent, int depth) {
     return std::to_string(m_value);
 }
-
 
 JsonBoolean::JsonBoolean(int line, int idx, bool value) {
     m_line = line;
@@ -76,7 +73,7 @@ JsonBoolean::JsonBoolean(int line, int idx, bool value) {
     m_type = BOOLEAN;
 }
 
-bool& JsonBoolean::getValue() {
+bool &JsonBoolean::getValue() {
     return m_value;
 }
 
@@ -84,14 +81,13 @@ std::string JsonBoolean::repr(int indent, int depth) {
     return m_value ? "true" : "false";
 }
 
-
 JsonObject::JsonObject(int line, int idx) {
     m_line = line;
     m_idx = idx;
     m_type = OBJECT;
 }
 
-std::map<std::string, JsonObjectEntry>& JsonObject::getValue() {
+std::map<std::string, JsonObjectEntry> &JsonObject::getValue() {
     return m_value;
 }
 
@@ -128,21 +124,20 @@ std::string JsonObject::repr(int indent, int depth) {
     return repr;
 }
 
-
 JsonArray::JsonArray(int line, int idx) {
     m_line = line;
     m_idx = idx;
     m_type = ARRAY;
 }
 
-std::vector<JsonElement*>& JsonArray::getValue() {
+std::vector<JsonElement *> &JsonArray::getValue() {
     return m_value;
 }
 
 std::string JsonArray::repr(int indent, int depth) {
     std::string repr = "[";
 
-    std::vector<JsonElement*>::iterator it;
+    std::vector<JsonElement *>::iterator it;
     for (it = m_value.begin(); it != m_value.end(); ++it) {
         if (indent) {
             repr += "\n";
@@ -169,7 +164,6 @@ std::string JsonArray::repr(int indent, int depth) {
     repr += "]";
     return repr;
 }
-
 
 bool JsonParser::parse(std::string json) {
     m_idx = 0;
@@ -203,16 +197,14 @@ int JsonParser::getLine() const {
     return m_line;
 }
 
-JsonElement* JsonParser::getElement() const {
+JsonElement *JsonParser::getElement() const {
     return m_elements.size() ? m_elements.back() : nullptr;
 }
 
 void JsonParser::skipWhitespace() {
-    while (m_idx < m_json.length() && (m_json[m_idx] == ' '
-                || m_json[m_idx] == '\t'
-                || m_json[m_idx] == '\n'
-                || m_json[m_idx] == '\r'))
-    {
+    while (m_idx < m_json.length() &&
+           (m_json[m_idx] == ' ' || m_json[m_idx] == '\t' ||
+            m_json[m_idx] == '\n' || m_json[m_idx] == '\r')) {
         if (m_json[m_idx] == '\n') {
             m_line++;
         }
@@ -272,7 +264,7 @@ bool JsonParser::parseObject() {
                 valid = false;
                 break;
             }
-            JsonString *key = (JsonString*)m_elements.back();
+            JsonString *key = (JsonString *)m_elements.back();
 
             skipWhitespace();
             if (next() != ':') {
@@ -391,8 +383,7 @@ bool JsonParser::parseNumber() {
     }
 
     if (hasDecimal) {
-        if (value.front() == '.' || value.back() == '.' || value.length() < 3)
-        {
+        if (value.front() == '.' || value.back() == '.' || value.length() < 3) {
             m_error = "A number cannot start or end with a decimal point";
             return false;
         }
@@ -406,7 +397,7 @@ bool JsonParser::parseNumber() {
         try {
             m_elements.push_back(new JsonInt(m_line, m_idx, std::stoi(value)));
         }
-        catch (const std::out_of_range&) {
+        catch (const std::out_of_range &) {
             m_error = "The number is out of range";
             return false;
         }
@@ -469,7 +460,7 @@ bool JsonParser::parseKeyword() {
     std::string value;
     bool parsed = false;
     while (!parsed) {
-        switch(peek()) {
+        switch (peek()) {
             case 'A' ... 'Z':
             case 'a' ... 'z':
                 value += next();

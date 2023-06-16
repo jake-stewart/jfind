@@ -12,12 +12,12 @@ enum Key {
     K_CTRL_E,
     K_CTRL_F,
     K_CTRL_G,
-    K_CTRL_H,  // also ctrl + backspace (ctrl + del)
-    K_TAB,     // CTRL-I is tab
+    K_CTRL_H, // also ctrl + backspace (ctrl + del)
+    K_TAB,    // CTRL-I is tab
     K_CTRL_J,
     K_CTRL_K,
     K_CTRL_L,
-    K_ENTER,   // CTRL-M is enter
+    K_ENTER, // CTRL-M is enter
     K_CTRL_N,
     K_CTRL_O,
     K_CTRL_P,
@@ -35,7 +35,7 @@ enum Key {
     K_ESCAPE,
     K_FS,
     K_CTRL_CLOSE_BRACKET,
-    K_CTRL_BACKSLASH,   // sends QUIT signal
+    K_CTRL_BACKSLASH, // sends QUIT signal
     K_CTRL_SLASH,
 
     K_SPACE,

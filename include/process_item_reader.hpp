@@ -1,16 +1,17 @@
 #ifndef ITEM_GENERATOR_HPP
 #define ITEM_GENERATOR_HPP
 
-#include "logger.hpp"
-#include "event_dispatch.hpp"
-#include "item_reader.hpp"
-#include "interval_thread.hpp"
 #include "double_buffer.hpp"
+#include "event_dispatch.hpp"
+#include "interval_thread.hpp"
+#include "item_reader.hpp"
+#include "logger.hpp"
 #include "process.hpp"
 #include <mutex>
 #include <string>
 
-class ProcessItemReader : public EventListener {
+class ProcessItemReader : public EventListener
+{
 public:
     ProcessItemReader(std::string command, std::string startQuery);
     ~ProcessItemReader();

@@ -1,11 +1,10 @@
 #include "../include/item_exact_matcher.hpp"
-#include "../include/item.hpp"
 #include "../include/config.hpp"
+#include "../include/item.hpp"
 #include <climits>
-#include <regex>
 #include <cstdio>
 #include <cstring>
-
+#include <regex>
 
 bool ItemExactMatcher::requiresFullRescore() {
     return false;
@@ -53,4 +52,3 @@ int ItemExactMatcher::calculateScore(Item *item) {
         }
     }
 }
-

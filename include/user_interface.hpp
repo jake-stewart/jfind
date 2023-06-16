@@ -1,21 +1,24 @@
 #ifndef USER_INTERFACE_HPP
 #define USER_INTERFACE_HPP
 
-#include "style_manager.hpp"
-#include "config.hpp"
-#include "utf8_line_editor.hpp"
-#include "input_reader.hpp"
 #include "ansi_wrapper.hpp"
+#include "config.hpp"
 #include "event_dispatch.hpp"
-#include "spinner.hpp"
+#include "input_reader.hpp"
 #include "item_list.hpp"
+#include "spinner.hpp"
+#include "style_manager.hpp"
+#include "utf8_line_editor.hpp"
 
-class UserInterface : public EventListener {
+class UserInterface : public EventListener
+{
 public:
-    UserInterface(FILE *outputFile, StyleManager *styleManager,
-            ItemList *itemLis, Utf8LineEditor *editor);
+    UserInterface(
+        FILE *outputFile, StyleManager *styleManager, ItemList *itemLis,
+        Utf8LineEditor *editor
+    );
     void handleInput(KeyEvent event);
-    Item* getSelected() const;
+    Item *getSelected() const;
     Key getSelectedKey() const;
     void onEvent(std::shared_ptr<Event> event) override;
     void onLoop() override;
@@ -31,11 +34,11 @@ private:
     void drawQuery();
     void handleMouse(MouseEvent event);
 
-    EventDispatch& m_dispatch = EventDispatch::instance();
+    EventDispatch &m_dispatch = EventDispatch::instance();
     Logger m_logger = Logger("UserInterface");
     StyleManager *m_styleManager;
-    AnsiWrapper& ansi = AnsiWrapper::instance();
-    const Config& m_config = Config::instance();
+    AnsiWrapper &ansi = AnsiWrapper::instance();
+    const Config &m_config = Config::instance();
     FILE *m_outputFile;
 
     bool m_firstUpdate = true;

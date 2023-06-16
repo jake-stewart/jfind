@@ -1,21 +1,21 @@
 #ifndef ANSI_WRAPPER_HPP
 #define ANSI_WRAPPER_HPP
 
-#include <cstdint>
-#include <cstddef>
-#include <cstdlib>
-#include <cstdio>
 #include <csignal>
 #include <cstdbool>
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
 
 extern "C" {
-#include <unistd.h>
 #include <sys/ioctl.h>
 #include <termios.h>
+#include <unistd.h>
 }
 
-
-class AnsiWrapper {
+class AnsiWrapper
+{
 private:
     AnsiWrapper();
 
@@ -26,7 +26,7 @@ private:
     termios m_origTermios;
 
 public:
-    static AnsiWrapper& instance();
+    static AnsiWrapper &instance();
 
     void setInputFileNo(int fileNo);
     void setOutputFile(FILE *file);

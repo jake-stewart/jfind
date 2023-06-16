@@ -7,9 +7,9 @@
 #include "logger.hpp"
 #include <fstream>
 #include <mutex>
+#include <string>
 #include <thread>
 #include <vector>
-#include <string>
 
 class ItemSorter : public EventListener
 {

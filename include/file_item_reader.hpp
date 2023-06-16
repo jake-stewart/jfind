@@ -1,19 +1,20 @@
 #ifndef FILE_ITEM_READER_HPP
 #define FILE_ITEM_READER_HPP
 
-#include <vector>
+#include "double_buffer.hpp"
+#include "event_dispatch.hpp"
+#include "interval_thread.hpp"
+#include "item.hpp"
+#include "item_reader.hpp"
+#include "logger.hpp"
+#include <condition_variable>
 #include <cstdio>
 #include <mutex>
-#include <condition_variable>
 #include <thread>
-#include "item.hpp"
-#include "logger.hpp"
-#include "event_dispatch.hpp"
-#include "double_buffer.hpp"
-#include "item_reader.hpp"
-#include "interval_thread.hpp"
+#include <vector>
 
-class FileItemReader : public EventListener {
+class FileItemReader : public EventListener
+{
 public:
     FileItemReader(FILE *file);
     bool read();
@@ -31,7 +32,7 @@ private:
     ItemReader m_itemReader;
     IntervalThread m_interval;
 
-    EventDispatch& m_dispatch = EventDispatch::instance();
+    EventDispatch &m_dispatch = EventDispatch::instance();
     Logger m_logger = Logger("FileItemReader");
 
     DoubleBuffer<std::vector<Item>> m_items;

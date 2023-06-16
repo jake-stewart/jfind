@@ -1,17 +1,17 @@
 #include "../include/file_item_reader.hpp"
-#include <cstring>
-#include <cstdlib>
 #include <chrono>
+#include <cstdlib>
+#include <cstring>
 #include <thread>
 
 extern "C" {
-#include <unistd.h>
 #include <fcntl.h>
+#include <unistd.h>
 }
 
 using namespace std::chrono_literals;
-using std::chrono::time_point;
 using std::chrono::system_clock;
+using std::chrono::time_point;
 
 FileItemReader::FileItemReader(FILE *file) {
     m_file = file;
@@ -46,7 +46,8 @@ void FileItemReader::dispatchItems() {
     }
     m_itemsRead = false;
     m_items.swap();
-    m_dispatch.dispatch(std::make_shared<NewItemsEvent>(&m_items.getSecondary()));
+    m_dispatch.dispatch(std::make_shared<NewItemsEvent>(&m_items.getSecondary())
+    );
     m_items.getPrimary().clear();
 }
 

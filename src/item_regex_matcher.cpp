@@ -1,9 +1,8 @@
 #include "../include/item_regex_matcher.hpp"
-#include "../include/item.hpp"
 #include "../include/config.hpp"
+#include "../include/item.hpp"
 #include <climits>
 #include <regex>
-
 
 bool ItemRegexMatcher::requiresFullRescore() {
     return true;
@@ -37,7 +36,7 @@ bool ItemRegexMatcher::setQuery(std::string query) {
         }
         return true;
     }
-    catch (const std::regex_error& error) {
+    catch (const std::regex_error &error) {
         return false;
     }
 }
@@ -48,4 +47,3 @@ int ItemRegexMatcher::calculateScore(Item *item) {
     }
     return BAD_HEURISTIC;
 }
-

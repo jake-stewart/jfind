@@ -1,21 +1,21 @@
 #include "../include/process_item_reader.hpp"
 #include "../include/config.hpp"
 #include <chrono>
+#include <csignal>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <csignal>
 #include <regex>
 
 extern "C" {
+#include <sys/wait.h>
 #include <termios.h>
 #include <unistd.h>
-#include <sys/wait.h>
 }
 
 using namespace std::chrono_literals;
-using std::chrono::time_point;
 using std::chrono::system_clock;
+using std::chrono::time_point;
 
 #define INTERVAL 50ms
 #define READ_BATCH 128
@@ -78,7 +78,6 @@ bool ProcessItemReader::readItem() {
     return true;
 }
 
-
 void ProcessItemReader::onStart() {
     m_logger.log("started");
     m_interval.start();
@@ -87,8 +86,8 @@ void ProcessItemReader::onStart() {
 
 void ProcessItemReader::startChildProcess() {
     std::string command = applyQuery(Config::instance().command, m_query);
-    const char* argv[] = {"/bin/sh", "-c", command.c_str(), NULL};
-    if (!m_process.start((char**)argv)) {
+    const char *argv[] = {"/bin/sh", "-c", command.c_str(), NULL};
+    if (!m_process.start((char **)argv)) {
         exit(EXIT_FAILURE);
     }
     m_readMax = READ_BATCH;
@@ -112,7 +111,7 @@ void ProcessItemReader::dispatchAllRead(bool value) {
 
 void ProcessItemReader::freeItems(std::vector<Item> &items) {
     for (const Item &item : items) {
-        free((void*)item.text);
+        free((void *)item.text);
     }
     items.clear();
 }
@@ -162,8 +161,8 @@ void ProcessItemReader::onEvent(std::shared_ptr<Event> event) {
 
     switch (event->getType()) {
         case QUERY_CHANGE_EVENT: {
-            QueryChangeEvent *queryChangeEvent
-                = (QueryChangeEvent *)event.get();
+            QueryChangeEvent *queryChangeEvent = (QueryChangeEvent *)event.get(
+            );
             m_newQuery = queryChangeEvent->getQuery();
             m_queryChanged = true;
             m_process.end();

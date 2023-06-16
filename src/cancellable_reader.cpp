@@ -53,9 +53,8 @@ void CancellableReader::cancel() {
 bool CancellableReader::blocked() {
     FD_SET(m_pipe[0], &m_fd_set);
     FD_SET(m_fd, &m_fd_set);
-    timeval timeout {0, 0};
+    timeval timeout{0, 0};
     if (select(m_maxFd, &m_fd_set, nullptr, nullptr, &timeout) <= 0) {
-
         return true;
     }
     return !(FD_ISSET(m_fd, &m_fd_set));

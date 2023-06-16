@@ -5,8 +5,8 @@
 #include "../include/util.hpp"
 #include <climits>
 #include <cstring>
-#include <unordered_map>
 #include <unistd.h>
+#include <unordered_map>
 
 using namespace std::chrono_literals;
 
@@ -21,7 +21,7 @@ ItemSorter::ItemSorter(std::string startQuery) {
     m_dispatch.subscribe(this, NEW_ITEMS_EVENT);
 }
 
-static bool sortFunc(const Item& l, const Item& r) {
+static bool sortFunc(const Item &l, const Item &r) {
     if (l.heuristic == r.heuristic) {
         if (strlen(l.text) == strlen(r.text)) {
             return l.index < r.index;
@@ -31,7 +31,7 @@ static bool sortFunc(const Item& l, const Item& r) {
     return l.heuristic > r.heuristic;
 }
 
-static bool sortEmptyFunc(const Item& l, const Item& r) {
+static bool sortEmptyFunc(const Item &l, const Item &r) {
     return l.index < r.index;
 }
 
@@ -50,7 +50,8 @@ void ItemSorter::sort(int sortIdx) {
     auto last = m_items.end();
     if (m_isSorted) {
         std::partial_sort(first, middle, last, sortFunc);
-    } else {
+    }
+    else {
         std::partial_sort(first, middle, last, sortEmptyFunc);
     }
 
@@ -95,19 +96,18 @@ void ItemSorter::calcHeuristics(bool queryChanged) {
     m_heuristicIdx = n;
 }
 
-#include <regex>
 #include "../include/item_regex_matcher.hpp"
+#include <regex>
 
-void ItemSorter::calcHeuristics(bool newItems, int start, int end)
-{
-    std::function<void(Item*, int)> f;
+void ItemSorter::calcHeuristics(bool newItems, int start, int end) {
+    std::function<void(Item *, int)> f;
     m_isSorted = m_query.size() > 0;
 
     if (m_isSorted) {
         if (!m_matcher->setQuery(m_query)) {
             return;
         }
-        f = [&] (Item *item, int n) {
+        f = [&](Item *item, int n) {
             for (int i = 0; i < n; i++) {
                 if (m_queryChanged) {
                     return;
@@ -122,7 +122,7 @@ void ItemSorter::calcHeuristics(bool newItems, int start, int end)
         };
     }
     else {
-        f = [] (Item *item, int n) {
+        f = [](Item *item, int n) {
             for (int i = 0; i < n; i++) {
                 item->heuristic = 0;
                 item++;
@@ -204,8 +204,8 @@ void ItemSorter::onEvent(std::shared_ptr<Event> event) {
     m_logger.log("received %s", getEventNames()[event->getType()]);
     switch (event->getType()) {
         case QUERY_CHANGE_EVENT: {
-            QueryChangeEvent *queryChangeEvent
-                    = (QueryChangeEvent*)event.get();
+            QueryChangeEvent *queryChangeEvent = (QueryChangeEvent *)event.get(
+            );
             std::unique_lock lock(m_sorter_mut);
             m_newQuery = queryChangeEvent->getQuery();
             m_queryChanged = true;
@@ -214,7 +214,7 @@ void ItemSorter::onEvent(std::shared_ptr<Event> event) {
         }
 
         case NEW_ITEMS_EVENT: {
-            NewItemsEvent *newItemsEvent = (NewItemsEvent*)event.get();
+            NewItemsEvent *newItemsEvent = (NewItemsEvent *)event.get();
             std::unique_lock lock(m_sorter_mut);
             m_newItems = newItemsEvent->getItems();
             m_hasNewItems = true;
@@ -247,8 +247,10 @@ void ItemSorter::addNewItems() {
         return;
     }
     m_hasNewItems = false;
-    m_items.insert(m_items.end(), m_newItems->data(),
-            m_newItems->data() + m_newItems->size());
+    m_items.insert(
+        m_items.end(), m_newItems->data(),
+        m_newItems->data() + m_newItems->size()
+    );
     m_dispatch.dispatch(std::make_shared<ItemsAddedEvent>());
 }
 
@@ -271,8 +273,9 @@ void ItemSorter::sortItems() {
         // delay on the main thread, which the user could notice
         m_firstItemsSize = m_items.size() < 256 ? m_items.size() : 256;
         sort(m_firstItemsSize);
-        std::copy(m_items.begin(), m_items.begin() + m_firstItemsSize,
-                  m_firstItems);
+        std::copy(
+            m_items.begin(), m_items.begin() + m_firstItemsSize, m_firstItems
+        );
         m_dispatch.dispatch(std::make_shared<ItemsSortedEvent>(m_query));
     }
 }

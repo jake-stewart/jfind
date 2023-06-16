@@ -1,14 +1,15 @@
 #ifndef ITEM_LIST_HPP
 #define ITEM_LIST_HPP
 
-#include "logger.hpp"
-#include "item_cache.hpp"
-#include "style_manager.hpp"
-#include "config.hpp"
 #include "ansi_wrapper.hpp"
+#include "config.hpp"
+#include "item_cache.hpp"
+#include "logger.hpp"
 #include "sliding_cache.hpp"
+#include "style_manager.hpp"
 
-class ItemList {
+class ItemList
+{
     int m_width = 0;
     int m_height = 0;
 
@@ -29,7 +30,7 @@ class ItemList {
 
     Logger m_logger = Logger("ItemList");
     AnsiWrapper &ansi = AnsiWrapper::instance();
-    const Config& m_config = Config::instance();
+    const Config &m_config = Config::instance();
 
     void drawName(int i) const;
     void drawHint(int i) const;
@@ -37,13 +38,14 @@ class ItemList {
     void calcVisibleItems();
 
 public:
-    ItemList(FILE *outputFile, StyleManager *styleManager,
-            ItemCache *itemCache);
+    ItemList(
+        FILE *outputFile, StyleManager *styleManager, ItemCache *itemCache
+    );
     void allowScrolling(bool value);
     bool didScroll();
     bool setSelected(int y);
-    Item* getSelected() const;
-    Item* get(int y) const;
+    Item *getSelected() const;
+    Item *get(int y) const;
     void resize(int w, int h);
     bool scrollUp();
     bool scrollDown();

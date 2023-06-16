@@ -1,8 +1,8 @@
 #ifndef ITEM_MATCHER_HPP
 #define ITEM_MATCHER_HPP
 
-#include <string>
 #include "item.hpp"
+#include <string>
 
 enum MatcherType {
     FUZZY_MATCHER,

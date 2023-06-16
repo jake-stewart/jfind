@@ -3,9 +3,10 @@
 
 #include "config.hpp"
 
-class ConfigOptionReader {
-    public:
-        bool read(int argc, const char **argv);
+class ConfigOptionReader
+{
+public:
+    bool read(int argc, const char **argv);
 };
 
 #endif

@@ -12,8 +12,8 @@ Spinner::Spinner(FILE *file) {
 }
 
 milliseconds Spinner::frameTimeRemaining() const {
-    milliseconds remaining = 150ms - duration_cast<milliseconds>(
-            system_clock::now() - m_lastFrameTime);
+    milliseconds remaining = 150ms -
+        duration_cast<milliseconds>(system_clock::now() - m_lastFrameTime);
     if (remaining <= 0ms) {
         return 0ms;
     }

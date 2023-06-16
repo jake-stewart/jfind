@@ -1,6 +1,6 @@
 #include "../include/history_manager.hpp"
-#include "../include/util.hpp"
 #include "../include/thread_manager.hpp"
+#include "../include/util.hpp"
 #include <fstream>
 #include <iostream>
 
@@ -34,8 +34,8 @@ bool HistoryManager::readHistory() {
 }
 
 void HistoryManager::applyHistory(Item *item) {
-    std::unordered_map<std::string, int>::const_iterator it
-        = m_historyLookup.find(item->text);
+    std::unordered_map<std::string, int>::const_iterator
+        it = m_historyLookup.find(item->text);
     if (it != m_historyLookup.end()) {
         item->index = -it->second - 1;
     }
@@ -48,23 +48,24 @@ bool HistoryManager::writeHistory(Item *selected) {
         try {
             fs::create_directories(parent);
         }
-        catch (const std::exception&) {
-            fprintf(stderr,
-                    "ERROR: could not create parent directories for '%s'\n",
-                    expanded.c_str());
+        catch (const std::exception &) {
+            fprintf(
+                stderr, "ERROR: could not create parent directories for '%s'\n",
+                expanded.c_str()
+            );
             return false;
         }
     }
     if (fs::exists(expanded) && !fs::is_regular_file(expanded)) {
-        fprintf(stderr, "ERROR: '%s' is not a regular file\n",
-                expanded.c_str());
+        fprintf(
+            stderr, "ERROR: '%s' is not a regular file\n", expanded.c_str()
+        );
         return false;
     }
     std::ofstream historyFile(expanded);
 
     if (!historyFile.is_open()) {
-        fprintf(stderr, "ERROR: '%s' could not be opened\n",
-                expanded.c_str());
+        fprintf(stderr, "ERROR: '%s' could not be opened\n", expanded.c_str());
         return false;
     }
 

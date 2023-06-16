@@ -1,6 +1,6 @@
 #include "../include/config_option_reader.hpp"
-#include "../include/option_parser.hpp"
 #include "../include/key.hpp"
+#include "../include/option_parser.hpp"
 
 bool ConfigOptionReader::read(int argc, const char **argv) {
     Config &config = Config::instance();

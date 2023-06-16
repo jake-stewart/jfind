@@ -1,16 +1,17 @@
 #ifndef CONFIG_HPP
 #define CONFIG_HPP
 
-#include <string>
-#include <filesystem>
 #include "ansi_style.hpp"
-#include "style_manager.hpp"
-#include "item_matcher.hpp"
 #include "case_sensitivity.hpp"
+#include "item_matcher.hpp"
+#include "style_manager.hpp"
+#include <filesystem>
+#include <string>
 
 namespace fs = std::filesystem;
 
-struct Config {
+struct Config
+{
     int activeItemStyle = NO_STYLE;
     int activeHintStyle = NO_STYLE;
     int itemStyle = NO_STYLE;
@@ -53,14 +54,13 @@ struct Config {
     std::vector<int> additionalKeys;
     bool showKey = false;
 
-    static Config& instance() {
+    static Config &instance() {
         static Config singleton;
         return singleton;
     }
 
 private:
-    Config() {};
-
+    Config(){};
 };
 
 #endif

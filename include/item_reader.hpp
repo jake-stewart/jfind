@@ -1,9 +1,9 @@
 #ifndef ITEM_READER_HPP
 #define ITEM_READER_HPP
 
-#include <cstdio>
-#include "item.hpp"
 #include "cancellable_reader.hpp"
+#include "item.hpp"
+#include <cstdio>
 
 class ItemReader
 {
@@ -12,7 +12,7 @@ class ItemReader
 
 public:
     void setFile(FILE *file);
-    bool read(Item& item);
+    bool read(Item &item);
 
 private:
     bool readWithHints(Item &item);

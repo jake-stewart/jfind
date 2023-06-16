@@ -1,15 +1,15 @@
 #ifndef INPUT_READER_HPP
 #define INPUT_READER_HPP
 
-#include "key.hpp"
-#include "event_dispatch.hpp"
-#include "mouse_event.hpp"
-#include "logger.hpp"
 #include "cancellable_reader.hpp"
+#include "event_dispatch.hpp"
+#include "key.hpp"
+#include "logger.hpp"
+#include "mouse_event.hpp"
 
 #include <string>
-#include <vector>
 #include <thread>
+#include <vector>
 
 extern "C" {
 #include <sys/select.h>
@@ -18,7 +18,8 @@ extern "C" {
 bool isContinuationByte(unsigned char c);
 int utf8CharLen(unsigned char c);
 
-class InputReader : public EventListener {
+class InputReader : public EventListener
+{
 public:
     bool getKey(Key *key);
     void setFileDescriptor(int fd);
@@ -30,7 +31,7 @@ public:
     void onSigInt();
 
 private:
-    EventDispatch& m_dispatch = EventDispatch::instance();
+    EventDispatch &m_dispatch = EventDispatch::instance();
     Logger m_logger = Logger("InputReader");
 
     CancellableReader m_reader;
@@ -47,8 +48,8 @@ private:
     bool getch(char *c);
     bool parseEsc(Key *key);
     void parseAltKey(char c, Key *key);
-    void parseMouse(std::string& seq, Key *key);
-    void parseEscSeq(std::string& seq, Key *key);
+    void parseMouse(std::string &seq, Key *key);
+    void parseEscSeq(std::string &seq, Key *key);
     bool parseUtf8(char c, Key *key);
 };
 

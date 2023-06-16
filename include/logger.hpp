@@ -4,7 +4,8 @@
 #include <cstdio>
 #include <mutex>
 
-class Logger {
+class Logger
+{
     static bool c_enabled;
     static std::mutex c_mut;
     static FILE *c_fp;

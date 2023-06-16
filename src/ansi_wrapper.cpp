@@ -1,8 +1,8 @@
 #include "../include/ansi_wrapper.hpp"
 
 extern "C" {
-#include <sys/stat.h>
 #include <fcntl.h>
+#include <sys/stat.h>
 }
 
 #define ANSI_ESC "\x1b["
@@ -18,7 +18,7 @@ AnsiWrapper::AnsiWrapper() {
     m_inputFileNo = STDIN_FILENO;
 };
 
-AnsiWrapper& AnsiWrapper::instance() {
+AnsiWrapper &AnsiWrapper::instance() {
     static AnsiWrapper singleton;
     return singleton;
 }
@@ -74,14 +74,18 @@ void AnsiWrapper::moveDownOrScroll() const {
 void AnsiWrapper::enableMouse() {
     if (!m_mouseEnabled) {
         m_mouseEnabled = true;
-        fprintf(m_outputFile, ANSI_ESC "?1002h" ANSI_ESC "?1015h" ANSI_ESC "?1006h");
+        fprintf(
+            m_outputFile, ANSI_ESC "?1002h" ANSI_ESC "?1015h" ANSI_ESC "?1006h"
+        );
     }
 }
 
 void AnsiWrapper::disableMouse() {
     if (m_mouseEnabled) {
         m_mouseEnabled = false;
-        fprintf(m_outputFile, ANSI_ESC "?1002l" ANSI_ESC "?1015l" ANSI_ESC "?1006l");
+        fprintf(
+            m_outputFile, ANSI_ESC "?1002l" ANSI_ESC "?1015l" ANSI_ESC "?1006l"
+        );
     }
 }
 
@@ -122,11 +126,19 @@ void AnsiWrapper::setOutputFile(FILE *file) {
 }
 
 void AnsiWrapper::saveCursor() const {
-    fprintf(m_outputFile, "\x1b" "7");
+    fprintf(
+        m_outputFile,
+        "\x1b"
+        "7"
+    );
 }
 
 void AnsiWrapper::restoreCursor() const {
-    fprintf(m_outputFile, "\x1b" "8");
+    fprintf(
+        m_outputFile,
+        "\x1b"
+        "8"
+    );
 }
 
 void AnsiWrapper::restoreTerm(void) {
@@ -149,12 +161,12 @@ void AnsiWrapper::initTerm(void) {
     tcgetattr(m_inputFileNo, &m_origTermios);
     termios term = m_origTermios;
 
-    term.c_lflag &=  ECHOCTL; // stops newline when <c-c> before eof
-    term.c_iflag &= ~ICRNL;   // differentiate newline and linefeed
-    term.c_iflag &= ~IXON;    // allow ctrl+s ctrl+q keys
-    term.c_lflag &=  ISIG;    // generate exit signals
-    term.c_lflag &= ~ECHO;    // disable echoing keys back to user
-    term.c_lflag &= ~ICANON;  // disable cannonical mode
+    term.c_lflag &= ECHOCTL; // stops newline when <c-c> before eof
+    term.c_iflag &= ~ICRNL;  // differentiate newline and linefeed
+    term.c_iflag &= ~IXON;   // allow ctrl+s ctrl+q keys
+    term.c_lflag &= ISIG;    // generate exit signals
+    term.c_lflag &= ~ECHO;   // disable echoing keys back to user
+    term.c_lflag &= ~ICANON; // disable cannonical mode
 
     tcsetattr(m_inputFileNo, TCSANOW, &term);
 

@@ -8,7 +8,8 @@ const int BAD_HEURISTIC = -INT_MAX;
 // an item represents a single record being queried
 // it is 16 bytes (text (8) + heuristic (4) + index (4))
 
-struct Item {
+struct Item
+{
     // text: what the user searches for
     // the text may contain a hint after its null terminator
     // this saves having to store another char pointer (8 bytes each)

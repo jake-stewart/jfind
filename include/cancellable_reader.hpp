@@ -1,15 +1,16 @@
 #ifndef CANCELLABLE_READER_HPP
 #define CANCELLABLE_READER_HPP
 
-#include <cstdio>
 #include "logger.hpp"
+#include <cstdio>
 
 extern "C" {
-#include <sys/select.h>
 #include <poll.h>
+#include <sys/select.h>
 }
 
-class CancellableReader {
+class CancellableReader
+{
     FILE *m_file;
     int m_fd;
 

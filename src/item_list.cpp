@@ -1,8 +1,9 @@
 #include "../include/item_list.hpp"
 #include <cstring>
 
-ItemList::ItemList(FILE *outputFile, StyleManager *styleManager,
-            ItemCache *itemCache) {
+ItemList::ItemList(
+    FILE *outputFile, StyleManager *styleManager, ItemCache *itemCache
+) {
     m_outputFile = outputFile;
     m_styleManager = styleManager;
     m_itemCache = itemCache;
@@ -43,9 +44,7 @@ void ItemList::drawName(int i) const {
         ansi.clearTilEOL();
         if (m_config.activeSelector.size()) {
             m_styleManager->set(m_config.activeSelectorStyle);
-            fprintf(
-                m_outputFile, "%s", m_config.activeSelector.c_str()
-            );
+            fprintf(m_outputFile, "%s", m_config.activeSelector.c_str());
         }
         m_styleManager->set(m_config.activeItemStyle);
     }
@@ -60,26 +59,28 @@ void ItemList::drawName(int i) const {
     }
 
     fprintf(m_outputFile, "%s", name.c_str());
-    // fprintf(m_outputFile, "%s %d", name.c_str(), m_itemCache->get(i)->heuristic);
+    // fprintf(m_outputFile, "%s %d", name.c_str(),
+    // m_itemCache->get(i)->heuristic);
 }
 
 void ItemList::drawHint(int i) const {
     const char *text = m_itemCache->get(i)->text;
     std::string hint = std::string(text + strlen(text) + 1);
 
-    m_styleManager->set(i == m_cursor ? m_config.activeHintStyle
-            : m_config.hintStyle);
+    m_styleManager->set(
+        i == m_cursor ? m_config.activeHintStyle : m_config.hintStyle
+    );
 
     if (hint.size() > m_hintWidth) {
         const char *str = hint.data();
         int startIdx = hint.size() - m_hintWidth + 1;
         int idx = startIdx;
         while (str[idx] != '/') {
-           idx++;
-           if (idx == hint.size()) {
-               idx = startIdx;
-               break;
-           }
+            idx++;
+            if (idx == hint.size()) {
+                idx = startIdx;
+                break;
+            }
         }
         ansi.move(m_width - hint.size() + idx - 1, m_height - i - 2 + m_offset);
         fprintf(m_outputFile, "…");
@@ -219,18 +220,20 @@ void ItemList::resize(int w, int h) {
         m_itemCache->setReserve(h * 2);
     }
 
-    int selectorWidth = std::max(m_config.selector.size(),
-            m_config.activeSelector.size());
+    int selectorWidth = std::max(
+        m_config.selector.size(), m_config.activeSelector.size()
+    );
 
     if (m_config.showHints) {
-        m_hintWidth = (m_width - ((m_width / 5) * 3) - selectorWidth
-            - m_config.minHintSpacing);
+        m_hintWidth =
+            (m_width - ((m_width / 5) * 3) - selectorWidth -
+             m_config.minHintSpacing);
         if (m_hintWidth >= m_config.minHintWidth) {
             if (m_hintWidth >= m_config.maxHintWidth) {
                 m_hintWidth = m_config.maxHintWidth;
             }
-            m_itemWidth = m_width - m_hintWidth - selectorWidth
-                - m_config.minHintSpacing;
+            m_itemWidth = m_width - m_hintWidth - selectorWidth -
+                m_config.minHintSpacing;
         }
         else {
             m_hintWidth = 0;
@@ -273,7 +276,7 @@ bool ItemList::setSelected(int y) {
     return true;
 }
 
-Item* ItemList::get(int y) const {
+Item *ItemList::get(int y) const {
     return m_itemCache->get(m_offset + (m_height - 1 - y));
 }
 
@@ -303,7 +306,8 @@ void ItemList::refresh(bool resetCursor) {
 
     m_itemCache->refresh();
     calcVisibleItems();
-    visibleItemsChanged = visibleItemsChanged || m_nVisibleItems != itemIds.size();
+    visibleItemsChanged = visibleItemsChanged ||
+        m_nVisibleItems != itemIds.size();
 
     if (!visibleItemsChanged) {
         for (int i = 0; i < m_nVisibleItems; i++) {
@@ -323,7 +327,7 @@ void ItemList::refresh(bool resetCursor) {
     }
 }
 
-Item* ItemList::getSelected() const {
+Item *ItemList::getSelected() const {
     if (m_nVisibleItems) {
         return m_itemCache->get(m_cursor);
     }

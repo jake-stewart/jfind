@@ -14,13 +14,12 @@ bool ItemReader::read(Item &item) {
     return readWithoutHints(item);
 }
 
-
 bool ItemReader::readWithoutHints(Item &item) {
     size_t size;
     char *buf = nullptr;
 
     if (getline(&buf, &size, m_file) < 0) {
-        free((void*)buf);
+        free((void *)buf);
         return false;
     }
 
@@ -37,19 +36,19 @@ bool ItemReader::readWithHints(Item &item) {
     char *secondBuf = nullptr;
 
     if (getline(&buf, &size, m_file) < 0) {
-        free((void*)buf);
+        free((void *)buf);
         return false;
     }
     if (getline(&secondBuf, &size, m_file) < 0) {
-        free((void*)buf);
-        free((void*)secondBuf);
+        free((void *)buf);
+        free((void *)secondBuf);
         return false;
     }
 
     buf[strcspn(buf, "\n")] = 0;
     secondBuf[strcspn(secondBuf, "\n")] = 0;
 
-    char *thirdBuf = (char*)malloc(strlen(buf) + strlen(secondBuf) + 2);
+    char *thirdBuf = (char *)malloc(strlen(buf) + strlen(secondBuf) + 2);
     strcpy(thirdBuf, buf);
     strcpy(thirdBuf + strlen(buf) + 1, secondBuf);
     free(secondBuf);

@@ -1,13 +1,13 @@
 #ifndef PROCESS_HPP
 #define PROCESS_HPP
 
-#include <cstdio>
 #include "logger.hpp"
+#include <cstdio>
 
 extern "C" {
+#include <sys/wait.h>
 #include <termios.h>
 #include <unistd.h>
-#include <sys/wait.h>
 }
 
 enum class ProcessState {
@@ -16,7 +16,8 @@ enum class ProcessState {
     Active,
 };
 
-class Process {
+class Process
+{
     Logger m_logger = Logger("Process");
     ProcessState m_state = ProcessState::None;
     int m_pipefd[2];

@@ -45,4 +45,3 @@ Color16 parseColor16(std::string name) {
     }
     return color;
 }
-
