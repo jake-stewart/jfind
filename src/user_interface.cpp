@@ -20,7 +20,6 @@ UserInterface::UserInterface(FILE *outputFile, StyleManager *styleManager, ItemL
     m_editor = editor;
 
     m_dispatch.subscribe(this, KEY_EVENT);
-    m_dispatch.subscribe(this, QUIT_EVENT);
     m_dispatch.subscribe(this, RESIZE_EVENT);
     m_dispatch.subscribe(this, ITEMS_SORTED_EVENT);
     m_dispatch.subscribe(this, ALL_ITEMS_READ_EVENT);
@@ -111,7 +110,6 @@ void UserInterface::handleMouse(MouseEvent event) {
                     {
                         m_selected = true;
                         m_selectedKey = K_MOUSE;
-                        // m_dispatch.dispatch(std::make_shared<QuitEvent>());
                         raise(SIGTERM);
                     }
                     else {
@@ -134,7 +132,6 @@ void UserInterface::handleInput(KeyEvent event) {
             if (key == event.getKey()) {
                 m_selectedKey = event.getKey();
                 m_selected = true;
-                // m_dispatch.dispatch(std::make_shared<QuitEvent>());
                 raise(SIGTERM);
                 return;
             }
@@ -145,7 +142,6 @@ void UserInterface::handleInput(KeyEvent event) {
         case K_ESCAPE:
         case K_CTRL_C:
             raise(SIGTERM);
-            // m_dispatch.dispatch(std::make_shared<QuitEvent>());
             break;
 
         case 32 ... 126:
@@ -190,7 +186,6 @@ void UserInterface::handleInput(KeyEvent event) {
         case K_ENTER: {
             m_selected = true;
             m_selectedKey = event.getKey();
-            // m_dispatch.dispatch(std::make_shared<QuitEvent>());
             raise(SIGTERM);
             break;
         }
@@ -250,9 +245,6 @@ void UserInterface::onEvent(std::shared_ptr<Event> event) {
             bool canScroll = m_threadsafeReading || itemsEvent->getValue();
             m_itemList->allowScrolling(canScroll);
             m_isReading = !itemsEvent->getValue();
-            break;
-        }
-        case QUIT_EVENT: {
             break;
         }
         default:

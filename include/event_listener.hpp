@@ -19,9 +19,6 @@ class EventListener {
         std::unique_lock lock(m_mut);
         for (std::shared_ptr<Event> event : m_events) {
             onEvent(event);
-            if (event->getType() == QUIT_EVENT) {
-                m_active = false;
-            }
         }
         m_events.clear();
     }
@@ -42,12 +39,6 @@ protected:
             m_cv.wait_until(lock, until);
         }
     }
-
-    // preOnEvent is called from a different thread
-    // it does not contain event payload and is meant
-    // to give the listener a chance to unblock IO for
-    // specific events (abort read when quitting)
-    virtual void preOnEvent(EventType type) {};
 
     virtual void onEvent(std::shared_ptr<Event> event) {};
     virtual void onLoop() {
@@ -71,7 +62,6 @@ public:
     }
 
     void addEvent(std::shared_ptr<Event> event) {
-        preOnEvent(event->getType());
         {
             std::unique_lock lock(m_mut);
             m_events.push_back(event);

@@ -8,8 +8,7 @@ static const char* const EVENT_NAMES[] = {
     "ITEMS_ADDED_EVENT",
     "ITEMS_SORTED_EVENT",
     "ITEMS_REQUEST_EVENT",
-    "RESIZE_EVENT",
-    "QUIT_EVENT",
+    "RESIZE_EVENT"
 };
 
 const char* const* getEventNames() {

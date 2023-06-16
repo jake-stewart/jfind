@@ -20,14 +20,11 @@ int utf8CharLen(unsigned char c);
 
 class InputReader : public EventListener {
 public:
-    InputReader();
-
     bool getKey(Key *key);
     void setFileDescriptor(int fd);
 
     void onLoop() override;
     void onStart() override;
-    void preOnEvent(EventType type) override;
     void onEvent(std::shared_ptr<Event> event) override;
 
     void onSigInt();

@@ -13,7 +13,6 @@ class ItemReader
 public:
     void setFile(FILE *file);
     bool read(Item& item);
-    void cancel();
 
 private:
     bool readWithHints(Item &item);

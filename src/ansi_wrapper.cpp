@@ -139,10 +139,10 @@ void AnsiWrapper::restoreTerm(void) {
     signal(SIGQUIT, SIG_DFL);
 }
 
-static char outputBuffer[50000];
+// static char outputBuffer[50000];
 
 void AnsiWrapper::initTerm(void) {
-    setvbuf(m_outputFile, outputBuffer, _IOFBF, sizeof(outputBuffer));
+    // setvbuf(m_outputFile, outputBuffer, _IOFBF, sizeof(outputBuffer));
     // setvbuf(m_outputFile, nullptr, _IOFBF, BUFSIZ);
     // setvbuf(m_outputFile, NULL, _IONBF, 0);
 

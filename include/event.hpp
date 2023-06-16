@@ -16,7 +16,6 @@ enum EventType {
     ITEMS_SORTED_EVENT,
     ITEMS_REQUEST_EVENT,
     RESIZE_EVENT,
-    QUIT_EVENT,
 };
 const char* const* getEventNames();
 
@@ -111,13 +110,6 @@ public:
 
     bool getValue() {
         return m_value;
-    }
-};
-
-class QuitEvent : public Event {
-public:
-    EventType getType() const override {
-        return QUIT_EVENT;
     }
 };
 

@@ -104,17 +104,12 @@ bool InputReader::getKey(Key *key) {
     }
 }
 
-InputReader::InputReader() {
-    m_dispatch.subscribe(this, QUIT_EVENT);
-}
-
 void InputReader::setFileDescriptor(int fd) {
     m_reader.setFileDescriptor(fd);
 }
 
 bool InputReader::getch(char *c) {
     if (m_reader.read(c, 1) < 0) {
-        m_dispatch.dispatch(std::make_shared<QuitEvent>());
         return false;
     }
     return true;
@@ -319,29 +314,20 @@ void InputReader::onStart() {
 
 void InputReader::onLoop() {
     Key key;
-    bool success = getKey(&key);
-    if (success) {
-        switch (key) {
-            case K_MOUSE:
-                m_dispatch.dispatch(std::make_shared<KeyEvent>(key, m_mouseEvents));
-                break;
-            case K_UTF8:
-                m_dispatch.dispatch(std::make_shared<KeyEvent>(key, m_widechar));
-                break;
-            default:
-                m_dispatch.dispatch(std::make_shared<KeyEvent>(key));
-                break;
-        }
-    }
-    else {
-        m_reader.cancel();
+    if (!getKey(&key)) {
         end();
+        return;
     }
-}
-
-void InputReader::preOnEvent(EventType type) {
-    if (type == QUIT_EVENT) {
-        m_reader.cancel();
+    switch (key) {
+        case K_MOUSE:
+            m_dispatch.dispatch(std::make_shared<KeyEvent>(key, m_mouseEvents));
+            break;
+        case K_UTF8:
+            m_dispatch.dispatch(std::make_shared<KeyEvent>(key, m_widechar));
+            break;
+        default:
+            m_dispatch.dispatch(std::make_shared<KeyEvent>(key));
+            break;
     }
 }
 

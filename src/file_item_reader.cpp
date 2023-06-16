@@ -17,7 +17,6 @@ FileItemReader::FileItemReader(FILE *file) {
     m_file = file;
     m_interval.setInterval(50ms);
     m_itemReader.setFile(file);
-    m_dispatch.subscribe(this, QUIT_EVENT);
     m_dispatch.subscribe(this, ITEMS_ADDED_EVENT);
 }
 
@@ -33,10 +32,6 @@ bool FileItemReader::read() {
 void FileItemReader::onEvent(std::shared_ptr<Event> event) {
     m_logger.log("received %s", getEventNames()[event->getType()]);
     switch (event->getType()) {
-        case QUIT_EVENT: {
-            m_interval.end();
-            break;
-        }
         case ITEMS_ADDED_EVENT:
             m_itemsRead = true;
             break;
@@ -67,13 +62,6 @@ void FileItemReader::onStart() {
     else {
         m_dispatch.dispatch(std::make_shared<AllItemsReadEvent>(true));
         end();
-    }
-}
-
-void FileItemReader::preOnEvent(EventType eventType) {
-    if (eventType == QUIT_EVENT) {
-        close(fileno(m_file));
-        m_itemReader.cancel();
     }
 }
 

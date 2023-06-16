@@ -44,7 +44,6 @@ ProcessItemReader::ProcessItemReader(
 ) {
     m_query = startQuery;
     m_interval.setInterval(INTERVAL);
-    m_dispatch.subscribe(this, QUIT_EVENT);
     m_dispatch.subscribe(this, QUERY_CHANGE_EVENT);
     m_dispatch.subscribe(this, ITEMS_REQUEST_EVENT);
 }
@@ -158,20 +157,10 @@ void ProcessItemReader::onLoop() {
     }
 }
 
-void ProcessItemReader::preOnEvent(EventType eventType) {
-    if (eventType == QUIT_EVENT) {
-        m_itemReader.cancel();
-    }
-}
-
 void ProcessItemReader::onEvent(std::shared_ptr<Event> event) {
     m_logger.log("received %s", getEventNames()[event->getType()]);
 
     switch (event->getType()) {
-        case QUIT_EVENT:
-            m_process.end();
-            m_interval.end();
-            break;
         case QUERY_CHANGE_EVENT: {
             QueryChangeEvent *queryChangeEvent
                 = (QueryChangeEvent *)event.get();

@@ -19,7 +19,6 @@ ItemSorter::ItemSorter(std::string startQuery) {
 
     m_dispatch.subscribe(this, QUERY_CHANGE_EVENT);
     m_dispatch.subscribe(this, NEW_ITEMS_EVENT);
-    m_dispatch.subscribe(this, QUIT_EVENT);
 }
 
 static bool sortFunc(const Item& l, const Item& r) {
@@ -220,10 +219,6 @@ void ItemSorter::onEvent(std::shared_ptr<Event> event) {
             m_sorter_cv.notify_one();
             break;
         }
-
-        case QUIT_EVENT:
-            endSorterThread();
-            break;
 
         default:
             break;

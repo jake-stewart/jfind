@@ -61,7 +61,3 @@ bool ItemReader::readWithHints(Item &item) {
 
     return true;
 }
-
-void ItemReader::cancel() {
-    // m_reader.cancel();
-}
