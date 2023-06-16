@@ -153,7 +153,7 @@ void AnsiWrapper::initTerm(void) {
     term.c_iflag &= ~ICRNL;   // differentiate newline and linefeed
     term.c_iflag &= ~IXON;    // allow ctrl+s ctrl+q keys
     term.c_lflag &=  ISIG;    // generate exit signals
-    term.c_lflag &= ~ECHO     // disable echoing keys back to user
+    term.c_lflag &= ~ECHO;    // disable echoing keys back to user
     term.c_lflag &= ~ICANON;  // disable cannonical mode
 
     tcsetattr(m_inputFileNo, TCSANOW, &term);
