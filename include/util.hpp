@@ -13,5 +13,6 @@ int mod(int n, int m);
 bool isVowel(char c);
 bool isInteger(const char *str);
 void replace(std::string &str, char from, char to);
+void displayHelp(const char *name);
 
 #endif

@@ -63,4 +63,7 @@ private:
     Config(){};
 };
 
+void createStyles(StyleManager *styleManager);
+bool readConfig(StyleManager *styleManager, int argc, const char **argv);
+
 #endif
