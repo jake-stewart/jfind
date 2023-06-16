@@ -15,8 +15,8 @@ void CancellableReader::setFile(FILE *file) {
 
 void CancellableReader::setFileDescriptor(int fd) {
     m_fd = fd;
-    /* m_maxFd = (m_pipe[0] > m_fd ? m_pipe[0] : m_fd) + 1; */
-    /* FD_ZERO(&m_fd_set); */
+    m_maxFd = (m_pipe[0] > m_fd ? m_pipe[0] : m_fd) + 1;
+    FD_ZERO(&m_fd_set);
     /* FD_SET(m_fd, &m_fd_set); */
     /* FD_SET(m_pipe[0], &m_fd_set); */
 }
