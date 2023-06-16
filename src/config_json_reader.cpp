@@ -16,6 +16,8 @@ std::map<std::string, JsonReaderStrategy*> ConfigJsonReader::createOptions() {
 
     options["prompt_gap"] = (
             new JsonIntReaderStrategy(&config.promptGap))->min(0);
+    options["max_cores"] = (
+            new JsonIntReaderStrategy(&config.maxCores))->min(0);
     options["history_limit"] = (
             new JsonIntReaderStrategy(&config.historyLimit))->min(0);
     options["min_hint_spacing"] = (

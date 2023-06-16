@@ -45,6 +45,7 @@ struct Config {
     fs::path historyFile;
     int historyLimit = 50;
 
+    int maxCores = 4;
     int minHintWidth = 25;
     int minHintSpacing = 5;
     int maxHintWidth = 60;

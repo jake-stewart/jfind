@@ -131,7 +131,9 @@ void ItemSorter::calcHeuristics(bool newItems, int start, int end)
     }
 
     ThreadManager<Item> manager(f);
-    manager.setNumThreads(4);
+    manager.setNumThreads(std::min(
+        (int)std::thread::hardware_concurrency(), Config::instance().maxCores
+    ));
     manager.setThreshold(1024);
     manager.run(m_items.data() + start, end - start);
 

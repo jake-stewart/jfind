@@ -202,7 +202,6 @@ void displayHelp(const char *name) {
 }
 
 int main(int argc, const char **argv) {
-
     ItemSorter *itemSorter;
     ItemMatcher *matcher;
     FileItemReader *fileItemReader;

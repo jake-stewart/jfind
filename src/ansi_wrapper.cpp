@@ -7,6 +7,10 @@ extern "C" {
 
 #define ANSI_ESC "\x1b["
 
+// output buffer so that we can flush when done drawing
+// without output buffer, cursor may jump around causing slight flicker
+static char outputBuffer[50000];
+
 AnsiWrapper::AnsiWrapper() {
     m_inAlternateBuffer = false;
     m_mouseEnabled = false;
@@ -139,12 +143,8 @@ void AnsiWrapper::restoreTerm(void) {
     signal(SIGQUIT, SIG_DFL);
 }
 
-// static char outputBuffer[50000];
-
 void AnsiWrapper::initTerm(void) {
-    // setvbuf(m_outputFile, outputBuffer, _IOFBF, sizeof(outputBuffer));
-    // setvbuf(m_outputFile, nullptr, _IOFBF, BUFSIZ);
-    // setvbuf(m_outputFile, NULL, _IONBF, 0);
+    setvbuf(m_outputFile, outputBuffer, _IOFBF, sizeof(outputBuffer));
 
     tcgetattr(m_inputFileNo, &m_origTermios);
     termios term = m_origTermios;
@@ -161,11 +161,4 @@ void AnsiWrapper::initTerm(void) {
     setAlternateBuffer(true);
     clearTerm();
     moveHome();
-    // fflush(m_outputFile);
-}
-
-void AnsiWrapper::closeStdin() {
-    int fd = open("/dev/null", O_RDONLY);
-    dup2(fd, 0);
-    close(fd);
 }
