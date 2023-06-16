@@ -109,16 +109,16 @@ void signalHandler(int sig) {
     switch (sig) {
         case SIGTERM:
             ansi.restoreTerm();
-            // printResult(userInterface.getSelectedKey(), userInterface.getSelected(),
-            //         editor.getText().c_str());
+            printResult(
+                userInterface.getSelectedKey(), userInterface.getSelected(),
+                editor.getText().c_str()
+            );
             logger.log("done");
             Logger::close();
             exit(0);
             break;
         case SIGINT:
             eventDispatch.dispatch(std::make_shared<KeyEvent>(K_CTRL_C));
-            // logger.log("received SIGINT");
-            // eventDispatch.dispatch(std::make_shared<QuitEvent>());
             break;
         case SIGWINCH:
             logger.log("received SIGWINCH");
