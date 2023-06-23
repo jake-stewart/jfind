@@ -50,7 +50,9 @@ ssize_t CancellableReader::read(char *buf, size_t n) {
 
 void CancellableReader::cancel() {
     char byte;
-    write(m_pipe[1], &byte, 1);
+    if (write(m_pipe[1], &byte, 1) != 1) {
+        LOG("failed to write dummy byte");
+    }
 }
 
 bool CancellableReader::blocked() {
