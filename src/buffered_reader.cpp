@@ -30,6 +30,7 @@ const char* BufferedReader::getline() {
             m_capacity *= 1.5;
             char *newBuffer = (char*)malloc(m_capacity);
             if (!newBuffer) {
+                LOG("failed to malloc additional buffer");
                 return nullptr;
             }
             m_buffers.push_back(newBuffer);
@@ -39,8 +40,10 @@ const char* BufferedReader::getline() {
             memcpy(newBuffer, m_buffer + result, m_size);
             m_buffer = newBuffer;
         }
-        ssize_t bytesRead = read(0, m_buffer + m_size, m_capacity - m_size);
+        ssize_t bytesRead = read(STDIN_FILENO,
+                m_buffer + m_size, m_capacity - m_size);
         if (bytesRead <= 0) {
+            LOG("failed to read from stdin");
             return nullptr;
         }
         m_size += bytesRead;
@@ -54,6 +57,7 @@ bool BufferedReader::reset() {
     m_buffer = (char*)malloc(m_capacity);
     m_buffers.clear();
     if (!m_buffer) {
+        LOG("failed to reset and malloc new buffer");
         return false;
     }
     m_buffers.push_back(m_buffer);

@@ -244,10 +244,12 @@ void ItemSorter::addNewItems() {
         return;
     }
     m_hasNewItems = false;
+    LOG("adding new items");
     m_items.insert(
         m_items.end(), m_newItems->data(),
         m_newItems->data() + m_newItems->size()
     );
+    LOG("added new items");
     m_dispatch.dispatch(std::make_shared<ItemsAddedEvent>());
 }
 
