@@ -6,7 +6,9 @@ extern "C" {
 }
 
 CancellableReader::CancellableReader() {
-    pipe(m_pipe);
+    if (pipe(m_pipe) == -1) {
+        LOG("pipe failed");
+    }
 }
 
 void CancellableReader::setFile(FILE *file) {
