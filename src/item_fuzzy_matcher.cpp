@@ -2,6 +2,7 @@
 #include "../include/item.hpp"
 #include "../include/util.hpp"
 #include <climits>
+#include <cstring>
 
 #define isupper(c) (c >= 'A' && c <= 'Z')
 #define islower(c) (c >= 'a' && c <= 'z')
