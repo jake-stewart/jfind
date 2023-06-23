@@ -197,3 +197,19 @@ void displayHelp(const char *name) {
            "the following example:\n");
     printf("    seq 100 | %s\n", name);
 }
+
+std::string fileName(std::string filePath) {
+    std::size_t lastSlash = filePath.find_last_of("/\\");
+    if (lastSlash != std::string::npos) {
+        filePath = filePath.substr(lastSlash + 1);
+    }
+    return filePath;
+}
+
+std::string fileStem(std::string filePath) {
+    std::size_t lastDot = filePath.find_last_of(".");
+    if (lastDot != std::string::npos) {
+        filePath = filePath.substr(0, lastDot);
+    }
+    return filePath;
+}

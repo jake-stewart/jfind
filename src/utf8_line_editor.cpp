@@ -30,11 +30,46 @@ void Utf8LineEditor::moveCursorRight() {
     m_cursor.moveRight();
 }
 
-void Utf8LineEditor::backspace() {
+void Utf8LineEditor::moveCursorStartOfLine() {
+    m_requiresRedraw = true;
+    while (m_cursor.moveLeft());
+}
+
+void Utf8LineEditor::moveCursorEndOfLine() {
+    m_requiresRedraw = true;
+    while (m_cursor.moveRight());
+}
+
+bool Utf8LineEditor::backspace() {
     if (m_cursor.backspace()) {
         m_requiresRedraw = true;
         m_end.reset();
+        return true;
     }
+    return false;
+}
+
+void Utf8LineEditor::backspaceWord() {
+    Utf8StringCursor left = m_cursor;
+
+    if (!left.moveLeft()) {
+        return;
+    }
+
+    m_requiresRedraw = true;
+
+    while ((m_string.bytes[left.getByte()] == ' '
+                || m_string.bytes[left.getByte()] == '\t')
+            && m_cursor.moveLeft()
+            && m_cursor.del()
+            && left.moveLeft());
+
+    while (m_string.bytes[left.getByte()] != ' '
+            && m_string.bytes[left.getByte()] != '\t'
+            && m_cursor.moveLeft()
+            && m_cursor.del()
+            && left.moveLeft());
+    m_end.reset();
 }
 
 void Utf8LineEditor::del() {

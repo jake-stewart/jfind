@@ -1,4 +1,5 @@
 #include "../include/cancellable_reader.hpp"
+#include "../include/logger.hpp"
 
 extern "C" {
 #include <unistd.h>

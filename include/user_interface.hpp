@@ -32,10 +32,10 @@ private:
     void onResize(int w, int h);
     void drawPrompt();
     void drawQuery();
+    bool loadHistory(int direction);
     void handleMouse(MouseEvent event);
 
     EventDispatch &m_dispatch = EventDispatch::instance();
-    Logger m_logger = Logger("UserInterface");
     StyleManager *m_styleManager;
     AnsiWrapper &ansi = AnsiWrapper::instance();
     const Config &m_config = Config::instance();
@@ -63,6 +63,9 @@ private:
 
     int m_width = 0;
     int m_height = 0;
+
+    int m_historyIdx = -1;
+    std::string m_originalQuery;
 };
 
 #endif

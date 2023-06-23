@@ -1,4 +1,5 @@
 #include "../include/user_interface.hpp"
+#include "../include/history_manager.hpp"
 #include <chrono>
 #include <cstring>
 #include <string>
@@ -28,7 +29,7 @@ UserInterface::UserInterface(
 }
 
 void UserInterface::onStart() {
-    m_logger.log("started");
+    LOG("started");
     m_lastUpdateTime = std::chrono::system_clock::now();
     m_itemList->allowScrolling(m_threadsafeReading);
 }
@@ -128,13 +129,44 @@ void UserInterface::handleMouse(MouseEvent event) {
     }
 }
 
+bool UserInterface::loadHistory(int direction) {
+    if (direction == 1) {
+        if (m_historyIdx == -1) {
+            m_originalQuery = m_editor->getText();
+        }
+    }
+    else {
+        if (m_historyIdx == 0) {
+            m_historyIdx--;
+            m_editor->clear();
+            m_editor->input(m_originalQuery);
+            return true;
+        }
+    }
+    std::string *entry;
+
+    if (HistoryManager::instance().getEntry(m_historyIdx + direction, &entry)) {
+        m_historyIdx += direction;
+        m_editor->clear();
+        m_editor->input(*entry);
+        return true;
+    }
+    return false;
+}
+
 void UserInterface::handleInput(KeyEvent event) {
     std::string query = m_editor->getText();
+
+    bool canAccept = m_itemList->getSelected() ||
+        Config::instance().acceptNonMatch;
 
     if (event.getKey() != K_UNKNOWN && event.getKey() != K_NULL) {
         std::vector<int> &keys = Config::instance().additionalKeys;
         for (int key : keys) {
             if (key == event.getKey()) {
+                if (!canAccept) {
+                    return;
+                }
                 m_selectedKey = event.getKey();
                 m_selected = true;
                 raise(SIGTERM);
@@ -153,8 +185,20 @@ void UserInterface::handleInput(KeyEvent event) {
             m_editor->input(event.getKey());
             break;
 
-        case K_CTRL_A:
+        case K_CTRL_V:
             m_editor->input(m_editor->getText());
+            break;
+
+        case K_CTRL_E:
+            m_editor->moveCursorEndOfLine();
+            break;
+
+        case K_CTRL_W:
+            m_editor->backspaceWord();
+            break;
+
+        case K_CTRL_A:
+            m_editor->moveCursorStartOfLine();
             break;
 
         case K_CTRL_H:
@@ -180,15 +224,28 @@ void UserInterface::handleInput(KeyEvent event) {
             m_itemList->moveCursorDown();
             break;
 
+        case K_CTRL_P:
+            loadHistory(1);
+            break;
+
+        case K_CTRL_N:
+            loadHistory(-1);
+            break;
+
         case K_LEFT:
+        case K_CTRL_B:
             m_editor->moveCursorLeft();
             break;
 
         case K_RIGHT:
+        case K_CTRL_F:
             m_editor->moveCursorRight();
             break;
 
         case K_ENTER: {
+            if (!canAccept) {
+                break;
+            }
             m_selected = true;
             m_selectedKey = event.getKey();
             raise(SIGTERM);
@@ -227,7 +284,7 @@ void UserInterface::handleInput(KeyEvent event) {
 }
 
 void UserInterface::onEvent(std::shared_ptr<Event> event) {
-    m_logger.log("received %s", getEventNames()[event->getType()]);
+    LOG("received %s", getEventNames()[event->getType()]);
     switch (event->getType()) {
         case KEY_EVENT: {
             KeyEvent *keyEvent = (KeyEvent *)event.get();
@@ -289,13 +346,14 @@ void UserInterface::onLoop() {
             );
 
         if (ms < 10ms && !m_firstUpdate) {
+            LOG("sleeping for %lldms", ms.count());
             awaitEvent(10ms - ms);
             return;
         }
 
         m_lastUpdateTime = now;
         m_firstUpdate = false;
-        m_logger.log("refreshed after %lldms", ms.count());
+        LOG("refreshed after %lldms", ms.count());
         m_itemList->refresh(m_resetCursor);
         m_resetCursor = false;
         m_requiresRefresh = false;

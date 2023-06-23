@@ -1,7 +1,6 @@
 #ifndef PROCESS_HPP
 #define PROCESS_HPP
 
-#include "logger.hpp"
 #include <cstdio>
 
 extern "C" {
@@ -18,7 +17,6 @@ enum class ProcessState {
 
 class Process
 {
-    Logger m_logger = Logger("Process");
     ProcessState m_state = ProcessState::None;
     int m_pipefd[2];
     pid_t m_child_pid;

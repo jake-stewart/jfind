@@ -3,6 +3,7 @@
 #include "../include/item_matcher.hpp"
 #include "../include/thread_manager.hpp"
 #include "../include/util.hpp"
+#include "../include/logger.hpp"
 #include <climits>
 #include <cstring>
 #include <unistd.h>
@@ -23,10 +24,7 @@ ItemSorter::ItemSorter(std::string startQuery) {
 
 static bool sortFunc(const Item &l, const Item &r) {
     if (l.heuristic == r.heuristic) {
-        if (strlen(l.text) == strlen(r.text)) {
-            return l.index < r.index;
-        }
-        return strlen(l.text) < strlen(r.text);
+        return l.index < r.index;
     }
     return l.heuristic > r.heuristic;
 }
@@ -43,7 +41,7 @@ void ItemSorter::sort(int sortIdx) {
         sortIdx = m_items.size();
     }
 
-    m_logger.log("sorting from %d to %d", m_sortIdx, sortIdx);
+    LOG("sorting from %d to %d", m_sortIdx, sortIdx);
 
     auto first = m_items.begin() + m_sortIdx;
     auto middle = m_items.begin() + sortIdx;
@@ -55,6 +53,7 @@ void ItemSorter::sort(int sortIdx) {
         std::partial_sort(first, middle, last, sortEmptyFunc);
     }
 
+    LOG("finished sorting");
     m_sortIdx = sortIdx;
 }
 
@@ -85,14 +84,15 @@ void ItemSorter::calcHeuristics(bool queryChanged) {
     }
 
     if (queryChanged && m_heuristicIdx) {
-        m_logger.log("fast calcHeuristics for %d items", m_heuristicIdx);
+        LOG("fast calcHeuristics for %d items", m_heuristicIdx);
         calcHeuristics(false, 0, m_heuristicIdx);
     }
     int n = m_items.size();
     if (n && n > m_heuristicIdx) {
-        m_logger.log("slow calcHeuristics for %d items", n - m_heuristicIdx);
+        LOG("slow calcHeuristics for %d items", n - m_heuristicIdx);
         calcHeuristics(true, m_heuristicIdx, n);
     }
+    LOG("finished calcHeuristics");
     m_heuristicIdx = n;
 }
 
@@ -173,11 +173,8 @@ void ItemSorter::sorterThread() {
         {
             std::unique_lock lock(m_sorter_mut);
             items_lock.unlock();
-            if (m_sorterThreadActive && !m_queryChanged && !m_hasNewItems) {
+            while (m_sorterThreadActive && !m_queryChanged && !m_hasNewItems) {
                 m_sorter_cv.wait(lock);
-            }
-            else {
-                std::this_thread::yield();
             }
             items_lock.lock();
         }
@@ -187,7 +184,7 @@ void ItemSorter::sorterThread() {
 }
 
 void ItemSorter::onStart() {
-    m_logger.log("started");
+    LOG("started");
     m_sorterThreadActive = true;
     m_sorterThread = new std::thread(&ItemSorter::sorterThread, this);
 }
@@ -201,7 +198,7 @@ void ItemSorter::onLoop() {
 }
 
 void ItemSorter::onEvent(std::shared_ptr<Event> event) {
-    m_logger.log("received %s", getEventNames()[event->getType()]);
+    LOG("received %s", getEventNames()[event->getType()]);
     switch (event->getType()) {
         case QUERY_CHANGE_EVENT: {
             QueryChangeEvent *queryChangeEvent = (QueryChangeEvent *)event.get(

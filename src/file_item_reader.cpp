@@ -1,4 +1,5 @@
 #include "../include/file_item_reader.hpp"
+#include "../include/logger.hpp"
 #include <chrono>
 #include <cstdlib>
 #include <cstring>
@@ -15,7 +16,7 @@ using std::chrono::time_point;
 
 FileItemReader::FileItemReader(FILE *file) {
     m_file = file;
-    m_interval.setInterval(50ms);
+    m_interval.setInterval(10ms);
     m_itemReader.setFile(file);
     m_dispatch.subscribe(this, ITEMS_ADDED_EVENT);
 }
@@ -30,7 +31,7 @@ bool FileItemReader::read() {
 }
 
 void FileItemReader::onEvent(std::shared_ptr<Event> event) {
-    m_logger.log("received %s", getEventNames()[event->getType()]);
+    LOG("received %s", getEventNames()[event->getType()]);
     switch (event->getType()) {
         case ITEMS_ADDED_EVENT:
             m_itemsRead = true;
@@ -52,7 +53,7 @@ void FileItemReader::dispatchItems() {
 }
 
 void FileItemReader::onStart() {
-    m_logger.log("started");
+    LOG("started");
     m_itemsRead = true;
 
     bool success = readFirstBatch();
@@ -69,13 +70,11 @@ void FileItemReader::onStart() {
 bool FileItemReader::readFirstBatch() {
     time_point start = system_clock::now();
     for (int i = 0; i < 128; i++) {
-
         bool success = read();
         if (!success) {
             return false;
         }
-
-        if (system_clock::now() - start > 50ms) {
+        if (system_clock::now() - start > 10ms) {
             break;
         }
     }

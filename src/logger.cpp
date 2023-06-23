@@ -1,40 +1,48 @@
 #include "../include/logger.hpp"
 #include <cstdarg>
 
-bool Logger::c_enabled;
-std::mutex Logger::c_mut;
-FILE *Logger::c_fp;
-
 bool Logger::open(const char *file) {
-    if (c_enabled) {
+    m_startTime = std::chrono::system_clock::now();
+    if (m_enabled) {
         return false;
     }
-    c_fp = fopen(file, "w+");
-    c_enabled = !!c_fp;
-    return c_enabled;
+    m_fp = fopen(file, "w+");
+    m_enabled = !!m_fp;
+    if (m_enabled) {
+        log("%5s %-16s %4s %s\n", "TIME", "LOCATION", "LINE", "MESSAGE");
+    }
+    return m_enabled;
 }
 
 void Logger::close() {
-    if (c_enabled) {
-        c_enabled = false;
-        fclose(c_fp);
+    if (m_enabled) {
+        m_enabled = false;
+        fclose(m_fp);
     }
 }
 
-Logger::Logger(const char *name) {
-    m_name = name;
+unsigned long long Logger::timeSinceOpened() {
+    std::chrono::system_clock::time_point now
+        = std::chrono::system_clock::now();
+    std::chrono::system_clock::time_point::duration duration
+        = now - m_startTime;
+    std::chrono::milliseconds ms
+        = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
+    return ms.count();
 }
 
 void Logger::log(const char *fmt, ...) {
-    if (!c_enabled) {
+    if (!m_enabled) {
         return;
     }
-    std::unique_lock lock(c_mut);
-    fprintf(c_fp, "%s: ", m_name);
     va_list args;
     va_start(args, fmt);
-    vfprintf(c_fp, fmt, args);
+    vfprintf(m_fp, fmt, args);
     va_end(args);
-    fprintf(c_fp, "\n");
-    fflush(c_fp);
+    fflush(m_fp);
+}
+
+Logger &Logger::instance() {
+    static Logger singleton;
+    return singleton;
 }

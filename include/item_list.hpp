@@ -4,7 +4,6 @@
 #include "ansi_wrapper.hpp"
 #include "config.hpp"
 #include "item_cache.hpp"
-#include "logger.hpp"
 #include "sliding_cache.hpp"
 #include "style_manager.hpp"
 
@@ -28,7 +27,6 @@ class ItemList
     ItemCache *m_itemCache;
     StyleManager *m_styleManager;
 
-    Logger m_logger = Logger("ItemList");
     AnsiWrapper &ansi = AnsiWrapper::instance();
     const Config &m_config = Config::instance();
 

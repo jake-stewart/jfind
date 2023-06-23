@@ -6,7 +6,6 @@
 #include "interval_thread.hpp"
 #include "item.hpp"
 #include "item_reader.hpp"
-#include "logger.hpp"
 #include <condition_variable>
 #include <cstdio>
 #include <mutex>
@@ -33,7 +32,6 @@ private:
     IntervalThread m_interval;
 
     EventDispatch &m_dispatch = EventDispatch::instance();
-    Logger m_logger = Logger("FileItemReader");
 
     DoubleBuffer<std::vector<Item>> m_items;
 

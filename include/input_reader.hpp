@@ -4,7 +4,6 @@
 #include "cancellable_reader.hpp"
 #include "event_dispatch.hpp"
 #include "key.hpp"
-#include "logger.hpp"
 #include "mouse_event.hpp"
 
 #include <string>
@@ -32,7 +31,6 @@ public:
 
 private:
     EventDispatch &m_dispatch = EventDispatch::instance();
-    Logger m_logger = Logger("InputReader");
 
     CancellableReader m_reader;
 

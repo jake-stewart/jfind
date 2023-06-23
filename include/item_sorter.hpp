@@ -4,7 +4,6 @@
 #include "event_dispatch.hpp"
 #include "item.hpp"
 #include "item_matcher.hpp"
-#include "logger.hpp"
 #include <fstream>
 #include <mutex>
 #include <string>
@@ -39,7 +38,6 @@ private:
     void sortItems();
 
     EventDispatch &m_dispatch = EventDispatch::instance();
-    Logger m_logger = Logger("ItemSorter");
 
     std::mutex m_sorter_mut;
     std::condition_variable m_sorter_cv;
@@ -55,6 +53,7 @@ private:
     Item m_firstItems[256];
     int m_firstItemsSize = 0;
 
+private:
     std::vector<Item> m_items;
     bool m_isSorted;
     std::string m_query;

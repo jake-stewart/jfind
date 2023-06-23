@@ -15,4 +15,21 @@ bool isInteger(const char *str);
 void replace(std::string &str, char from, char to);
 void displayHelp(const char *name);
 
+std::string fileName(std::string filePath);
+std::string fileStem(std::string filePath);
+
+template <typename T>
+void removeConsecutiveDuplicates(std::vector<T> &vec) {
+    auto it = vec.begin();
+    while (it != vec.end()) {
+        auto next = it + 1;
+        if (next != vec.end() && *it == *next) {
+            vec.erase(next);
+        }
+        else {
+            ++it;
+        }
+    }
+}
+
 #endif

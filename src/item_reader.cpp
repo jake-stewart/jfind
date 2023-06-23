@@ -7,6 +7,10 @@ void ItemReader::setFile(FILE *file) {
     m_file = file;
 }
 
+BufferedReader &ItemReader::getReader() {
+    return m_reader;
+}
+
 bool ItemReader::read(Item &item) {
     if (Config::instance().showHints) {
         return readWithHints(item);
@@ -15,48 +19,16 @@ bool ItemReader::read(Item &item) {
 }
 
 bool ItemReader::readWithoutHints(Item &item) {
-    size_t size;
-    char *buf = nullptr;
-
-    if (getline(&buf, &size, m_file) < 0) {
-        free((void *)buf);
-        return false;
-    }
-
-    buf[strcspn(buf, "\n")] = 0;
-    item.text = buf;
+    item.text = m_reader.getline();
     item.index = m_itemId++;
-
-    return true;
+    return item.text;
 }
 
 bool ItemReader::readWithHints(Item &item) {
-    size_t size;
-    char *buf = nullptr;
-    char *secondBuf = nullptr;
-
-    if (getline(&buf, &size, m_file) < 0) {
-        free((void *)buf);
+    item.text = m_reader.getline();
+    if (!item.text) {
         return false;
     }
-    if (getline(&secondBuf, &size, m_file) < 0) {
-        free((void *)buf);
-        free((void *)secondBuf);
-        return false;
-    }
-
-    buf[strcspn(buf, "\n")] = 0;
-    secondBuf[strcspn(secondBuf, "\n")] = 0;
-
-    char *thirdBuf = (char *)malloc(strlen(buf) + strlen(secondBuf) + 2);
-    strcpy(thirdBuf, buf);
-    strcpy(thirdBuf + strlen(buf) + 1, secondBuf);
-    free(secondBuf);
-    free(buf);
-
-    item.text = thirdBuf;
     item.index = m_itemId++;
-    item.heuristic = 0;
-
-    return true;
+    return m_reader.getline();
 }

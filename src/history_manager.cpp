@@ -1,21 +1,42 @@
 #include "../include/history_manager.hpp"
 #include "../include/thread_manager.hpp"
+#include "../include/logger.hpp"
 #include "../include/util.hpp"
+#include "../include/config.hpp"
 #include <fstream>
 #include <iostream>
+#include <filesystem>
 
-HistoryManager::HistoryManager(fs::path file) {
-    m_historyLimit = 20;
-    m_file = file;
+HistoryManager &HistoryManager::instance() {
+    static HistoryManager singleton;
+    return singleton;
 }
 
-void HistoryManager::setHistoryLimit(int historyLimit) {
-    m_historyLimit = historyLimit;
+HistoryManager::HistoryManager() {
+    m_readHistory = false;
+}
+
+bool HistoryManager::getEntry(int index, std::string **entry) {
+    if (!m_readHistory) {
+        readHistory();
+    }
+    if (index < 0 || index >= m_history.size()) {
+        return false;
+    }
+    *entry = &m_history[index];
+    return true;
 }
 
 bool HistoryManager::readHistory() {
-    std::ifstream historyFile(expandUserPath(m_file));
+    m_readHistory = true;
+    fs::path path = Config::instance().historyFile;
+    if (path.empty()) {
+        return false;
+    }
+
+    std::ifstream historyFile(expandUserPath(path));
     if (!historyFile.is_open()) {
+        LOG("open '%s' failed", path.c_str());
         return false;
     }
 
@@ -24,75 +45,59 @@ bool HistoryManager::readHistory() {
         if (!getline(historyFile, line)) {
             break;
         }
-        if (!m_historyLookup.contains(line)) {
-            m_historyLookup[line] = m_historyLookup.size();
-        }
+        m_history.push_back(line);
     }
 
     historyFile.close();
     return true;
 }
 
-void HistoryManager::applyHistory(Item *item) {
-    std::unordered_map<std::string, int>::const_iterator
-        it = m_historyLookup.find(item->text);
-    if (it != m_historyLookup.end()) {
-        item->index = -it->second - 1;
+bool HistoryManager::writeHistory(std::string query) {
+    if (!m_readHistory) {
+        if (!readHistory()) {
+            return false;
+        }
     }
-}
-
-bool HistoryManager::writeHistory(Item *selected) {
-    fs::path expanded = expandUserPath(m_file);
+    fs::path path = Config::instance().historyFile;
+    if (path.empty()) {
+        return false;
+    }
+    fs::path expanded = expandUserPath(path);
     fs::path parent = expanded.parent_path();
     if (!parent.empty() && !fs::exists(parent)) {
         try {
             fs::create_directories(parent);
         }
         catch (const std::exception &) {
-            fprintf(
-                stderr, "ERROR: could not create parent directories for '%s'\n",
-                expanded.c_str()
-            );
+            LOG("create_directories(%s) failed", expanded.c_str());
             return false;
         }
     }
     if (fs::exists(expanded) && !fs::is_regular_file(expanded)) {
-        fprintf(
-            stderr, "ERROR: '%s' is not a regular file\n", expanded.c_str()
-        );
+        LOG("'%s' exists but is not a regular file", expanded.c_str());
         return false;
     }
     std::ofstream historyFile(expanded);
 
     if (!historyFile.is_open()) {
-        fprintf(stderr, "ERROR: '%s' could not be opened\n", expanded.c_str());
+        LOG("open '%s' failed", expanded.c_str());
         return false;
     }
 
-    if (m_historyLookup.contains(selected->text)) {
-        m_historyLookup[selected->text] = m_historyLookup.size() - 1;
-    }
-    else {
-        m_historyLookup[selected->text] = m_historyLookup.size();
-    }
+    m_history.push_back(query);
+    removeConsecutiveDuplicates(m_history);
 
-    int size = m_historyLookup.size();
-    std::string history[size];
+    int start = m_history.size() > Config::instance().historyLimit
+        ? m_history.size() - Config::instance().historyLimit
+        : 0;
 
-    for (std::pair<std::string, int> it : m_historyLookup) {
-        history[it.second] = it.first;
-    }
-
-    int start = size > m_historyLimit ? size - m_historyLimit : 0;
-
-    for (int i = start; i < size; i++) {
-        if (!history[i].size()) {
+    for (int i = m_history.size() - 1; i >= start; i--) {
+        if (!m_history[i].size()) {
             continue;
         }
-        historyFile << history[i] << '\n';
+        historyFile << m_history[i] << '\n';
     }
 
     historyFile.close();
-
     return true;
 }

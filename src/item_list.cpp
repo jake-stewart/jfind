@@ -1,4 +1,5 @@
 #include "../include/item_list.hpp"
+#include "../include/logger.hpp"
 #include <cstring>
 
 ItemList::ItemList(
@@ -319,7 +320,7 @@ void ItemList::refresh(bool resetCursor) {
         }
     }
 
-    m_logger.log("visibleItemsChanged=%d", visibleItemsChanged);
+    LOG("visibleItemsChanged=%d", visibleItemsChanged);
 
     if (visibleItemsChanged) {
         calcVisibleItems();

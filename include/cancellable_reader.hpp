@@ -1,7 +1,6 @@
 #ifndef CANCELLABLE_READER_HPP
 #define CANCELLABLE_READER_HPP
 
-#include "logger.hpp"
 #include <cstdio>
 
 extern "C" {
@@ -14,7 +13,6 @@ class CancellableReader
     FILE *m_file;
     int m_fd;
 
-    Logger m_logger = Logger("CancellableReader");
     int m_pipe[2];
     fd_set m_fd_set;
     int m_maxFd;

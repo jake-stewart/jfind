@@ -31,11 +31,9 @@ extern "C" {
 static Config &config = Config::instance();
 static AnsiWrapper &ansi = AnsiWrapper::instance();
 static EventDispatch &eventDispatch = EventDispatch::instance();
-static Logger logger = Logger("main");
 
 static InputReader inputReader;
 static StyleManager styleManager(stderr);
-static HistoryManager *historyManager = nullptr;
 static ItemCache itemCache;
 static ItemList itemList(stderr, &styleManager, &itemCache);
 static Utf8LineEditor editor(stderr);
@@ -69,17 +67,16 @@ void emitResizeEvent() {
 }
 
 void finish() {
-    Item *selected = userInterface.getSelected();
-    if (selected && historyManager) {
-        historyManager->writeHistory(selected);
-        delete historyManager;
-    }
     ansi.restoreTerm();
+    Item *selected = userInterface.getSelected();
+    if (selected) {
+        HistoryManager::instance().writeHistory(editor.getText());
+    }
     printResult(
         userInterface.getSelectedKey(), selected, editor.getText().c_str()
     );
-    logger.log("done");
-    Logger::close();
+    LOG("done");
+    Logger::instance().close();
     exit(0);
 }
 
@@ -92,11 +89,11 @@ void signalHandler(int sig) {
             eventDispatch.dispatch(std::make_shared<KeyEvent>(K_CTRL_C));
             break;
         case SIGWINCH:
-            logger.log("received SIGWINCH");
+            LOG("received SIGWINCH");
             emitResizeEvent();
             break;
         default:
-            logger.log("received unknown signal %d", sig);
+            LOG("received unknown signal %d", sig);
             break;
     }
 }
@@ -107,7 +104,7 @@ int main(int argc, const char **argv) {
     }
 
     if (config.logFile.size()) {
-        Logger::open(config.logFile.c_str());
+        Logger::instance().open(config.logFile.c_str());
     }
 
     if ((!config.command.size() && isatty(STDIN_FILENO)) || config.showHelp) {
@@ -116,12 +113,6 @@ int main(int argc, const char **argv) {
     }
 
     createStyles(&styleManager);
-
-    if (!config.historyFile.empty()) {
-        historyManager = new HistoryManager(config.historyFile);
-        historyManager->setHistoryLimit(config.historyLimit);
-        historyManager->readHistory();
-    }
 
     editor.input(config.query);
 
@@ -152,7 +143,8 @@ int main(int argc, const char **argv) {
     new std::thread(&InputReader::start, &inputReader);
     userInterface.start();
 
-    logger.log("edited unexpectedly");
+    LOG("edited unexpectedly");
+    Logger::instance().close();
     ansi.restoreTerm();
     return 1;
 }

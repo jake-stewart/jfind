@@ -15,7 +15,8 @@ public:
     void input(char ch);
     void input(std::string text);
     void handleClick(int x);
-    void backspace();
+    bool backspace();
+    void backspaceWord();
     void del();
     void moveCursorLeft();
     void moveCursorRight();
@@ -23,6 +24,8 @@ public:
     const std::string &getText() const;
     int getCursorCol() const;
     void setWidth(int width);
+    void moveCursorStartOfLine();
+    void moveCursorEndOfLine();
 
 private:
     Utf8String m_string;

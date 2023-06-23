@@ -46,7 +46,7 @@ bool ItemFuzzyMatcher::requiresFullRescore() {
 }
 
 int ItemFuzzyMatcher::calculateScore(Item *item) {
-    int total = 0;
+    int total = -strlen(item->text);
     for (const std::string &query : m_queries) {
         int score = matchStart(item->text, query.c_str());
         if (score == BAD_HEURISTIC) {

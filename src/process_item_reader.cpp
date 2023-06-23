@@ -1,5 +1,7 @@
 #include "../include/process_item_reader.hpp"
 #include "../include/config.hpp"
+#include "../include/buffered_reader.hpp"
+#include "../include/logger.hpp"
 #include <chrono>
 #include <csignal>
 #include <cstdio>
@@ -32,11 +34,6 @@ std::string applyQuery(const std::string str, const std::string query) {
         return str + " " + quoted;
     }
     return std::regex_replace(str, PLACEHOLDER_REGEX, quoted);
-}
-
-ProcessItemReader::~ProcessItemReader() {
-    freeItems(m_items.getPrimary());
-    freeItems(m_items.getSecondary());
 }
 
 ProcessItemReader::ProcessItemReader(
@@ -79,7 +76,7 @@ bool ProcessItemReader::readItem() {
 }
 
 void ProcessItemReader::onStart() {
-    m_logger.log("started");
+    LOG("started");
     m_interval.start();
     startChildProcess();
 }
@@ -109,13 +106,6 @@ void ProcessItemReader::dispatchAllRead(bool value) {
     m_dispatch.dispatch(std::make_shared<AllItemsReadEvent>(value));
 }
 
-void ProcessItemReader::freeItems(std::vector<Item> &items) {
-    for (const Item &item : items) {
-        free((void *)item.text);
-    }
-    items.clear();
-}
-
 void ProcessItemReader::onLoop() {
     if (m_queryChanged) {
         if (!m_interval.ticked()) {
@@ -126,7 +116,13 @@ void ProcessItemReader::onLoop() {
         m_queryChanged = false;
         m_query = m_newQuery;
 
-        freeItems(m_items.getSecondary());
+        for (char *buffer : m_previousReaderBuffers) {
+            free(buffer);
+        }
+        m_previousReaderBuffers = m_itemReader.getReader().getBuffers();
+        m_itemReader.getReader().reset();
+        m_items.getSecondary().clear();
+
         startChildProcess();
         return;
     }
@@ -157,7 +153,7 @@ void ProcessItemReader::onLoop() {
 }
 
 void ProcessItemReader::onEvent(std::shared_ptr<Event> event) {
-    m_logger.log("received %s", getEventNames()[event->getType()]);
+    LOG("received %s", getEventNames()[event->getType()]);
 
     switch (event->getType()) {
         case QUERY_CHANGE_EVENT: {

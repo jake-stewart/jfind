@@ -13,6 +13,7 @@ extern "C" {
 #include <unistd.h>
 }
 
+#include "../include/logger.hpp"
 #include "../include/input_reader.hpp"
 
 using std::chrono::duration_cast;
@@ -312,7 +313,7 @@ bool InputReader::parseUtf8(char ch, Key *key) {
 }
 
 void InputReader::onStart() {
-    m_logger.log("started");
+    LOG("started");
 }
 
 void InputReader::onLoop() {
@@ -335,5 +336,5 @@ void InputReader::onLoop() {
 }
 
 void InputReader::onEvent(std::shared_ptr<Event> event) {
-    m_logger.log("received %s", getEventNames()[event->getType()]);
+    LOG("received %s", getEventNames()[event->getType()]);
 }
