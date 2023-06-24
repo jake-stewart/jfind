@@ -41,8 +41,8 @@ void FuzzyFindStrategy::start() {
         return m_itemSorter.size();
     });
 
-    std::thread t1(&ItemSorter::start, &m_itemSorter);
-    std::thread t2(&FileItemReader::start, &m_itemReader);
+    m_itemSorterThread = new std::thread(&ItemSorter::start, &m_itemSorter);
+    m_itemReaderThread = new std::thread(&FileItemReader::start, &m_itemReader);
 }
 
 InteractiveCommandStrategy::InteractiveCommandStrategy(ItemCache &itemCache) :
@@ -65,6 +65,6 @@ void InteractiveCommandStrategy::start() {
         return m_itemReader.size();
     });
 
-    std::thread t(&ProcessItemReader::start, &m_itemReader);
+    m_itemReaderThread = new std::thread(&ProcessItemReader::start, &m_itemReader);
 }
 

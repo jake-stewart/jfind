@@ -22,6 +22,8 @@ class FuzzyFindStrategy : public JfindStrategy
 {
     FileItemReader m_itemReader;
     ItemSorter m_itemSorter;
+    std::thread *m_itemReaderThread;
+    std::thread *m_itemSorterThread;
 
 public:
     FuzzyFindStrategy(ItemCache &itemCache);
@@ -32,6 +34,7 @@ public:
 class InteractiveCommandStrategy : public JfindStrategy
 {
     ProcessItemReader m_itemReader;
+    std::thread *m_itemReaderThread;
 
 public:
     InteractiveCommandStrategy(ItemCache &itemCache);
