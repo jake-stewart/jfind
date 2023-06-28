@@ -7,7 +7,6 @@
 
 class Spinner
 {
-    FILE *m_outputFile;
     int m_x = 0;
     int m_y = 0;
     bool m_firstUpdate = false;
@@ -20,7 +19,6 @@ class Spinner
     AnsiWrapper &ansi = AnsiWrapper::instance();
 
 public:
-    Spinner(FILE *file);
     void setPosition(int x, int y);
     std::chrono::milliseconds frameTimeRemaining() const;
     void update();

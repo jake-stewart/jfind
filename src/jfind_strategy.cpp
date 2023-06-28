@@ -13,7 +13,7 @@ JfindStrategy::JfindStrategy(ItemCache &itemCache) : m_itemCache(itemCache) {}
 FuzzyFindStrategy::FuzzyFindStrategy(ItemCache &itemCache) :
     JfindStrategy(itemCache),
     m_itemSorter(Config::instance().query),
-    m_itemReader(stdin) {}
+    m_itemReader(STDIN_FILENO) {}
 
 bool FuzzyFindStrategy::isThreadsafeReading() {
     return false;
@@ -54,7 +54,7 @@ bool InteractiveCommandStrategy::isThreadsafeReading() {
 }
 
 void InteractiveCommandStrategy::start() {
-    close(STDIN_FILENO);
+    // close(STDIN_FILENO);
     Config &config = Config::instance();
 
     m_itemCache.setItemsCallback([this](Item *buffer, int idx, int n) {

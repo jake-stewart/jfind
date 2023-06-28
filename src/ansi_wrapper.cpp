@@ -63,12 +63,20 @@ void AnsiWrapper::moveLeft(unsigned int amount) const {
     fprintf(m_outputFile, ANSI_ESC "%uD", amount);
 }
 
-void AnsiWrapper::moveUpOrScroll() const {
-    fprintf(m_outputFile, "\x1bM");
+void AnsiWrapper::scrollUp() const {
+    fprintf(m_outputFile, ANSI_ESC "S");
 }
 
-void AnsiWrapper::moveDownOrScroll() const {
-    fprintf(m_outputFile, "\n");
+void AnsiWrapper::scrollDown() const {
+    fprintf(m_outputFile, ANSI_ESC "T");
+}
+
+void AnsiWrapper::scrollLeft() const {
+    fprintf(m_outputFile, ANSI_ESC "@");
+}
+
+void AnsiWrapper::scrollRight() const {
+    fprintf(m_outputFile, ANSI_ESC "A");
 }
 
 void AnsiWrapper::enableMouse() {
@@ -147,6 +155,7 @@ void AnsiWrapper::restoreTerm(void) {
     fprintf(m_outputFile, "\x1b[0m");
     clearTerm();
     setCursor(true);
+    resetScrollRegion();
     setAlternateBuffer(false);
     fflush(m_outputFile);
     tcsetattr(m_inputFileNo, TCSANOW, &m_origTermios);
@@ -157,6 +166,7 @@ void AnsiWrapper::restoreTerm(void) {
 
 void AnsiWrapper::initTerm(void) {
     setvbuf(m_outputFile, outputBuffer, _IOFBF, sizeof(outputBuffer));
+    // setvbuf(m_outputFile, nullptr, _IOFBF, 0);
 
     tcgetattr(m_inputFileNo, &m_origTermios);
     termios term = m_origTermios;
@@ -173,4 +183,17 @@ void AnsiWrapper::initTerm(void) {
     setAlternateBuffer(true);
     clearTerm();
     moveHome();
+}
+
+void AnsiWrapper::setScrollRegion(unsigned int minRow, unsigned int maxRow) {
+    m_scrollRegionEnabled = true;
+    fprintf(m_outputFile, ANSI_ESC "%d;%dr", minRow + 1, maxRow + 1);
+}
+
+void AnsiWrapper::resetScrollRegion() {
+    if (!m_scrollRegionEnabled) {
+        return;
+    }
+    m_scrollRegionEnabled = false;
+    fprintf(m_outputFile, ANSI_ESC "r");
 }

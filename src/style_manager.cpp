@@ -1,6 +1,12 @@
 #include "../include/style_manager.hpp"
+#include "../include/logger.hpp"
 
-StyleManager::StyleManager(FILE *outputFile) {
+StyleManager &StyleManager::instance() {
+    static StyleManager singleton;
+    return singleton;
+}
+
+void StyleManager::setOutputFile(FILE *outputFile) {
     m_outputFile = outputFile;
 }
 
@@ -16,15 +22,27 @@ int StyleManager::add(AnsiStyle &style) {
     return m_escSeqs.size() - 1;
 }
 
-void StyleManager::set(int idx) {
+bool StyleManager::set(int idx) {
     if (idx == m_currentStyle) {
-        return;
+        return false;
     }
-    if (idx == NO_STYLE) {
+    m_currentStyle = idx;
+    set();
+    return true;
+}
+
+void StyleManager::set() {
+    if (m_currentStyle == NO_STYLE) {
         fprintf(m_outputFile, "\x1b[0m");
     }
     else {
-        fprintf(m_outputFile, "%s", m_escSeqs[idx].c_str());
+        // std::string escSeq = m_escSeqs[m_currentStyle];
+        // for (int i = 0; i < escSeq.size(); i++) {
+        //     if (escSeq[i] == '\x1b') {
+        //         escSeq[i] = 'e';
+        //     }
+        // }
+        // LOG("setting style %s", escSeq.c_str());
+        fprintf(m_outputFile, "%s", m_escSeqs[m_currentStyle].c_str());
     }
-    m_currentStyle = idx;
 }

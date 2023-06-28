@@ -63,6 +63,7 @@ public:
     }
 
     void refresh() {
+        m_size = 0;
         refresh(0);
     }
 
@@ -76,6 +77,10 @@ public:
         m_cache = new T[m_reserve];
         m_idx = 0;
         refresh();
+    }
+
+    int size() const {
+        return m_size;
     }
 
 private:

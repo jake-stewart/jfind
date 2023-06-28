@@ -20,10 +20,9 @@ class Process
     ProcessState m_state = ProcessState::None;
     int m_pipefd[2];
     pid_t m_child_pid;
-    FILE *m_file;
 
 public:
-    FILE *getStdout() const;
+    int getFd() const;
     ProcessState getState() const;
 
     bool start(char *const *argv);

@@ -21,6 +21,7 @@ private:
 
     bool m_inAlternateBuffer;
     bool m_mouseEnabled;
+    bool m_scrollRegionEnabled;
     FILE *m_outputFile;
     int m_inputFileNo;
     termios m_origTermios;
@@ -44,8 +45,13 @@ public:
     void moveLeft(unsigned int amount) const;
     void moveRight(unsigned int amount) const;
 
-    void moveUpOrScroll() const;
-    void moveDownOrScroll() const;
+    void setScrollRegion(unsigned int minRow, unsigned int maxRow);
+    void resetScrollRegion();
+
+    void scrollDown() const;
+    void scrollUp() const;
+    void scrollLeft() const;
+    void scrollRight() const;
 
     void clearTerm() const;
     void clearTilEOL() const;

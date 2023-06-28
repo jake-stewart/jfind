@@ -5,8 +5,8 @@
 #define READ 0
 #define WRITE 1
 
-FILE *Process::getStdout() const {
-    return m_file;
+int Process::getFd() const {
+    return m_pipefd[READ];
 }
 
 ProcessState Process::getState() const {
@@ -26,7 +26,7 @@ bool Process::start(char *const *argv) {
     }
 
     if (pipe(m_pipefd) == -1) {
-        LOG("pipe failed");
+        LOG("pipe failed errno=%d", errno);
         exit(EXIT_FAILURE);
     }
 
@@ -48,12 +48,6 @@ bool Process::start(char *const *argv) {
     }
 
     close(m_pipefd[WRITE]);
-    m_file = fdopen(m_pipefd[READ], "r");
-    if (m_file == NULL) {
-        LOG("fdopen failed errno=%d", errno);
-        exit(EXIT_FAILURE);
-    }
-
     m_state = ProcessState::Active;
     return true;
 }
@@ -107,11 +101,11 @@ bool Process::end() {
             break;
     }
 
-    if (kill(m_child_pid, SIGTERM) < 0) {
+    if (kill(m_child_pid, SIGKILL) < 0) {
         LOG("Could not end process errno=%d", errno);
         return false;
     }
+    close(m_pipefd[READ]);
     m_state = ProcessState::None;
-    fclose(m_file);
     return true;
 }

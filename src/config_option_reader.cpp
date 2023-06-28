@@ -10,31 +10,41 @@ bool ConfigOptionReader::read(int argc, const char **argv) {
         {new BooleanOption("help", &config.showHelp),
          new BooleanOption("hints", &config.showHints),
          new BooleanOption("select-hint", &config.selectHint),
-         new BooleanOption("select-both", &config.selectBoth),
          new BooleanOption("accept-non-match", &config.acceptNonMatch),
          new StringOption("prompt", &config.prompt),
          new StringOption("query", &config.query),
          new StringOption("history", &historyFile),
          new StringOption("log", &config.logFile),
          new StringOption("command", &config.command),
+         new StringOption("preview", &config.preview),
+         new StringOption("preview-line", &config.previewLine),
+         new BooleanOption("external-border", &config.externalBorder),
+         new EnumOption<Placement>(
+             "preview-position", &config.previewPlacement, {
+                 {"top", Placement::Top},
+                 {"bottom", Placement::Bottom},
+                 {"left", Placement::Left},
+                 {"right", Placement::Right}
+             }
+         ),
          (new IntVectorOption("additional-keys", &config.additionalKeys))
              ->min(K_NULL)
              ->max(K_ERROR),
          (new BooleanOption("show-key", &config.showKey)),
          (new IntegerOption("history-limit", &config.historyLimit))->min(0),
          new EnumOption<MatcherType>(
-             "matcher", &config.matcher,
-             std::map<std::string, MatcherType>{
+             "matcher", &config.matcher, {
                  {"fuzzy", FUZZY_MATCHER},
                  {"regex", REGEX_MATCHER},
-                 {"exact", EXACT_MATCHER}}
+                 {"exact", EXACT_MATCHER}
+             }
          ),
          new EnumOption<CaseSensitivity>(
-             "case-mode", &config.caseSensitivity,
-             std::map<std::string, CaseSensitivity>{
+             "case-mode", &config.caseSensitivity, {
                  {"sensitive", CASE_SENSITIVE},
                  {"insensitive", CASE_INSENSITIVE},
-                 {"smart", SMART_CASE}}
+                 {"smart", SMART_CASE}
+             }
          )}};
 
     OptionParser optionParser(options);

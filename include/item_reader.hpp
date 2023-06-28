@@ -10,16 +10,11 @@ class ItemReader
 {
     BufferedReader m_reader;
     int m_itemId = 0;
-    FILE *m_file;
 
 public:
-    void setFile(FILE *file);
+    void setFd(int fd);
     BufferedReader &getReader();
     bool read(Item &item);
-
-private:
-    bool readWithHints(Item &item);
-    bool readWithoutHints(Item &item);
 };
 
 #endif

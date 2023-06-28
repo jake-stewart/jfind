@@ -15,7 +15,7 @@
 class FileItemReader : public EventListener
 {
 public:
-    FileItemReader(FILE *file);
+    FileItemReader(int fd);
     bool read();
     void onStart() override;
     void onLoop() override;
@@ -26,13 +26,9 @@ private:
     void endInterval();
 
     bool m_itemsRead = true;
-    FILE *m_file;
-
     ItemReader m_itemReader;
     IntervalThread m_interval;
-
     EventDispatch &m_dispatch = EventDispatch::instance();
-
     DoubleBuffer<std::vector<Item>> m_items;
 
     bool readFirstBatch();

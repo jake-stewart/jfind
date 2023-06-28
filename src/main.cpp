@@ -33,23 +33,21 @@ static AnsiWrapper &ansi = AnsiWrapper::instance();
 static EventDispatch &eventDispatch = EventDispatch::instance();
 
 static InputReader inputReader;
-static StyleManager styleManager(stderr);
 static ItemCache itemCache;
-static ItemList itemList(stderr, &styleManager, &itemCache);
+static ItemList itemList(&itemCache);
 static Utf8LineEditor editor(stderr);
-static UserInterface userInterface(stderr, &styleManager, &itemList, &editor);
+static UserInterface userInterface(&itemList, &editor);
 
 void printResult(Key key, Item *selected, const char *input) {
     if (config.showKey && (selected || config.acceptNonMatch)) {
         printf("%d\n", key);
     }
     if (selected) {
-        if (!config.selectHint || config.selectBoth) {
-            printf("%s\n", selected->text);
+        const char *result = selected->text;
+        if (config.selectHint) {
+            result += strlen(result) + 1;
         }
-        if (config.selectHint || config.selectBoth) {
-            printf("%s\n", selected->text + strlen(selected->text) + 1);
-        }
+        printf("%s\n", result);
     }
     else if (config.acceptNonMatch) {
         printf("%s\n", input);
@@ -99,7 +97,7 @@ void signalHandler(int sig) {
 }
 
 int main(int argc, const char **argv) {
-    if (!readConfig(&styleManager, argc, argv)) {
+    if (!readConfig(argc, argv)) {
         return 1;
     }
 
@@ -112,7 +110,8 @@ int main(int argc, const char **argv) {
         return 0;
     }
 
-    createStyles(&styleManager);
+    StyleManager::instance().setOutputFile(stderr);
+    createStyles();
 
     editor.input(config.query);
 
@@ -138,9 +137,19 @@ int main(int argc, const char **argv) {
         ? (JfindStrategy *)new InteractiveCommandStrategy(itemCache)
         : (JfindStrategy *)new FuzzyFindStrategy(itemCache);
 
+    ItemPreviewReader *previewReader;
+    std::thread *previewReaderThread;
+    if (Config::instance().preview.size()) {
+        previewReader = new ItemPreviewReader();
+        previewReaderThread = new std::thread(
+            &ItemPreviewReader::start, previewReader
+        );
+    }
+
     userInterface.setThreadsafeReading(jfindStrategy->isThreadsafeReading());
     jfindStrategy->start();
     new std::thread(&InputReader::start, &inputReader);
+
     userInterface.start();
 
     LOG("edited unexpectedly");

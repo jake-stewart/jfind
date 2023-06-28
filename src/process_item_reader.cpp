@@ -2,6 +2,7 @@
 #include "../include/config.hpp"
 #include "../include/buffered_reader.hpp"
 #include "../include/logger.hpp"
+#include "../include/util.hpp"
 #include <chrono>
 #include <csignal>
 #include <cstdio>
@@ -25,17 +26,6 @@ using std::chrono::time_point;
 #define READ 0
 #define WRITE 1
 
-std::string applyQuery(const std::string str, const std::string query) {
-    static const std::regex PLACEHOLDER_REGEX("\\{\\}");
-    static const std::regex QUOTE_REGEX("'");
-    std::string quoted = "'" +
-        std::regex_replace(query, QUOTE_REGEX, "'\"'\"'") + "'";
-    if (!std::regex_search(str, PLACEHOLDER_REGEX)) {
-        return str + " " + quoted;
-    }
-    return std::regex_replace(str, PLACEHOLDER_REGEX, quoted);
-}
-
 ProcessItemReader::ProcessItemReader(
     std::string command, std::string startQuery
 ) {
@@ -50,6 +40,7 @@ bool ProcessItemReader::readFirstBatch() {
     bool success;
     for (int i = 0; i < READ_BATCH; i++) {
         Item item;
+        // LOG("getting line");
         success = m_itemReader.read(item);
         if (!success) {
             break;
@@ -83,16 +74,20 @@ void ProcessItemReader::onStart() {
 
 void ProcessItemReader::startChildProcess() {
     std::string command = applyQuery(Config::instance().command, m_query);
+    LOG("command = %s", command.c_str());
     const char *argv[] = {"/bin/sh", "-c", command.c_str(), NULL};
     if (!m_process.start((char **)argv)) {
+        LOG("failed to start process errno=%d", errno);
         exit(EXIT_FAILURE);
     }
     m_readMax = READ_BATCH;
-    m_itemReader.setFile(m_process.getStdout());
+    LOG("setting fd to %d", m_process.getFd());
+    m_itemReader.setFd(m_process.getFd());
     bool success = readFirstBatch();
     dispatchItems();
     dispatchAllRead(!success);
     if (!success) {
+        LOG("reading first batch failed %d", m_items.getPrimary().size());
         m_process.end();
         awaitEvent();
     }
@@ -139,6 +134,7 @@ void ProcessItemReader::onLoop() {
             m_process.suspend();
         }
         else if (m_interval.ticked()) {
+            m_interval.restart();
             dispatchItems();
         }
     }

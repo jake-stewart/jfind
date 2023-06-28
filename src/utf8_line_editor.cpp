@@ -104,33 +104,31 @@ void Utf8LineEditor::adjustBounds() {
 
     // adjust start bound so that cursor is not out of view
     while (m_cursor.getCol() - m_start.getCol() >= m_width &&
-           m_start.moveRight()) {
-        ;
-    }
+           m_start.moveRight());
 
     // adjust end bound so the line fits as much text as possible
-    while (m_start.getCol() + m_width > m_end.getCol() && m_end.moveRight()) {
-        ;
-    }
-    while (m_start.getCol() + m_width < m_end.getCol() && m_end.moveLeft()) {
-        ;
-    }
+    while (m_start.getCol() + m_width > m_end.getCol() && m_end.moveRight());
+    while (m_start.getCol() + m_width < m_end.getCol() && m_end.moveLeft());
 }
 
 bool Utf8LineEditor::requiresRedraw() const {
     return m_requiresRedraw;
 }
 
-void Utf8LineEditor::print() {
+void Utf8LineEditor::redraw() {
     m_requiresRedraw = false;
+    AnsiWrapper::instance().move(m_x, m_y);
     adjustBounds();
     int bytes = m_end.getPointer() - m_start.getPointer();
     fprintf(m_outputFile, "%.*s", bytes, m_start.getPointer());
+    for (int i = m_end.getCol() - m_start.getCol(); i < m_width; i++) {
+        fprintf(m_outputFile, " ");
+    }
 }
 
 void Utf8LineEditor::handleClick(int x) {
     m_cursor = m_start;
-    while (m_cursor.getCol() - m_start.getCol() < x) {
+    while (m_cursor.getCol() - m_start.getCol() <= x) {
         if (!m_cursor.moveRight()) {
             return;
         }
@@ -138,10 +136,16 @@ void Utf8LineEditor::handleClick(int x) {
     m_cursor.moveLeft();
 }
 
-void Utf8LineEditor::setWidth(int width) {
-    m_width = width - 1;
+void Utf8LineEditor::resize(int x, int y, int width) {
+    m_x = x;
+    m_y = y;
+    m_width = width;
 }
 
 int Utf8LineEditor::getCursorCol() const {
     return m_cursor.getCol() - m_start.getCol();
+}
+
+void Utf8LineEditor::focus() {
+    AnsiWrapper::instance().move(m_x + getCursorCol(), m_y);
 }

@@ -1,6 +1,11 @@
 #include "../include/ansi_style.hpp"
 #include <sstream>
 
+AnsiStyle &AnsiStyle::blend() {
+    m_blend = true;
+    return *this;
+}
+
 AnsiStyle &AnsiStyle::fg(int color) {
     if (color < BRIGHT_BLACK) {
         m_fgType = COLOR_8;
@@ -155,5 +160,12 @@ std::string AnsiStyle::build() const {
     }
 
     ss << "m";
-    return ss.str();
+    std::string escSeq = ss.str();
+    if (m_blend) {
+        escSeq.erase(escSeq.begin() + 2, escSeq.begin() + 4);
+        if (escSeq == "\x1b[") {
+            return "";
+        }
+    }
+    return escSeq;
 }

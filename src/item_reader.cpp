@@ -3,8 +3,8 @@
 
 #include <cstring>
 
-void ItemReader::setFile(FILE *file) {
-    m_file = file;
+void ItemReader::setFd(int fd) {
+    m_reader.setFd(fd);
 }
 
 BufferedReader &ItemReader::getReader() {
@@ -12,23 +12,7 @@ BufferedReader &ItemReader::getReader() {
 }
 
 bool ItemReader::read(Item &item) {
-    if (Config::instance().showHints) {
-        return readWithHints(item);
-    }
-    return readWithoutHints(item);
-}
-
-bool ItemReader::readWithoutHints(Item &item) {
-    item.text = m_reader.getline();
+    item.text = m_reader.getlines(Config::instance().showHints ? 2 : 1);
     item.index = m_itemId++;
     return item.text;
-}
-
-bool ItemReader::readWithHints(Item &item) {
-    item.text = m_reader.getline();
-    if (!item.text) {
-        return false;
-    }
-    item.index = m_itemId++;
-    return m_reader.getline();
 }

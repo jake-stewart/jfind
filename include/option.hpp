@@ -2,6 +2,7 @@
 #define OPTION_HPP
 
 #include "util.hpp"
+#include "choice.hpp"
 #include <map>
 #include <optional>
 #include <string>
@@ -74,8 +75,8 @@ template <typename T>
 class EnumOption : public Option
 {
 public:
-    EnumOption(std::string key, T *value, std::map<std::string, T> lookup) {
-        m_lookup = lookup;
+    EnumOption(std::string key, T *value, std::vector<Choice<T>> choices) {
+        m_choices = choices;
         m_key = key;
         m_value = value;
     }
@@ -84,29 +85,37 @@ public:
         if (!value) {
             return error("expects a value");
         }
-        auto it = m_lookup.find(value);
-        if (it == m_lookup.end()) {
+
+        int idx = -1;
+        for (int i = 0; i < m_choices.size(); i++) {
+            if (m_choices[i].name == value) {
+                idx = i;
+                break;
+            }
+        }
+
+        if (idx == -1) {
             std::string message = "expects either ";
             int i = 0;
-            for (auto it : m_lookup) {
-                if (i == m_lookup.size() - 1) {
+            for (const Choice<T>& choice : m_choices) {
+                if (i == m_choices.size() - 1) {
                     message += " or ";
                 }
                 else if (i > 0) {
                     message += ", ";
                 }
-                message += "'" + it.first + "'";
+                message += "'" + choice.name + "'";
                 i++;
             }
             return error(message);
         }
-        *m_value = it->second;
+        *m_value = m_choices[idx].value;
         return true;
     }
 
 private:
     T *m_value;
-    std::map<std::string, T> m_lookup;
+    std::vector<Choice<T>> m_choices;
 };
 
 #endif

@@ -99,9 +99,8 @@ bool JsonBoolReaderStrategy::read(
 }
 
 JsonStylesReaderStrategy::JsonStylesReaderStrategy(
-    StyleManager *styleManager, std::map<std::string, int *> &styles
+    std::map<std::string, JsonStyleContext> &styles
 ) {
-    m_styleManager = styleManager;
     m_styles = styles;
 }
 
@@ -125,10 +124,13 @@ bool JsonStylesReaderStrategy::read(
         }
 
         AnsiStyle style;
+        if (find->second.blend) {
+            style.blend();
+        }
         if (!readStyle(it.second.value, &style)) {
             return false;
         }
-        *find->second = m_styleManager->add(style);
+        *find->second.style = StyleManager::instance().add(style);
     }
     return true;
 }
@@ -313,6 +315,52 @@ bool JsonReader::read(JsonElement *element) {
         if (!find->second->read(it->first, it->second.value, &m_error)) {
             return false;
         }
+    }
+    return true;
+}
+
+JsonStringArrayReaderStrategy::JsonStringArrayReaderStrategy(std::vector<std::string> *value) {
+    m_value = value;
+}
+
+JsonStringArrayReaderStrategy *JsonStringArrayReaderStrategy::min(int min) {
+    m_min = min;
+    return this;
+}
+
+JsonStringArrayReaderStrategy *JsonStringArrayReaderStrategy::max(int max) {
+    m_max = max;
+    return this;
+}
+
+bool JsonStringArrayReaderStrategy::read(
+    const std::string &name, JsonElement *element, JsonError *error
+) {
+    if (element->getType() != ARRAY) {
+        error->typeError(element->getLine(), name, "string array");
+        return false;
+    }
+    m_value->clear();
+    JsonArray *array = (JsonArray *)element;
+    for (JsonElement *child : array->getValue()) {
+        if (child->getType() != STRING) {
+            error->typeError(element->getLine(), name, "string array");
+            return false;
+        }
+        m_value->push_back(((JsonString*)child)->getValue());
+    }
+
+    if (m_min.has_value() && m_value->size() < m_min.value()) {
+        error->message = "The '" + name + "' array cannot have less than " +
+            std::to_string(m_min.value()) + " items";
+        error->line = element->getLine();
+        return false;
+    }
+    if (m_max.has_value() && m_value->size() > m_max.value()) {
+        error->message = "The '" + name + "' array cannot have more than " +
+            std::to_string(m_max.value()) + " items";
+        error->line = element->getLine();
+        return false;
     }
     return true;
 }

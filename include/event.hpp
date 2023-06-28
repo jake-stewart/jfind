@@ -4,6 +4,7 @@
 #include "item.hpp"
 #include "key.hpp"
 #include "mouse_event.hpp"
+#include "item_preview_content.hpp"
 #include <cstring>
 #include <vector>
 
@@ -16,6 +17,8 @@ enum EventType {
     ITEMS_SORTED_EVENT,
     ITEMS_REQUEST_EVENT,
     RESIZE_EVENT,
+    PREVIEW_READ_EVENT,
+    SELECTED_ITEM_CHANGE_EVENT,
 };
 const char *const *getEventNames();
 
@@ -172,6 +175,43 @@ class ItemsRequestEvent : public Event
 {
     EventType getType() const override {
         return ITEMS_REQUEST_EVENT;
+    }
+};
+
+class PreviewReadEvent : public Event
+{
+    ItemPreviewContent m_content;
+
+public:
+    PreviewReadEvent(ItemPreviewContent content) {
+        m_content = content;
+    }
+
+    EventType getType() const override {
+        return PREVIEW_READ_EVENT;
+    }
+
+    ItemPreviewContent getContent() const {
+        return m_content;
+    }
+
+};
+
+class SelectedItemChangeEvent : public Event
+{
+    std::string m_item;
+
+public:
+    SelectedItemChangeEvent(std::string item) {
+        m_item = item;
+    }
+
+    EventType getType() const override {
+        return SELECTED_ITEM_CHANGE_EVENT;
+    }
+
+    std::string getItem() const {
+        return m_item;
     }
 };
 

@@ -4,6 +4,7 @@
 #include "item_cache.hpp"
 #include "item_sorter.hpp"
 #include "file_item_reader.hpp"
+#include "item_preview_reader.hpp"
 #include "process_item_reader.hpp"
 #include <thread>
 

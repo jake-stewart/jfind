@@ -56,8 +56,9 @@ private:
 private:
     std::vector<Item> m_items;
     bool m_isSorted;
-    std::string m_query;
+
     bool m_queryChanged;
+    std::string m_query;
     std::string m_newQuery;
 };
 

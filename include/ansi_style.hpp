@@ -24,6 +24,7 @@ enum ColorType {
 class AnsiStyle
 {
 public:
+    AnsiStyle &blend();
     AnsiStyle &fg(int color);
     AnsiStyle &bg(int color);
     AnsiStyle &fg(ColorRGB color);
@@ -49,6 +50,7 @@ private:
     Color16 m_bg16;
     int m_bg256;
 
+    bool m_blend = false;
     bool m_bold = false;
     bool m_italic = false;
     bool m_blink = false;

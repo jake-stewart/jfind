@@ -4,7 +4,10 @@
 #include "item_matcher.hpp"
 #include "json_parser.hpp"
 #include "style_manager.hpp"
+#include "choice.hpp"
 #include <optional>
+#include <map>
+#include <vector>
 
 struct JsonError
 {
@@ -64,12 +67,15 @@ private:
     bool *m_value;
 };
 
+struct JsonStyleContext {
+    int *style;
+    bool blend = false;
+};
+
 class JsonStylesReaderStrategy : public JsonReaderStrategy
 {
 public:
-    JsonStylesReaderStrategy(
-        StyleManager *styleManager, std::map<std::string, int *> &styles
-    );
+    JsonStylesReaderStrategy(std::map<std::string, JsonStyleContext> &styles);
     bool read(const std::string &name, JsonElement *element, JsonError *error)
         override;
     bool readStyle(JsonElement *element, AnsiStyle *style);
@@ -79,8 +85,7 @@ public:
     bool readAttr(JsonArray *arr, AnsiStyle *style);
 
 private:
-    StyleManager *m_styleManager;
-    std::map<std::string, int *> m_styles;
+    std::map<std::string, JsonStyleContext> m_styles;
     JsonError *m_error;
 };
 
@@ -88,8 +93,8 @@ template <typename T>
 class JsonEnumReaderStrategy : public JsonReaderStrategy
 {
 public:
-    JsonEnumReaderStrategy(T *value, std::map<std::string, T> lookup) {
-        m_lookup = lookup;
+    JsonEnumReaderStrategy(T *value, std::vector<Choice<T>> choices) {
+        m_choices = choices;
         m_value = value;
     }
 
@@ -101,33 +106,55 @@ public:
         }
         std::string key = ((JsonString *)element)->getValue();
 
-        auto it = m_lookup.find(key);
+        int idx = -1;
+        for (int i = 0; i < m_choices.size(); i++) {
+            if (m_choices[i].name == key) {
+                idx = i;
+                break;
+            }
+        }
 
-        if (it == m_lookup.end()) {
+        if (idx == -1) {
             std::string message = name + " expects either ";
             int i = 0;
-            for (auto it : m_lookup) {
-                if (i == m_lookup.size() - 1) {
+            for (const Choice<T> &choice : m_choices) {
+                if (i == m_choices.size() - 1) {
                     message += " or ";
                 }
                 else if (i > 0) {
                     message += ", ";
                 }
-                message += "'" + it.first + "'";
+                message += "'" + choice.name + "'";
                 i++;
             }
             error->message = message;
             error->line = element->getLine();
             return false;
         }
-        *m_value = it->second;
+        *m_value = m_choices[idx].value;
         return true;
     }
 
 private:
     T *m_value;
-    std::map<std::string, T> m_lookup;
+    std::vector<Choice<T>> m_choices;
 };
+
+class JsonStringArrayReaderStrategy : public JsonReaderStrategy
+{
+public:
+    JsonStringArrayReaderStrategy(std::vector<std::string> *value);
+    JsonStringArrayReaderStrategy *min(int min);
+    JsonStringArrayReaderStrategy *max(int max);
+    bool read(const std::string &name, JsonElement *element, JsonError *error)
+        override;
+
+private:
+    std::vector<std::string> *m_value;
+    std::optional<int> m_min;
+    std::optional<int> m_max;
+};
+
 
 class JsonReader
 {

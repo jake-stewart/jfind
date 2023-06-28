@@ -16,48 +16,53 @@ BufferedReader::BufferedReader() {
     reset();
 }
 
-const char* BufferedReader::getline() {
-    int result = m_offset;
+const char* BufferedReader::getlines(int numLines) {
     while (true) {
-        while (m_offset < m_size) {
-            if (m_buffer[m_offset] == '\n') {
-                m_buffer[m_offset++] = 0;
-                return m_buffer + result;
+        while (m_index < m_filled) {
+            if (m_buffer[m_index] == '\n') {
+                m_buffer[m_index++] = 0;
+                if (!--numLines) {
+                    int prevLineStart = m_lineStart;
+                    m_lineStart = m_index;
+                    return m_buffer + prevLineStart;
+                }
             }
-            m_offset++;
+            m_index++;
         }
-        if (m_size >= m_capacity) {
-            m_capacity *= 1.5;
-            char *newBuffer = (char*)malloc(m_capacity);
+        if (m_filled >= m_capacity) {
+            size_t newCapacity = m_capacity * 1.5;
+            char *newBuffer = (char*)malloc(newCapacity);
             if (!newBuffer) {
-                LOG("failed to malloc additional buffer");
+                LOG("failed to malloc additional buffer, errno=%d", errno);
                 return nullptr;
             }
             m_buffers.push_back(newBuffer);
-            m_size = m_size - result;
-            m_offset = 0;
-            result = 0;
-            memcpy(newBuffer, m_buffer + result, m_size);
+            m_capacity = newCapacity;
+            m_filled = m_filled - m_lineStart;
+            memcpy(newBuffer, m_buffer + m_lineStart, m_filled);
+            m_index = m_filled;
+            m_lineStart = 0;
             m_buffer = newBuffer;
         }
-        ssize_t bytesRead = read(STDIN_FILENO,
-                m_buffer + m_size, m_capacity - m_size);
+        ssize_t bytesRead = read(m_fd,
+                m_buffer + m_filled, m_capacity - m_filled);
         if (bytesRead <= 0) {
-            LOG("failed to read from stdin");
+            LOG("read failed, fd=%d, errno=%d filled=%d, capacity=%d", m_fd, errno, m_filled, m_capacity);
             return nullptr;
         }
-        m_size += bytesRead;
+        m_filled += bytesRead;
     }
 }
 
 bool BufferedReader::reset() {
-    m_size = 0;
-    m_offset = 0;
+    m_filled = 0;
+    m_index = 0;
+    m_lineStart = 0;
     m_capacity = START_CAPACITY;
     m_buffer = (char*)malloc(m_capacity);
     m_buffers.clear();
     if (!m_buffer) {
-        LOG("failed to reset and malloc new buffer");
+        LOG("failed to reset and malloc new buffer, errno=%d", errno);
         return false;
     }
     m_buffers.push_back(m_buffer);
@@ -66,4 +71,9 @@ bool BufferedReader::reset() {
 
 std::vector<char *> BufferedReader::getBuffers() {
     return m_buffers;
+}
+
+void BufferedReader::setFd(int fd) {
+    LOG("setting fd to %d", fd);
+    m_fd = fd;
 }

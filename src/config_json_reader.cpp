@@ -1,10 +1,6 @@
 #include "../include/config_json_reader.hpp"
 #include "../include/util.hpp"
 
-ConfigJsonReader::ConfigJsonReader(StyleManager *styleManager) {
-    m_styleManager = styleManager;
-}
-
 std::map<std::string, JsonReaderStrategy *> ConfigJsonReader::createOptions() {
     Config &config = Config::instance();
     std::map<std::string, JsonReaderStrategy *> options;
@@ -19,6 +15,8 @@ std::map<std::string, JsonReaderStrategy *> ConfigJsonReader::createOptions() {
         = (new JsonIntReaderStrategy(&config.promptGap))->min(0);
     options["max_cores"]
         = (new JsonIntReaderStrategy(&config.maxCores))->min(0);
+    options["tabstop"]
+        = (new JsonIntReaderStrategy(&config.tabstop))->min(0)->max(8);
     options["history_limit"]
         = (new JsonIntReaderStrategy(&config.historyLimit))->min(0);
     options["min_hint_spacing"]
@@ -29,37 +27,61 @@ std::map<std::string, JsonReaderStrategy *> ConfigJsonReader::createOptions() {
         = (new JsonIntReaderStrategy(&config.maxHintWidth))->min(0);
     options["show_spinner"]
         = (new JsonBoolReaderStrategy(&config.showSpinner));
+    options["border_chars"]
+        = (new JsonStringArrayReaderStrategy(&config.borderChars))
+            ->min(11)->max(11);
+    options["external_border"]
+        = (new JsonBoolReaderStrategy(&config.externalBorder));
+    options["preview_border"]
+        = (new JsonBoolReaderStrategy(&config.previewBorder));
+    options["items_border"]
+        = (new JsonBoolReaderStrategy(&config.itemsBorder));
+    options["query_border"]
+        = (new JsonBoolReaderStrategy(&config.queryBorder));
+    options["query_window"]
+        = (new JsonBoolReaderStrategy(&config.queryWindow));
 
     options["matcher"] = new JsonEnumReaderStrategy<MatcherType>(
-        &config.matcher,
-        std::map<std::string, MatcherType>{
+        &config.matcher, {
             {"fuzzy", FUZZY_MATCHER},
             {"regex", REGEX_MATCHER},
             {"exact", REGEX_MATCHER}}
     );
 
-    options["case_mode"] = new JsonEnumReaderStrategy<CaseSensitivity>(
-        &config.caseSensitivity,
-        std::map<std::string, CaseSensitivity>{
-            {"sensitive", CASE_SENSITIVE},
-            {"insensitive", CASE_INSENSITIVE},
-            {"smart", SMART_CASE}}
+    options["preview_position"] = new JsonEnumReaderStrategy<Placement>(
+        &config.previewPlacement, {
+            {"top", Placement::Top},
+            {"bottom", Placement::Bottom},
+            {"left", Placement::Left},
+            {"right", Placement::Right}
+        }
     );
 
-    std::map<std::string, int *> styles;
-    styles["item"] = &config.itemStyle;
-    styles["active_item"] = &config.activeItemStyle;
-    styles["hint"] = &config.hintStyle;
-    styles["active_hint"] = &config.activeHintStyle;
-    styles["selector"] = &config.selectorStyle;
-    styles["active_selector"] = &config.activeSelectorStyle;
-    styles["active_row"] = &config.activeRowStyle;
-    styles["row"] = &config.rowStyle;
-    styles["search_prompt"] = &config.searchPromptStyle;
-    styles["search"] = &config.searchStyle;
-    styles["search_row"] = &config.searchRowStyle;
-    styles["background"] = &config.backgroundStyle;
-    options["style"] = new JsonStylesReaderStrategy(m_styleManager, styles);
+    options["case_mode"] = new JsonEnumReaderStrategy<CaseSensitivity>(
+        &config.caseSensitivity, {
+            {"sensitive", CASE_SENSITIVE},
+            {"insensitive", CASE_INSENSITIVE},
+            {"smart", SMART_CASE}
+        }
+    );
+
+    std::map<std::string, JsonStyleContext> styles{
+        {"item", {&config.itemStyle}},
+        {"active_item", {&config.activeItemStyle}},
+        {"hint", {&config.hintStyle}},
+        {"active_hint", {&config.activeHintStyle}},
+        {"selector", {&config.selectorStyle}},
+        {"active_selector", {&config.activeSelectorStyle}},
+        {"active_row", {&config.activeRowStyle}},
+        {"row", {&config.rowStyle}},
+        {"search_prompt", {&config.searchPromptStyle}},
+        {"search", {&config.searchStyle}},
+        {"search_row", {&config.searchRowStyle}},
+        {"background", {&config.backgroundStyle}},
+        {"border", {&config.borderStyle}},
+        {"preview_line", {&config.previewLineStyle, true}},
+    };
+    options["style"] = new JsonStylesReaderStrategy(styles);
 
     return options;
 }

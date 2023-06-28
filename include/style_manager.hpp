@@ -10,15 +10,17 @@ const int NO_STYLE = -1;
 class StyleManager
 {
 public:
+    static StyleManager &instance();
+    void setOutputFile(FILE *outputFile);
     int add(AnsiStyle &style);
-    void set(int idx);
-    StyleManager(FILE *outputFile);
+    bool set(int idx);
+    void set();
 
 private:
     std::map<std::string, int> m_lookup;
     std::vector<std::string> m_escSeqs;
     int m_currentStyle = NO_STYLE;
-    FILE *m_outputFile;
+    FILE *m_outputFile = stdout;
 };
 
 #endif

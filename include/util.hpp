@@ -32,4 +32,6 @@ void removeConsecutiveDuplicates(std::vector<T> &vec) {
     }
 }
 
+std::string applyQuery(const std::string str, const std::string query);
+
 #endif

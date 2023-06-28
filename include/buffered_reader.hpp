@@ -14,16 +14,19 @@
 */
 
 class BufferedReader {
-    int m_capacity = 0;
-    int m_offset = 0;
+    size_t m_capacity = 0;
+    size_t m_filled = 0;
+    int m_lineStart = 0;
+    int m_index = 0;
     char *m_buffer = nullptr;
-    int m_size = 0;
     std::vector<char*> m_buffers;
+    int m_fd;
 
 public:
     BufferedReader();
-    const char *getline();
+    const char *getlines(int numLines);
     bool reset();
+    void setFd(int fd);
     std::vector<char*> getBuffers();
 };
 

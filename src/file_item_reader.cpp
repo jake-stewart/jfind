@@ -14,10 +14,9 @@ using namespace std::chrono_literals;
 using std::chrono::system_clock;
 using std::chrono::time_point;
 
-FileItemReader::FileItemReader(FILE *file) {
-    m_file = file;
+FileItemReader::FileItemReader(int fd) {
     m_interval.setInterval(10ms);
-    m_itemReader.setFile(file);
+    m_itemReader.setFd(fd);
     m_dispatch.subscribe(this, ITEMS_ADDED_EVENT);
 }
 

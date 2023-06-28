@@ -1,6 +1,7 @@
 #include "../include/util.hpp"
 
 #include <vector>
+#include <regex>
 
 namespace fs = std::filesystem;
 
@@ -89,8 +90,6 @@ void displayHelp(const char *name) {
     printf("    --hints                       Read hints from stdin (every "
            "second line)\n");
     printf("    --select-hint                 Print the hint to stdout\n");
-    printf("    --select-both                 Print both the item and hint to "
-           "stdout\n");
     printf("    --accept-non-match            Accept the user's query if "
            "nothing matches\n");
     printf("    --matcher=MATCHER             Override matching algorithm to "
@@ -213,3 +212,15 @@ std::string fileStem(std::string filePath) {
     }
     return filePath;
 }
+
+std::string applyQuery(const std::string str, const std::string query) {
+    static const std::regex PLACEHOLDER_REGEX("\\{\\}");
+    static const std::regex QUOTE_REGEX("'");
+    std::string quoted = "'" +
+        std::regex_replace(query, QUOTE_REGEX, "'\"'\"'") + "'";
+    if (!std::regex_search(str, PLACEHOLDER_REGEX)) {
+        return str + " " + quoted;
+    }
+    return std::regex_replace(str, PLACEHOLDER_REGEX, quoted);
+}
+

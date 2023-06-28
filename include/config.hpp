@@ -10,6 +10,27 @@
 
 namespace fs = std::filesystem;
 
+enum class Placement {
+    Top,
+    Bottom,
+    Left,
+    Right,
+};
+
+enum BorderChar {
+    HORIZONTAL_BORDER,
+    VERTICAL_BORDER,
+    TOP_LEFT_BORDER,
+    TOP_RIGHT_BORDER,
+    BOTTOM_RIGHT_BORDER,
+    BOTTOM_LEFT_BORDER,
+    TOP_JOIN_BORDER,
+    RIGHT_JOIN_BORDER,
+    BOTTOM_JOIN_BORDER,
+    LEFT_JOIN_BORDER,
+    FULL_JOIN_BORDER
+};
+
 struct Config
 {
     int activeItemStyle = NO_STYLE;
@@ -24,6 +45,14 @@ struct Config
     int searchPromptStyle = NO_STYLE;
     int searchStyle = NO_STYLE;
     int searchRowStyle = NO_STYLE;
+    int borderStyle = NO_STYLE;
+    int previewLineStyle = NO_STYLE;
+
+    bool externalBorder = false;
+    bool previewBorder = false;
+    bool itemsBorder = false;
+    bool queryBorder = false;
+    bool queryWindow = false;
 
     MatcherType matcher = FUZZY_MATCHER;
     CaseSensitivity caseSensitivity = CASE_SENSITIVE;
@@ -35,11 +64,17 @@ struct Config
     std::string query = "";
     std::string logFile = "";
     std::string command = "";
+    std::string preview = "";
+    std::string previewLine = "";
+    std::vector<std::string> borderChars{"─", "│", "┌", "┐", "┘", "└",
+                                         "┬", "┤", "┴", "├", "┼"};
+
+    Placement previewPlacement = Placement::Top;
+    int tabstop = 8;
 
     bool showHelp = false;
     bool showHints = false;
     bool selectHint = false;
-    bool selectBoth = false;
     bool showSpinner = true;
     bool acceptNonMatch = false;
 
@@ -63,7 +98,7 @@ private:
     Config(){};
 };
 
-void createStyles(StyleManager *styleManager);
-bool readConfig(StyleManager *styleManager, int argc, const char **argv);
+void createStyles();
+bool readConfig(int argc, const char **argv);
 
 #endif

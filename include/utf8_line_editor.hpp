@@ -11,7 +11,7 @@ class Utf8LineEditor
 public:
     Utf8LineEditor(FILE *outputFile);
     bool requiresRedraw() const;
-    void print();
+    void redraw();
     void input(char ch);
     void input(std::string text);
     void handleClick(int x);
@@ -23,9 +23,10 @@ public:
     void clear();
     const std::string &getText() const;
     int getCursorCol() const;
-    void setWidth(int width);
+    void resize(int x, int y, int width);
     void moveCursorStartOfLine();
     void moveCursorEndOfLine();
+    void focus();
 
 private:
     Utf8String m_string;
@@ -34,6 +35,9 @@ private:
     Utf8StringCursor m_end;
     FILE *m_outputFile;
     bool m_requiresRedraw;
+
+    int m_x;
+    int m_y;
     int m_width;
 
     void adjustBounds();

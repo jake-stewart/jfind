@@ -159,6 +159,8 @@ void InputReader::parseMouse(std::string &seq, Key *key) {
             seq.c_str() + idx, "[<%d;%d;%d%c%n", &button, &event.x, &event.y,
             &pressed, &length
         );
+        event.x--;
+        event.y--;
         idx += length + 1;
 
         if (results != 4) {
