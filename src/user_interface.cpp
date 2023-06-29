@@ -213,6 +213,7 @@ void UserInterface::layoutWindows(float p) {
 }
 
 void UserInterface::onResize(int w, int h) {
+    // todo: this function gotta be cleaned up good
     m_pane.x = 0;
     m_pane.y = 0;
     m_pane.w = w;
