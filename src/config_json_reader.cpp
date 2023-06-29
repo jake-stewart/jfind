@@ -30,25 +30,23 @@ std::map<std::string, JsonReaderStrategy *> ConfigJsonReader::createOptions() {
     options["border_chars"]
         = (new JsonStringArrayReaderStrategy(&config.borderChars))
             ->min(11)->max(11);
-    options["external_border"]
-        = (new JsonBoolReaderStrategy(&config.externalBorder));
-    options["preview_border"]
-        = (new JsonBoolReaderStrategy(&config.previewBorder));
-    options["items_border"]
-        = (new JsonBoolReaderStrategy(&config.itemsBorder));
-    options["query_border"]
-        = (new JsonBoolReaderStrategy(&config.queryBorder));
-    options["query_window"]
-        = (new JsonBoolReaderStrategy(&config.queryWindow));
 
-    options["matcher"] = new JsonEnumReaderStrategy<MatcherType>(
+    options["window_style"] = new JsonEnumReaderStrategy(
+        &config.windowStyle, {
+            {"compact", WindowStyle::Compact},
+            {"merged", WindowStyle::Merged},
+            {"windowed", WindowStyle::Windowed}
+        }
+    );
+
+    options["matcher"] = new JsonEnumReaderStrategy(
         &config.matcher, {
             {"fuzzy", FUZZY_MATCHER},
             {"regex", REGEX_MATCHER},
             {"exact", REGEX_MATCHER}}
     );
 
-    options["preview_position"] = new JsonEnumReaderStrategy<Placement>(
+    options["preview_position"] = new JsonEnumReaderStrategy(
         &config.previewPlacement, {
             {"top", Placement::Top},
             {"bottom", Placement::Bottom},
@@ -57,7 +55,7 @@ std::map<std::string, JsonReaderStrategy *> ConfigJsonReader::createOptions() {
         }
     );
 
-    options["case_mode"] = new JsonEnumReaderStrategy<CaseSensitivity>(
+    options["case_mode"] = new JsonEnumReaderStrategy(
         &config.caseSensitivity, {
             {"sensitive", CASE_SENSITIVE},
             {"insensitive", CASE_INSENSITIVE},

@@ -131,11 +131,8 @@ void displayHelp(const char *name) {
     printf("                                  (fuzzy, regex, exact)\n");
     printf("    case_mode: SENSITIVITY        Default case sensitivity\n");
     printf("                                  (sensitive, insensitive, or smart)\n");
-    printf("\n");
-    printf("    preview_border: BOOL          Surround preview window with a border\n");
-    printf("    items_border: BOOL            Surround items list with a border\n");
-    printf("    query_border: BOOL            Surround query with a border\n");
-    printf("    query_window: BOOL            Treat query as its own window\n");
+    printf("    window_style: WINDOW STYLE    Set how the window borders look\n");
+    printf("                                  (compact, merged, windowed)\n");
     printf("\n");
     printf("STYLES:\n");
     printf("    item                          An unselected item\n");

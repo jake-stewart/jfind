@@ -218,28 +218,54 @@ void UserInterface::onResize(int w, int h) {
     m_pane.w = w;
     m_pane.h = h;
 
-    int minWidth = 10 + m_config.queryBorder + m_config.itemsBorder * 2 +
+    bool previewBorder;
+    bool itemsBorder;
+    bool queryBorder;
+    bool queryWindow;
+
+    switch (m_config.windowStyle) {
+        case WindowStyle::Compact:
+            previewBorder = false;
+            itemsBorder = false;
+            queryBorder = false;
+            queryWindow = false;
+            break;
+        case WindowStyle::Merged:
+            previewBorder = false;
+            itemsBorder = false;
+            queryBorder = false;
+            queryWindow = true;
+            break;
+        case WindowStyle::Windowed:
+            previewBorder = true;
+            itemsBorder = true;
+            queryBorder = true;
+            queryWindow = true;
+            break;
+    }
+
+    int minWidth = 10 + queryBorder + itemsBorder * 2 +
         m_config.externalBorder * 2;
     if (m_config.preview.size() &&
         (m_config.previewPlacement == Placement::Left ||
          m_config.previewPlacement == Placement::Right)) {
-        minWidth += 2 + m_config.previewBorder;
+        minWidth += 2 + previewBorder;
     }
 
-    int minHeight = 5 + m_config.queryBorder + m_config.itemsBorder * 2 +
+    int minHeight = 5 + queryBorder + itemsBorder * 2 +
         m_config.externalBorder * 2;
     if (m_config.preview.size() &&
         (m_config.previewPlacement == Placement::Top ||
          m_config.previewPlacement == Placement::Bottom)) {
-        minHeight += 2 + m_config.previewBorder;
+        minHeight += 2 + previewBorder;
     }
 
     bool small = h < minHeight || w < minWidth;
     float p = small ? 0.0f : Config::instance().previewPercent;
-    bool previewBorder = !small && m_config.previewBorder;
-    bool itemsBorder = !small && m_config.itemsBorder;
-    bool queryBorder = !small && m_config.queryBorder;
-    bool queryWindow = !small && m_config.queryWindow;
+    previewBorder &= !small;
+    itemsBorder &= !small;
+    queryBorder &= !small;
+    queryWindow &= !small;
 
     bool vertical = m_config.previewPlacement == Placement::Top ||
         m_config.previewPlacement == Placement::Bottom;

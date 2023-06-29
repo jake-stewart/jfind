@@ -22,6 +22,12 @@ enum class VerticalPlacement {
     Bottom,
 };
 
+enum class WindowStyle {
+    Compact,
+    Merged,
+    Windowed
+};
+
 enum BorderChar {
     HORIZONTAL_BORDER,
     VERTICAL_BORDER,
@@ -53,11 +59,8 @@ struct Config
     int borderStyle = NO_STYLE;
     int previewLineStyle = NO_STYLE;
 
-    bool externalBorder;
-    bool previewBorder;
-    bool itemsBorder;
-    bool queryBorder;
-    bool queryWindow;
+    bool externalBorder = false;
+    WindowStyle windowStyle = WindowStyle::Compact;
 
     MatcherType matcher = FUZZY_MATCHER;
     CaseSensitivity caseSensitivity = CASE_SENSITIVE;
