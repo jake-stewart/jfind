@@ -7,7 +7,7 @@ static int escapeCodeLength(const char *c) {
     int length = 3;
 
     while (*c) {
-        if (!isnumber(*c) && *c != ';' && *c != ':') {
+        if (!isdigit(*c) && *c != ';' && *c != ':') {
             break;
         }
         length++;
