@@ -14,11 +14,13 @@ ItemPreviewReader::ItemPreviewReader() {
 void ItemPreviewReader::onStart() {
     m_ansiStringParser.setTabstop(Config::instance().tabstop);
 
-    try {
-        m_lineRegex = std::regex(Config::instance().previewLine);
-    }
-    catch (const std::regex_error &error) {
-        m_lineRegex.reset();
+    if (Config::instance().previewLine.size()) {
+        try {
+            m_lineRegex = std::regex(Config::instance().previewLine);
+        }
+        catch (const std::regex_error &error) {
+            m_lineRegex.reset();
+        }
     }
 }
 
@@ -63,21 +65,20 @@ void ItemPreviewReader::onLoop() {
         }
         m_reader.reset();
 
-        m_content.lineNumber = 1;
+        m_content.lineNumber = -1;
         if (m_lineRegex) {
             std::cmatch match;
-
             if (std::regex_search(m_newItem->c_str(), match, m_lineRegex.value())) {
-                const char *lineNumberString = match[0].first;
+                std::string lineNumberString = match[0].str();
                 try {
                     int lineNumber = std::stoi(lineNumberString);
                     if (lineNumber > 0) {
                         m_content.lineNumber = lineNumber;
                     }
                 }
-                catch (const std::out_of_range& ex) {
+                catch (const std::out_of_range &ex) {
                 }
-                catch (const std::invalid_argument& ex) {
+                catch (const std::invalid_argument &ex) {
                 }
             }
         }

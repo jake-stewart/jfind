@@ -54,6 +54,48 @@ bool StringOption::parse(const char *value) {
     return true;
 }
 
+FloatOption::FloatOption(std::string key, float *value) {
+    m_key = key;
+    m_value = value;
+}
+
+FloatOption *FloatOption::min(float min) {
+    m_min = min;
+    return this;
+}
+
+FloatOption *FloatOption::max(float max) {
+    m_max = max;
+    return this;
+}
+
+bool FloatOption::parse(const char *value) {
+    float num;
+    try {
+        num = std::stof(value);
+    }
+    catch (const std::out_of_range &) {
+        return error("received an out of range integer");
+    }
+    catch (const std::invalid_argument &) {
+        return error("expects an integer");
+    }
+
+    if (m_min.has_value() && num < m_min.value()) {
+        return error(
+            "value cannot be less than " + std::to_string(m_min.value())
+        );
+    }
+    if (m_max.has_value() && num > m_max.value()) {
+        return error(
+            "value cannot be greater than " + std::to_string(m_max.value())
+        );
+    }
+
+    *m_value = num;
+    return true;
+}
+
 IntegerOption::IntegerOption(std::string key, int *value) {
     m_key = key;
     m_value = value;

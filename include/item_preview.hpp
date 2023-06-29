@@ -21,14 +21,14 @@ class ItemPreview
     ItemPreviewContent m_content;
     bool m_optimizeAnsi = false;
     void printLine(int idx);
+    void redraw();
 
 public:
     void canOptimizeAnsi(bool value);
     void refresh(ItemPreviewContent content);
-    void redraw();
     void resize(int x, int y, int w, int h);
-    bool scrollUp();
-    bool scrollDown();
+    bool scrollUp(int lines);
+    bool scrollDown(int lines);
 };
 
 #endif

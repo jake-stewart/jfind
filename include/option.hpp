@@ -43,6 +43,20 @@ private:
     bool m_allowEmpty;
 };
 
+class FloatOption : public Option
+{
+public:
+    FloatOption(std::string key, float *value);
+    FloatOption *min(float min);
+    FloatOption *max(float max);
+    bool parse(const char *value) override;
+
+private:
+    std::optional<float> m_min;
+    std::optional<float> m_max;
+    float *m_value;
+};
+
 class IntegerOption : public Option
 {
 public:

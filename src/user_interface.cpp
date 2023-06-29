@@ -7,33 +7,6 @@
 using namespace std::chrono_literals;
 using std::chrono::milliseconds;
 
-static void layoutWindows(Pane parent, Placement placement, float p, Pane *first, Pane *second) {
-    int totalSize = placement == Placement::Top || placement == Placement::Bottom
-        ? parent.h
-        : parent.w;
-    int offset = placement == Placement::Top || placement == Placement::Bottom
-        ? parent.y
-        : parent.x;
-
-    int aSize = totalSize * p;
-    int bSize = totalSize - aSize;
-    int aPos = offset;
-    int bPos = offset + aSize;
-
-    if (placement == Placement::Top || placement == Placement::Left) {
-        std::swap(aSize, bSize);
-        std::swap(aPos, bPos);
-    }
-    if (placement == Placement::Top || placement == Placement::Bottom) {
-        *first = {parent.x, aPos, parent.w, aSize};
-        *second = {parent.x, bPos, parent.w, bSize};
-    }
-    else {
-        *first = {aPos, parent.y, aSize, parent.h};
-        *second = {bPos, parent.y, bSize, parent.h};
-    }
-}
-
 static void horizontalSeperator(int col, int row, int size) {
     StyleManager::instance().set(Config::instance().borderStyle);
     AnsiWrapper::instance().move(col, row);
@@ -202,14 +175,41 @@ void UserInterface::updateSpinner() {
         if (m_spinner.isSpinning()) {
             m_spinner.setSpinning(false);
             drawPrompt();
-            // drawQuery();
         }
         return;
     }
-
     m_spinner.setSpinning(true);
-    StyleManager::instance().set(m_config.searchPromptStyle);
-    m_spinner.update();
+    milliseconds remaining = m_spinner.frameTimeRemaining();
+    if (remaining <= 0ms) {
+        StyleManager::instance().set(m_config.searchPromptStyle);
+        m_spinner.update();
+    }
+}
+
+void UserInterface::layoutWindows(float p) {
+    Placement place = Config::instance().previewPlacement;
+    bool vertical = place == Placement::Top || place == Placement::Bottom;
+    bool backwards = place == Placement::Top || place == Placement::Left;
+
+    int totalSize = vertical ? m_pane.h : m_pane.w;
+    int offset = vertical ? m_pane.y : m_pane.x;
+
+    int previewSize = totalSize * p;
+    int itemListSize = totalSize - previewSize;
+    int itemListPos = offset;
+    int previewPos = offset + itemListSize;
+    if (backwards) {
+        previewPos = offset;
+        itemListPos = offset + previewSize;
+    }
+    if (vertical) {
+        m_itemListPane = {m_pane.x, itemListPos, m_pane.w, itemListSize};
+        m_previewPane = {m_pane.x, previewPos, m_pane.w, previewSize};
+    }
+    else {
+        m_itemListPane = {itemListPos, m_pane.y, itemListSize, m_pane.h};
+        m_previewPane = {previewPos, m_pane.y, previewSize, m_pane.h};
+    }
 }
 
 void UserInterface::onResize(int w, int h) {
@@ -218,43 +218,77 @@ void UserInterface::onResize(int w, int h) {
     m_pane.w = w;
     m_pane.h = h;
 
-    bool optimizeAnsi = false;
+    int minWidth = 10 + m_config.queryBorder + m_config.itemsBorder * 2 +
+        m_config.externalBorder * 2;
+    if (m_config.preview.size() &&
+        (m_config.previewPlacement == Placement::Left ||
+         m_config.previewPlacement == Placement::Right)) {
+        minWidth += 2 + m_config.previewBorder;
+    }
+
+    int minHeight = 5 + m_config.queryBorder + m_config.itemsBorder * 2 +
+        m_config.externalBorder * 2;
+    if (m_config.preview.size() &&
+        (m_config.previewPlacement == Placement::Top ||
+         m_config.previewPlacement == Placement::Bottom)) {
+        minHeight += 2 + m_config.previewBorder;
+    }
+
+    bool small = h < minHeight || w < minWidth;
+    float p = small ? 0.0f : Config::instance().previewPercent;
+    bool previewBorder = !small && m_config.previewBorder;
+    bool itemsBorder = !small && m_config.itemsBorder;
+    bool queryBorder = !small && m_config.queryBorder;
+    bool queryWindow = !small && m_config.queryWindow;
+
+    bool vertical = m_config.previewPlacement == Placement::Top ||
+        m_config.previewPlacement == Placement::Bottom;
+    bool optimizeAnsi = (vertical || !Config::instance().preview.size());
 
     if (m_config.externalBorder) {
+        optimizeAnsi = false;
         border(m_pane);
     }
 
     if (Config::instance().preview.size()) {
-        layoutWindows(
-            m_pane, m_config.previewPlacement, 0.5f, &m_itemListPane,
-            &m_previewPane
-        );
+        layoutWindows(p);
     }
     else {
         m_itemListPane = m_pane;
     }
 
     m_editorPane.x = m_itemListPane.x;
-    m_editorPane.y = m_itemListPane.y + m_itemListPane.h - 1;
+    if (m_config.queryPlacement == VerticalPlacement::Bottom) {
+        m_editorPane.y = m_itemListPane.y + m_itemListPane.h - 1;
+    }
+    else {
+        m_editorPane.y = m_itemListPane.y;
+    }
     m_editorPane.w = m_itemListPane.w;
     m_editorPane.h = 1;
 
-    if (!m_config.itemsBorder && !m_config.previewBorder || m_config.itemsBorder && (m_config.queryWindow && !m_config.queryBorder)) {
+    if (!itemsBorder && !previewBorder ||
+        itemsBorder &&
+            (queryWindow && !queryBorder)) {
         if (Config::instance().preview.size()) {
             switch (m_config.previewPlacement) {
                 case Placement::Top:
                     m_previewPane.h -= 1;
-                    horizontalSeperator(
-                        m_previewPane.x, m_previewPane.y + m_previewPane.h,
-                        m_previewPane.w, m_config.externalBorder,
-                        m_config.externalBorder
-                    );
+                    if (m_previewPane.h > 0) {
+                        horizontalSeperator(
+                            m_previewPane.x, m_previewPane.y + m_previewPane.h,
+                            m_previewPane.w, m_config.externalBorder,
+                            m_config.externalBorder
+                        );
+                    }
                     break;
                 case Placement::Bottom:
-                    horizontalSeperator(
-                        m_previewPane.x, m_previewPane.y, m_previewPane.w,
-                        m_config.externalBorder, m_config.externalBorder
-                    );
+                    if (m_previewPane.h > 0) {
+                        horizontalSeperator(
+                            m_previewPane.x, m_previewPane.y, m_previewPane.w,
+                            m_config.externalBorder, m_config.externalBorder
+                        );
+                    }
                     m_previewPane.h -= 1;
                     m_previewPane.y += 1;
                     break;
@@ -277,79 +311,129 @@ void UserInterface::onResize(int w, int h) {
             }
         }
     }
-    if (m_config.previewBorder && m_config.preview.size()) {
+    if (previewBorder && m_config.preview.size()) {
         border(m_previewPane);
     }
 
-    if (m_config.queryWindow) {
-        if (m_config.queryBorder) {
-            m_itemListPane.h -= 3;
-            m_editorPane.h += 2;
-            m_editorPane.y -= 2;
+    if (queryWindow) {
+        if (queryBorder) {
+            if (m_config.queryPlacement == VerticalPlacement::Top) {
+                m_itemListPane.h -= 3;
+                m_itemListPane.y += 3;
+                m_editorPane.h += 2;
+            }
+            else {
+                m_itemListPane.h -= 3;
+                m_editorPane.h += 2;
+                m_editorPane.y -= 2;
+            }
             border(m_editorPane);
-            if (m_config.itemsBorder) {
+            if (itemsBorder) {
                 border(m_itemListPane);
             }
         }
         else {
-            m_itemListPane.h -= 2;
-            if (m_config.itemsBorder) {
+            if (m_config.queryPlacement == VerticalPlacement::Top) {
+                m_itemListPane.y += 2;
+                m_itemListPane.h -= 2;
+            }
+            else {
+                m_itemListPane.h -= 2;
+            }
+            if (itemsBorder) {
                 border(m_itemListPane);
             }
             bool connectLeft = m_config.externalBorder ||
-                (!m_config.previewBorder &&
+                (!previewBorder &&
                  m_config.previewPlacement == Placement::Left);
             bool connectRight = m_config.externalBorder ||
-                (!m_config.previewBorder &&
+                (!previewBorder &&
                  m_config.previewPlacement == Placement::Right);
 
-            if (m_config.preview.size() && m_config.previewBorder && !m_config.itemsBorder) {
+            if (m_config.preview.size() && previewBorder &&
+                !itemsBorder && !vertical) {
                 connectRight = false;
                 connectLeft = false;
             }
 
-            horizontalSeperator(
-                m_editorPane.x, m_editorPane.y - 1, m_editorPane.w, connectLeft,
-                connectRight
-            );
+            if (m_config.queryPlacement == VerticalPlacement::Top) {
+                horizontalSeperator(
+                    m_editorPane.x, m_editorPane.y + 1, m_editorPane.w, connectLeft,
+                    connectRight
+                );
+            }
+            else {
+                horizontalSeperator(
+                    m_editorPane.x, m_editorPane.y - 1, m_editorPane.w, connectLeft,
+                    connectRight
+                );
+            }
         }
     }
     else {
-        if (m_config.queryBorder) {
-            if (m_config.itemsBorder) {
+        if (queryBorder) {
+            if (itemsBorder) {
                 border(m_itemListPane);
-                m_editorPane.y -= 1;
-                m_editorPane.x += 1;
-                m_editorPane.w -= 2;
+                if (m_config.queryPlacement == VerticalPlacement::Top) {
+                    m_editorPane.y += 1;
+                    m_editorPane.x += 1;
+                    m_editorPane.w -= 2;
+                }
+                else {
+                    m_editorPane.y -= 1;
+                    m_editorPane.x += 1;
+                    m_editorPane.w -= 2;
+                }
             }
-            m_itemListPane.h -= 3;
-            m_editorPane.h += 2;
-            m_editorPane.y -= 2;
+            if (m_config.queryPlacement == VerticalPlacement::Top) {
+                m_itemListPane.h -= 3;
+                m_editorPane.h += 2;
+                m_itemListPane.y -= 2;
+            }
+            else {
+                m_itemListPane.h -= 3;
+                m_editorPane.h += 2;
+                m_editorPane.y -= 2;
+            }
+
             border(m_editorPane);
         }
         else {
-            if (m_config.itemsBorder) {
+            if (itemsBorder) {
                 border(m_itemListPane);
-                m_editorPane.y -= 1;
-                m_editorPane.x += 1;
-                m_editorPane.w -= 2;
+                if (m_config.queryPlacement == VerticalPlacement::Top) {
+                    m_editorPane.y += 1;
+                    m_editorPane.x += 1;
+                    m_editorPane.w -= 2;
+                }
+                else {
+                    m_editorPane.y -= 1;
+                    m_editorPane.x += 1;
+                    m_editorPane.w -= 2;
+                }
             }
-            m_itemListPane.h -= 1;
+            if (m_config.queryPlacement == VerticalPlacement::Top) {
+                m_itemListPane.y += 1;
+                m_itemListPane.h -= 1;
+            }
+            else {
+                m_itemListPane.h -= 1;
+            }
         }
     }
+
+    LOG("optimizeAnsi=%d", optimizeAnsi);
 
     m_itemPreview->resize(
         m_previewPane.x, m_previewPane.y, m_previewPane.w, m_previewPane.h
     );
-    m_itemPreview->canOptimizeAnsi(optimizeAnsi);
-
+    m_itemPreview->canOptimizeAnsi(optimizeAnsi && !previewBorder);
 
     m_itemList->resize(
         m_itemListPane.x, m_itemListPane.y, m_itemListPane.w,
         m_itemListPane.h
     );
-    m_itemList->canOptimizeAnsi(optimizeAnsi);
-
+    m_itemList->canOptimizeAnsi(optimizeAnsi && !itemsBorder);
 
     int promptSize = m_config.prompt.size() + m_config.promptGap;
     int spinnerReservation = m_config.prompt.size() == 1 ? 0 : 2;
@@ -366,7 +450,6 @@ void UserInterface::onResize(int w, int h) {
         m_editorPane.y
     );
 
-
     drawPrompt();
     drawQuery();
     m_editor->focus();
@@ -376,39 +459,48 @@ void UserInterface::handleMouse(MouseEvent event) {
     switch (event.button) {
         case MB_SCROLL_UP:
             if (m_itemListPane.pointContained(event.x, event.y)) {
-                m_itemList->scrollUp();
+                if (m_config.queryPlacement == VerticalPlacement::Top) {
+                    m_itemList->scrollDown();
+                }
+                else {
+                    m_itemList->scrollUp();
+                }
             }
             if (m_previewPane.pointContained(event.x, event.y)) {
-                m_itemPreview->scrollUp();
+                m_itemPreview->scrollUp(1);
             }
             break;
         case MB_SCROLL_DOWN:
             if (m_itemListPane.pointContained(event.x, event.y)) {
-                m_itemList->scrollDown();
+                if (m_config.queryPlacement == VerticalPlacement::Top) {
+                    m_itemList->scrollUp();
+                }
+                else {
+                    m_itemList->scrollDown();
+                }
             }
             if (m_previewPane.pointContained(event.x, event.y)) {
-                m_itemPreview->scrollDown();
+                m_itemPreview->scrollDown(1);
             }
             break;
         case MB_LEFT:
-            if (event.pressed && !event.dragged) {
-                if (event.y == m_pane.h - 1) {
-                    int offset = m_config.prompt.size() + m_config.promptGap;
-                    if (event.x >= offset) {
-                        m_editor->handleClick(event.x - offset);
-                    }
+            if (!event.pressed || event.dragged) {
+                return;
+            }
+            if (m_itemListPane.pointContained(event.x, event.y)) {
+                if (event.numClicks >= 2 &&
+                    m_itemList->get(event.y) == m_itemList->getSelected()) {
+                    m_selected = true;
+                    m_selectedKey = K_MOUSE;
+                    raise(SIGTERM);
                 }
                 else {
-                    if (event.numClicks >= 2 &&
-                        m_itemList->get(event.y) == m_itemList->getSelected()) {
-                        m_selected = true;
-                        m_selectedKey = K_MOUSE;
-                        raise(SIGTERM);
-                    }
-                    else {
-                        m_itemList->setSelected(event.y);
-                    }
+                    m_itemList->setSelected(event.y);
                 }
+            }
+            else if (m_editorPane.pointContained(event.x, event.y)) {
+                int offset = m_config.prompt.size() + m_config.promptGap;
+                m_editor->handleClick(event.x - m_editorPane.x - offset);
             }
             break;
         default:
@@ -503,12 +595,36 @@ void UserInterface::handleInput(KeyEvent *event) {
 
         case K_UP:
         case K_CTRL_K:
-            m_itemList->moveCursorUp();
+            if (m_config.queryPlacement == VerticalPlacement::Top) {
+                m_itemList->moveCursorDown();
+            }
+            else {
+                m_itemList->moveCursorUp();
+            }
             break;
 
         case K_DOWN:
         case K_CTRL_J:
-            m_itemList->moveCursorDown();
+            if (m_config.queryPlacement == VerticalPlacement::Top) {
+                m_itemList->moveCursorUp();
+            }
+            else {
+                m_itemList->moveCursorDown();
+            }
+            break;
+
+        case K_ALT_U:
+        case K_ALT_u:
+            if (m_itemPreview) {
+                m_itemPreview->scrollUp(10);
+            }
+            break;
+
+        case K_ALT_D:
+        case K_ALT_d:
+            if (m_itemPreview) {
+                m_itemPreview->scrollDown(10);
+            }
             break;
 
         case K_CTRL_P:
@@ -597,7 +713,6 @@ void UserInterface::onEvent(std::shared_ptr<Event> event) {
         case PREVIEW_READ_EVENT: {
             PreviewReadEvent *readEvent = (PreviewReadEvent *)event.get();
             m_itemPreview->refresh(readEvent->getContent());
-            m_itemPreview->redraw();
             break;
         }
         default:
@@ -635,11 +750,11 @@ void UserInterface::onLoop() {
             ms = std::chrono::duration_cast<std::chrono::milliseconds>(duration
             );
 
-        if (ms < 10ms && !m_firstUpdate) {
-            LOG("sleeping for %lldms", ms.count());
-            awaitEvent(10ms - ms);
-            return;
-        }
+        // if (ms < 10ms) {
+        //     LOG("sleeping for %lldms", ms.count());
+        //     awaitEvent(1ms - ms);
+        //     return;
+        // }
 
         m_lastUpdateTime = now;
         m_firstUpdate = false;
@@ -669,19 +784,14 @@ void UserInterface::onLoop() {
         }
     }
 
-    milliseconds remaining = m_spinner.frameTimeRemaining();
-    if (remaining == 0ms) {
-        updateSpinner();
-    }
+    updateSpinner();
     m_editor->focus();
     fflush(stderr);
 
     if (!m_spinner.isSpinning()) {
-        awaitEvent();
+        return awaitEvent();
     }
-    else if (remaining > 0ms) {
-        awaitEvent(remaining);
-    }
+    awaitEvent(m_spinner.frameTimeRemaining());
 }
 
 void UserInterface::setThreadsafeReading(bool value) {

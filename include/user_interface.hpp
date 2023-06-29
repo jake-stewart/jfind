@@ -38,6 +38,7 @@ private:
     void redraw();
     void updateSpinner();
     void onResize(int w, int h);
+    void layoutWindows(float p);
     void drawPrompt();
     void drawQuery();
     bool loadHistory(int direction);

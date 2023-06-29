@@ -9,35 +9,39 @@ void ItemPreview::canOptimizeAnsi(bool value) {
     m_optimizeAnsi = value;
 }
 
-bool ItemPreview::scrollUp() {
-    if (m_offset == 0) {
-        return false;
-    }
-    m_offset -= 1;
-    if (!m_optimizeAnsi) {
-        redraw();
-        return true;
-    }
+bool ItemPreview::scrollUp(int lines) {
+    for (int i = 0; i < lines; i++) {
+        if (m_offset == 0) {
+            return false;
+        }
+        m_offset -= 1;
+        if (!m_optimizeAnsi) {
+            redraw();
+            continue;
+        }
 
-    AnsiWrapper::instance().setScrollRegion(m_y, m_y + m_height - 1);
-    AnsiWrapper::instance().scrollDown();
-    printLine(m_y);
+        AnsiWrapper::instance().setScrollRegion(m_y, m_y + m_height - 1);
+        AnsiWrapper::instance().scrollDown();
+        printLine(m_y);
+    }
     return true;
 }
 
-bool ItemPreview::scrollDown() {
-    if (m_content.lines.size() - m_offset <= m_height) {
-        return false;
-    }
-    m_offset += 1;
-    if (!m_optimizeAnsi) {
-        redraw();
-        return true;
-    }
+bool ItemPreview::scrollDown(int lines) {
+    for (int i = 0; i < lines; i++) {
+        if (m_content.lines.size() - m_offset <= m_height) {
+            return false;
+        }
+        m_offset += 1;
+        if (!m_optimizeAnsi) {
+            redraw();
+            continue;
+        }
 
-    AnsiWrapper::instance().setScrollRegion(m_y, m_y + m_height - 1);
-    AnsiWrapper::instance().scrollUp();
-    printLine(m_height - 1);
+        AnsiWrapper::instance().setScrollRegion(m_y, m_y + m_height - 1);
+        AnsiWrapper::instance().scrollUp();
+        printLine(m_height - 1);
+    }
     return true;
 }
 
@@ -84,6 +88,9 @@ void ItemPreview::printLine(int idx) {
 }
 
 void ItemPreview::redraw() {
+    if (m_height <= 0 || m_width <= 0) {
+        return;
+    }
     int numLines = std::min(m_height, (int)m_content.lines.size() - m_offset);
     fprintf(stderr, "\x1b[0m");
     for (int i = 0; i < numLines; i++) {
@@ -119,4 +126,5 @@ void ItemPreview::refresh(ItemPreviewContent content) {
             m_offset = 0;
         }
     }
+    redraw();
 }

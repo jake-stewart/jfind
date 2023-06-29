@@ -54,14 +54,14 @@ void printResult(Key key, Item *selected, const char *input) {
     }
 }
 
-void emitResizeEvent() {
+winsize getWinsize() {
     winsize ws;
     if (ioctl(STDERR_FILENO, TIOCGWINSZ, &ws) == -1) {
         ansi.restoreTerm();
         fprintf(stderr, "failed to query terminal size\n");
         exit(1);
     }
-    eventDispatch.dispatch(std::make_shared<ResizeEvent>(ws.ws_col, ws.ws_row));
+    return ws;
 }
 
 void finish() {
@@ -86,10 +86,14 @@ void signalHandler(int sig) {
         case SIGINT:
             eventDispatch.dispatch(std::make_shared<KeyEvent>(K_CTRL_C));
             break;
-        case SIGWINCH:
+        case SIGWINCH: {
             LOG("received SIGWINCH");
-            emitResizeEvent();
+            winsize ws = getWinsize();
+            eventDispatch.dispatch(
+                std::make_shared<ResizeEvent>(ws.ws_col, ws.ws_row)
+            );
             break;
+        }
         default:
             LOG("received unknown signal %d", sig);
             break;
@@ -131,7 +135,8 @@ int main(int argc, const char **argv) {
     ansi.initTerm();
     ansi.enableMouse();
     ansi.setCursor(true);
-    emitResizeEvent();
+    winsize ws = getWinsize();
+    userInterface.onEvent(std::make_shared<ResizeEvent>(ws.ws_col, ws.ws_row));
 
     JfindStrategy *jfindStrategy = config.command.size()
         ? (JfindStrategy *)new InteractiveCommandStrategy(itemCache)

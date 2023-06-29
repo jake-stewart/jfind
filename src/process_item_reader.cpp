@@ -40,7 +40,6 @@ bool ProcessItemReader::readFirstBatch() {
     bool success;
     for (int i = 0; i < READ_BATCH; i++) {
         Item item;
-        // LOG("getting line");
         success = m_itemReader.read(item);
         if (!success) {
             break;
@@ -69,7 +68,13 @@ bool ProcessItemReader::readItem() {
 void ProcessItemReader::onStart() {
     LOG("started");
     m_interval.start();
-    startChildProcess();
+
+    if (m_query.size()) {
+        startChildProcess();
+    }
+    else {
+        dispatchAllRead(true);
+    }
 }
 
 void ProcessItemReader::startChildProcess() {
@@ -118,7 +123,14 @@ void ProcessItemReader::onLoop() {
         m_itemReader.getReader().reset();
         m_items.getSecondary().clear();
 
-        startChildProcess();
+        if (m_query.size()) {
+            startChildProcess();
+        }
+        else {
+            m_items.swap();
+            dispatchItems();
+            dispatchAllRead(true);
+        }
         return;
     }
 

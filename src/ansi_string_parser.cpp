@@ -29,25 +29,32 @@ AnsiString AnsiStringParser::parse(const char *c) {
     m_string = AnsiString();
 
     while (*c) {
-        if (*c == '\x1b') {
-            if (m_content.size()) {
-                addSpan();
-            }
+        if (*c < 32) {
+            if (*c == '\x1b') {
+                if (m_content.size()) {
+                    addSpan();
+                }
 
-            int length = escapeCodeLength(c);
-            if (length > 0) {
-                m_escapeCode += std::string(c, length);
-                c += length;
+                int length = escapeCodeLength(c);
+                if (length > 0) {
+                    m_escapeCode += std::string(c, length);
+                    c += length;
+                }
+                else {
+                    c++;
+                }
             }
-            else {
+            else if (*c == '\t') {
+                for (int i = 0; i < m_tabstop; i++) {
+                    m_content += " ";
+                }
                 c++;
             }
-        }
-        else if (*c == '\t') {
-            for (int i = 0; i < m_tabstop; i++) {
-                m_content += " ";
+            else {
+                m_content.push_back('^');
+                m_content.push_back(*c + 64);
+                c++;
             }
-            c++;
         }
         else {
             m_content += *c;

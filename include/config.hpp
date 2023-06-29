@@ -17,6 +17,11 @@ enum class Placement {
     Right,
 };
 
+enum class VerticalPlacement {
+    Top,
+    Bottom,
+};
+
 enum BorderChar {
     HORIZONTAL_BORDER,
     VERTICAL_BORDER,
@@ -48,11 +53,11 @@ struct Config
     int borderStyle = NO_STYLE;
     int previewLineStyle = NO_STYLE;
 
-    bool externalBorder = false;
-    bool previewBorder = false;
-    bool itemsBorder = false;
-    bool queryBorder = false;
-    bool queryWindow = false;
+    bool externalBorder;
+    bool previewBorder;
+    bool itemsBorder;
+    bool queryBorder;
+    bool queryWindow;
 
     MatcherType matcher = FUZZY_MATCHER;
     CaseSensitivity caseSensitivity = CASE_SENSITIVE;
@@ -69,7 +74,9 @@ struct Config
     std::vector<std::string> borderChars{"─", "│", "┌", "┐", "┘", "└",
                                          "┬", "┤", "┴", "├", "┼"};
 
+    float previewPercent = 0.5f;
     Placement previewPlacement = Placement::Top;
+    VerticalPlacement queryPlacement = VerticalPlacement::Bottom;
     int tabstop = 8;
 
     bool showHelp = false;

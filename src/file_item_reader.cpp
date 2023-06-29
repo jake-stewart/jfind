@@ -68,7 +68,7 @@ void FileItemReader::onStart() {
 
 bool FileItemReader::readFirstBatch() {
     time_point start = system_clock::now();
-    for (int i = 0; i < 128; i++) {
+    for (int i = 0; i < 1; i++) {
         bool success = read();
         if (!success) {
             return false;

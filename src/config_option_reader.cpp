@@ -19,7 +19,7 @@ bool ConfigOptionReader::read(int argc, const char **argv) {
          new StringOption("preview", &config.preview),
          new StringOption("preview-line", &config.previewLine),
          new BooleanOption("external-border", &config.externalBorder),
-         new EnumOption<Placement>(
+         new EnumOption(
              "preview-position", &config.previewPlacement, {
                  {"top", Placement::Top},
                  {"bottom", Placement::Bottom},
@@ -27,19 +27,28 @@ bool ConfigOptionReader::read(int argc, const char **argv) {
                  {"right", Placement::Right}
              }
          ),
+         (new FloatOption(
+             "preview-height", &config.previewPercent
+         ))->min(0)->max(1),
+         new EnumOption(
+             "query-position", &config.queryPlacement, {
+                 {"top", VerticalPlacement::Top},
+                 {"bottom", VerticalPlacement::Bottom},
+             }
+         ),
          (new IntVectorOption("additional-keys", &config.additionalKeys))
              ->min(K_NULL)
              ->max(K_ERROR),
          (new BooleanOption("show-key", &config.showKey)),
          (new IntegerOption("history-limit", &config.historyLimit))->min(0),
-         new EnumOption<MatcherType>(
+         new EnumOption(
              "matcher", &config.matcher, {
                  {"fuzzy", FUZZY_MATCHER},
                  {"regex", REGEX_MATCHER},
                  {"exact", EXACT_MATCHER}
              }
          ),
-         new EnumOption<CaseSensitivity>(
+         new EnumOption(
              "case-mode", &config.caseSensitivity, {
                  {"sensitive", CASE_SENSITIVE},
                  {"insensitive", CASE_INSENSITIVE},

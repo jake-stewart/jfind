@@ -27,7 +27,12 @@ void ItemList::drawItems() const {
 
     for (int i = m_nVisibleItems; i < m_height; i++) {
         StyleManager::instance().set(m_config.backgroundStyle);
-        ansi.move(m_x, m_y + m_height - i - 1);
+        if (Config::instance().queryPlacement == VerticalPlacement::Top) {
+            ansi.move(m_x, m_y + i);
+        }
+        else {
+            ansi.move(m_x, m_y + m_height - i - 1);
+        }
         if (m_optimizeAnsi) {
             ansi.clearTilEOL();
         }
@@ -47,7 +52,12 @@ void ItemList::drawName(int i) const {
         name = name.substr(0, m_itemWidth - 1) + "…";
     }
 
-    ansi.move(m_x, m_y + m_height - i - 1 + m_offset);
+    if (Config::instance().queryPlacement == VerticalPlacement::Top) {
+        ansi.move(m_x, m_y + i - m_offset);
+    }
+    else {
+        ansi.move(m_x, m_y + m_height - i - 1 + m_offset);
+    }
     if (i == m_cursor) {
         if (m_config.activeSelector.size()) {
             StyleManager::instance().set(m_config.activeSelectorStyle);
@@ -97,12 +107,32 @@ void ItemList::drawHint(int i) const {
                 break;
             }
         }
-        ansi.move(m_x + m_width - hint.size() + idx - 1, m_y + m_height - i - 1 + m_offset);
+        if (Config::instance().queryPlacement == VerticalPlacement::Top) {
+            ansi.move(
+                m_x + m_width - hint.size() + idx - 1,
+                m_y + i - m_offset
+            );
+        }
+        else {
+            ansi.move(
+                m_x + m_width - hint.size() + idx - 1,
+                m_y + m_height - i - 1 + m_offset
+            );
+        }
         fprintf(stderr, "…");
         fprintf(stderr, "%s", str + idx);
     }
     else {
-        ansi.move(m_x + m_width - hint.size(), m_y + m_height - i - 1 + m_offset);
+        if (Config::instance().queryPlacement == VerticalPlacement::Top) {
+            ansi.move(
+                m_x + m_width - hint.size(), m_y + i - m_offset
+            );
+        }
+        else {
+            ansi.move(
+                m_x + m_width - hint.size(), m_y + m_height - i - 1 + m_offset
+            );
+        }
         fprintf(stderr, "%s", hint.data());
     }
 }
@@ -116,7 +146,7 @@ bool ItemList::scrollUp() {
         return false;
     }
     m_offset += 1;
-    if (!m_optimizeAnsi) {
+    if (!m_optimizeAnsi || m_height <= 1) {
         if (m_cursor - m_offset < 0) {
             m_cursor += 1;
         }
@@ -124,7 +154,12 @@ bool ItemList::scrollUp() {
         return true;
     }
     ansi.setScrollRegion(m_y, m_y + m_height - 1);
-    ansi.scrollDown();
+    if (Config::instance().queryPlacement == VerticalPlacement::Top) {
+        ansi.scrollUp();
+    }
+    else {
+        ansi.scrollDown();
+    }
     if (m_cursor - m_offset < 0) {
         m_cursor += 1;
         drawName(m_offset);
@@ -144,7 +179,7 @@ bool ItemList::scrollDown() {
         return false;
     }
     m_offset -= 1;
-    if (!m_optimizeAnsi) {
+    if (!m_optimizeAnsi || m_height <= 1) {
         if (m_cursor - m_offset >= m_height) {
             m_cursor -= 1;
         }
@@ -152,7 +187,12 @@ bool ItemList::scrollDown() {
         return true;
     }
     ansi.setScrollRegion(m_y, m_y + m_height - 1);
-    ansi.scrollUp();
+    if (Config::instance().queryPlacement == VerticalPlacement::Top) {
+        ansi.scrollDown();
+    }
+    else {
+        ansi.scrollUp();
+    }
     if (m_cursor - m_offset >= m_height) {
         m_cursor -= 1;
         drawName(m_offset + m_height - 1);
@@ -180,12 +220,17 @@ bool ItemList::moveCursorUp() {
             return false;
         }
         m_offset += 1;
-        if (!m_optimizeAnsi) {
+        if (!m_optimizeAnsi || m_height <= 1) {
             drawItems();
             return true;
         }
         ansi.setScrollRegion(m_y, m_y + m_height - 1);
-        ansi.scrollDown();
+        if (Config::instance().queryPlacement == VerticalPlacement::Top) {
+            ansi.scrollUp();
+        }
+        else {
+            ansi.scrollDown();
+        }
     }
     drawName(m_cursor - 1);
     drawName(m_cursor);
@@ -207,12 +252,17 @@ bool ItemList::moveCursorDown() {
             return false;
         }
         m_offset -= 1;
-        if (!m_optimizeAnsi) {
+        if (!m_optimizeAnsi || m_height <= 1) {
             drawItems();
             return true;
         }
         ansi.setScrollRegion(m_y, m_y + m_height - 1);
-        ansi.scrollUp();
+        if (Config::instance().queryPlacement == VerticalPlacement::Top) {
+            ansi.scrollDown();
+        }
+        else {
+            ansi.scrollUp();
+        }
     }
     drawName(m_cursor + 1);
     drawName(m_cursor);
@@ -274,27 +324,37 @@ void ItemList::resize(int x, int y, int w, int h) {
     }
 
     if (!firstResize) {
-        calcVisibleItems();
         if (m_height + m_offset > m_itemCache->size()) {
             m_offset = m_itemCache->size() - m_height;
             if (m_offset < 0) {
                 m_offset = 0;
             }
         }
-        else if (m_cursor - m_offset >= m_nVisibleItems) {
+        calcVisibleItems();
+        if (m_cursor - m_offset < 0) {
+            m_offset = m_cursor;
+        }
+        if (m_cursor - m_offset >= m_nVisibleItems) {
             m_offset = m_cursor - m_nVisibleItems + 1;
         }
-
         drawItems();
     }
+
 }
 
 bool ItemList::setSelected(int y) {
-    if (m_y + m_height - y - 1 >= m_nVisibleItems) {
+    int idx;
+    if (Config::instance().queryPlacement == VerticalPlacement::Top) {
+        idx = y - m_y;
+    }
+    else {
+        idx = m_y + m_height - y - 1;
+    }
+    if (idx >= m_nVisibleItems) {
         return false;
     }
     int oldCursor = m_cursor;
-    m_cursor = m_offset + m_y + m_height - y - 1;
+    m_cursor = m_offset + idx;
     drawName(oldCursor);
     drawName(m_cursor);
     if (m_hintWidth > m_config.minHintWidth) {
@@ -305,7 +365,12 @@ bool ItemList::setSelected(int y) {
 }
 
 Item *ItemList::get(int y) const {
-    return m_itemCache->get(m_offset + (m_y + m_height - y - 1));
+    if (Config::instance().queryPlacement == VerticalPlacement::Top) {
+        return m_itemCache->get(m_offset + y - m_y);
+    }
+    else {
+        return m_itemCache->get(m_offset + m_y + m_height - y - 1);
+    }
 }
 
 void ItemList::allowScrolling(bool value) {
@@ -313,6 +378,9 @@ void ItemList::allowScrolling(bool value) {
 }
 
 void ItemList::refresh(bool resetCursor) {
+    if (m_nVisibleItems < 0) {
+        return;
+    }
     bool visibleItemsChanged = false;
     if (resetCursor) {
         m_cursor = 0;
@@ -321,11 +389,11 @@ void ItemList::refresh(bool resetCursor) {
         }
         m_offset = 0;
     }
+
     std::vector<int> itemIds(m_nVisibleItems);
     for (int i = 0; i < m_nVisibleItems; i++) {
         itemIds[i] = m_itemCache->get(m_offset + i)->index;
     }
-
     m_itemCache->refresh();
     calcVisibleItems();
     visibleItemsChanged = visibleItemsChanged ||
