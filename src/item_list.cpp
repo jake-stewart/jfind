@@ -47,6 +47,11 @@ void ItemList::drawItems() const {
 void ItemList::drawName(int i) const {
     std::string name = std::string(m_itemCache->get(i)->text);
     replace(name, '\t', ' ');
+    for (int i = 0; i < name.size(); i++) {
+        if (name[i] < 32) {
+            name[i] = '?';
+        }
+    }
 
     if (name.size() > m_itemWidth) {
         name = name.substr(0, m_itemWidth - 1) + "…";
@@ -91,6 +96,12 @@ void ItemList::drawName(int i) const {
 void ItemList::drawHint(int i) const {
     const char *text = m_itemCache->get(i)->text;
     std::string hint = std::string(text + strlen(text) + 1);
+    replace(hint, '\t', ' ');
+    for (int i = 0; i < hint.size(); i++) {
+        if (hint[i] < 32) {
+            hint[i] = '?';
+        }
+    }
 
     StyleManager::instance().set(
         i == m_cursor ? m_config.activeHintStyle : m_config.hintStyle

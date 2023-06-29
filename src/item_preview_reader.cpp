@@ -44,7 +44,6 @@ void ItemPreviewReader::onEvent(std::shared_ptr<Event> event) {
 }
 
 bool ItemPreviewReader::readLine() {
-    // LOG("getting line");
     const char *buffer = m_reader.getlines(1);
     if (!buffer) {
         return false;
@@ -102,6 +101,7 @@ void ItemPreviewReader::onLoop() {
 
     if (!readLine()) {
         m_process.end();
+        LOG("finished reading");
         m_dispatch.dispatch(std::make_shared<PreviewReadEvent>(m_content));
     }
 }
