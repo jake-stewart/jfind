@@ -134,6 +134,7 @@ void displayHelp(const char *name) {
     printf("                                  (sensitive, insensitive, or smart)\n");
     printf("    window_style: WINDOW STYLE    Set how the window borders look\n");
     printf("                                  (compact, merged, windowed)\n");
+    printf("    wrap_item_list: BOOL          Whether the cursor should wrap when out of bounds\n");
     printf("\n");
     printf("STYLES:\n");
     printf("    item                          An unselected item\n");
