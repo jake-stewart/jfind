@@ -1,40 +1,34 @@
 #ifndef FILE_ITEM_READER_HPP
 #define FILE_ITEM_READER_HPP
 
-#include <vector>
+#include "double_buffer.hpp"
+#include "event_dispatch.hpp"
+#include "interval_thread.hpp"
+#include "item.hpp"
+#include "item_reader.hpp"
+#include <condition_variable>
 #include <cstdio>
 #include <mutex>
-#include <condition_variable>
 #include <thread>
-#include "item.hpp"
-#include "logger.hpp"
-#include "event_dispatch.hpp"
-#include "double_buffer.hpp"
-#include "item_reader.hpp"
-#include "interval_thread.hpp"
+#include <vector>
 
-class FileItemReader : public EventListener {
+class FileItemReader : public EventListener
+{
 public:
-    FileItemReader(FILE *file);
+    FileItemReader(int fd);
     bool read();
     void onStart() override;
     void onLoop() override;
     void onEvent(std::shared_ptr<Event> event) override;
-    void preOnEvent(EventType eventType) override;
     void dispatchItems();
 
 private:
     void endInterval();
 
     bool m_itemsRead = true;
-    FILE *m_file;
-
     ItemReader m_itemReader;
     IntervalThread m_interval;
-
-    EventDispatch& m_dispatch = EventDispatch::instance();
-    Logger m_logger = Logger("FileItemReader");
-
+    EventDispatch &m_dispatch = EventDispatch::instance();
     DoubleBuffer<std::vector<Item>> m_items;
 
     bool readFirstBatch();

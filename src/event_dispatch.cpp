@@ -10,7 +10,7 @@ void EventDispatch::dispatch(std::shared_ptr<Event> event) {
     }
 }
 
-EventDispatch& EventDispatch::instance() {
+EventDispatch &EventDispatch::instance() {
     static EventDispatch singleton;
     return singleton;
 }

@@ -1,32 +1,33 @@
 #ifndef ANSI_WRAPPER_HPP
 #define ANSI_WRAPPER_HPP
 
-#include <cstdint>
-#include <cstddef>
-#include <cstdlib>
-#include <cstdio>
 #include <csignal>
 #include <cstdbool>
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
 
 extern "C" {
-#include <unistd.h>
 #include <sys/ioctl.h>
 #include <termios.h>
+#include <unistd.h>
 }
 
-
-class AnsiWrapper {
+class AnsiWrapper
+{
 private:
     AnsiWrapper();
 
     bool m_inAlternateBuffer;
     bool m_mouseEnabled;
+    bool m_scrollRegionEnabled;
     FILE *m_outputFile;
     int m_inputFileNo;
     termios m_origTermios;
 
 public:
-    static AnsiWrapper& instance();
+    static AnsiWrapper &instance();
 
     void setInputFileNo(int fileNo);
     void setOutputFile(FILE *file);
@@ -44,8 +45,13 @@ public:
     void moveLeft(unsigned int amount) const;
     void moveRight(unsigned int amount) const;
 
-    void moveUpOrScroll() const;
-    void moveDownOrScroll() const;
+    void setScrollRegion(unsigned int minRow, unsigned int maxRow);
+    void resetScrollRegion();
+
+    void scrollDown() const;
+    void scrollUp() const;
+    void scrollLeft() const;
+    void scrollRight() const;
 
     void clearTerm() const;
     void clearTilEOL() const;

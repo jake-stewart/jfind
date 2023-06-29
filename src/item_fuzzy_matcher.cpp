@@ -2,6 +2,7 @@
 #include "../include/item.hpp"
 #include "../include/util.hpp"
 #include <climits>
+#include <cstring>
 
 #define isupper(c) (c >= 'A' && c <= 'Z')
 #define islower(c) (c >= 'a' && c <= 'z')
@@ -46,10 +47,12 @@ bool ItemFuzzyMatcher::requiresFullRescore() {
 }
 
 int ItemFuzzyMatcher::calculateScore(Item *item) {
-    int total = 0;
-    for (const std::string& query : m_queries) {
+    int total = -strlen(item->text);
+    for (const std::string &query : m_queries) {
         int score = matchStart(item->text, query.c_str());
-        if (score == BAD_HEURISTIC) return BAD_HEURISTIC;
+        if (score == BAD_HEURISTIC) {
+            return BAD_HEURISTIC;
+        }
         total += score;
     }
     return total;
@@ -62,7 +65,9 @@ int ItemFuzzyMatcher::matchStart(const char *tp, const char *qp) {
         int score = 0;
         if (*(qp + 1)) {
             score = match(tp + 1, qp + 1, 1, true, &depth);
-            if (score == BAD_HEURISTIC) return maxScore;
+            if (score == BAD_HEURISTIC) {
+                return maxScore;
+            }
         }
         maxScore = score + MATCH_BONUS + START_LINE_BONUS;
     }
@@ -73,7 +78,9 @@ int ItemFuzzyMatcher::matchStart(const char *tp, const char *qp) {
             int score = 0;
             if (*(qp + 1)) {
                 score = match(tp + 1, qp + 1, 1, boundary > 0, &depth);
-                if (score == BAD_HEURISTIC) return maxScore;
+                if (score == BAD_HEURISTIC) {
+                    return maxScore;
+                }
             }
             score += MATCH_BONUS + boundary;
             maxScore = std::max(score, maxScore);
@@ -83,9 +90,9 @@ int ItemFuzzyMatcher::matchStart(const char *tp, const char *qp) {
     return maxScore;
 }
 
-int ItemFuzzyMatcher::match(const char *tp, const char *qp, int dist, bool consec,
-                       int *depth)
-{
+int ItemFuzzyMatcher::match(
+    const char *tp, const char *qp, int dist, bool consec, int *depth
+) {
     int maxScore = BAD_HEURISTIC;
     while (*tp) {
         int boundary = boundaryScore(tp);
@@ -94,12 +101,16 @@ int ItemFuzzyMatcher::match(const char *tp, const char *qp, int dist, bool conse
             int score = 0;
             if (*(qp + 1)) {
                 score = match(tp + 1, qp + 1, dist, consec || boundary, depth);
-                if (score == BAD_HEURISTIC) return maxScore;
+                if (score == BAD_HEURISTIC) {
+                    return maxScore;
+                }
             }
-            score += MATCH_BONUS + boundary + consec * CONSECUTIVE_BONUS
-                + dist * DISTANCE_PENALTY;
+            score += MATCH_BONUS + boundary + consec * CONSECUTIVE_BONUS +
+                dist * DISTANCE_PENALTY;
             maxScore = std::max(score, maxScore);
-            if (++(*depth) > 100) return maxScore;
+            if (++(*depth) > 100) {
+                return maxScore;
+            }
         }
         tp++;
         consec = false;

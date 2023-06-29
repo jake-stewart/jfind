@@ -1,8 +1,8 @@
 #ifndef ITEM_EXACT_MATCHER_HPP
 #define ITEM_EXACT_MATCHER_HPP
 
-#include "item_matcher.hpp"
 #include "case_sensitivity.hpp"
+#include "item_matcher.hpp"
 #include <climits>
 #include <regex>
 #include <string>

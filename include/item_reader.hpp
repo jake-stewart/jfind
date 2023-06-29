@@ -1,23 +1,20 @@
 #ifndef ITEM_READER_HPP
 #define ITEM_READER_HPP
 
-#include <cstdio>
-#include "item.hpp"
 #include "cancellable_reader.hpp"
+#include "buffered_reader.hpp"
+#include "item.hpp"
+#include <cstdio>
 
 class ItemReader
 {
+    BufferedReader m_reader;
     int m_itemId = 0;
-    CancellableReader m_reader;
 
 public:
-    void setFile(FILE *file);
-    bool read(Item& item);
-    void cancel();
-
-private:
-    bool readWithHints(Item &item);
-    bool readWithoutHints(Item &item);
+    void setFd(int fd);
+    BufferedReader &getReader();
+    bool read(Item &item);
 };
 
 #endif

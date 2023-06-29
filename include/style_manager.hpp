@@ -1,23 +1,26 @@
 #ifndef STYLE_MANAGER_HPP
 #define STYLE_MANAGER_HPP
 
+#include "ansi_style.hpp"
 #include <map>
 #include <vector>
-#include "ansi_style.hpp"
 
 const int NO_STYLE = -1;
 
-class StyleManager {
-    public:
-        int add(AnsiStyle& style);
-        void set(int idx);
-        StyleManager(FILE *outputFile);
+class StyleManager
+{
+public:
+    static StyleManager &instance();
+    void setOutputFile(FILE *outputFile);
+    int add(AnsiStyle &style);
+    bool set(int idx);
+    void set();
 
-    private:
-        std::map<std::string, int> m_lookup;
-        std::vector<std::string> m_escSeqs;
-        int m_currentStyle = NO_STYLE;
-        FILE *m_outputFile;
+private:
+    std::map<std::string, int> m_lookup;
+    std::vector<std::string> m_escSeqs;
+    int m_currentStyle = NO_STYLE;
+    FILE *m_outputFile = stdout;
 };
 
 #endif

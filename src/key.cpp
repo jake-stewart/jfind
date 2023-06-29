@@ -7,9 +7,9 @@ std::string getKeyName(Key key) {
         case K_TAB:
             return "TAB";
 
-        case K_CTRL_A ... (K_TAB - 1):
-        case (K_TAB + 1) ... (K_ENTER - 1):
-        case (K_ENTER + 1) ... K_CTRL_Z:
+        case K_CTRL_A ...(K_TAB - 1):
+        case (K_TAB + 1)...(K_ENTER - 1):
+        case (K_ENTER + 1)... K_CTRL_Z:
             return std::string("CTRL-") + (char)(K_A + key - 1) + "'";
 
         case K_ESCAPE:
@@ -40,8 +40,8 @@ std::string getKeyName(Key key) {
         case K_ALT_ENTER:
             return "ALT-ENTER";
         case K_ALT_SPACE ... K_ALT_TILDE:
-            return std::string("ALT-'")
-                + (char)(K_SPACE + key - K_ALT_SPACE) + "'";
+            return std::string("ALT-'") + (char)(K_SPACE + key - K_ALT_SPACE) +
+                "'";
 
         case K_UP:
             return "UP";

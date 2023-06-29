@@ -1,9 +1,10 @@
 #ifndef EVENT_HPP
 #define EVENT_HPP
 
-#include "mouse_event.hpp"
-#include "key.hpp"
 #include "item.hpp"
+#include "key.hpp"
+#include "mouse_event.hpp"
+#include "item_preview_content.hpp"
 #include <cstring>
 #include <vector>
 
@@ -16,17 +17,20 @@ enum EventType {
     ITEMS_SORTED_EVENT,
     ITEMS_REQUEST_EVENT,
     RESIZE_EVENT,
-    QUIT_EVENT,
+    PREVIEW_READ_EVENT,
+    SELECTED_ITEM_CHANGE_EVENT,
 };
-const char* const* getEventNames();
+const char *const *getEventNames();
 
-class Event {
+class Event
+{
 public:
     virtual ~Event() {}
     virtual EventType getType() const = 0;
 };
 
-class KeyEvent : public Event {
+class KeyEvent : public Event
+{
     Key m_key;
     std::vector<MouseEvent> m_mouseEvents;
     char m_widechar[4];
@@ -54,16 +58,17 @@ public:
         return m_key;
     }
 
-    char* getWidechar() {
+    char *getWidechar() {
         return m_widechar;
     }
 
-    std::vector<MouseEvent>& getMouseEvents() {
+    std::vector<MouseEvent> &getMouseEvents() {
         return m_mouseEvents;
     }
 };
 
-class QueryChangeEvent : public Event {
+class QueryChangeEvent : public Event
+{
     std::string m_query;
 
 public:
@@ -75,16 +80,17 @@ public:
         return QUERY_CHANGE_EVENT;
     }
 
-    const std::string& getQuery() {
+    const std::string &getQuery() {
         return m_query;
     }
 };
 
-class NewItemsEvent : public Event {
-    std::vector<Item>* m_items;
+class NewItemsEvent : public Event
+{
+    std::vector<Item> *m_items;
 
 public:
-    NewItemsEvent(std::vector<Item>* items) {
+    NewItemsEvent(std::vector<Item> *items) {
         m_items = items;
     }
 
@@ -92,12 +98,13 @@ public:
         return NEW_ITEMS_EVENT;
     }
 
-    std::vector<Item>* getItems() {
+    std::vector<Item> *getItems() {
         return m_items;
     }
 };
 
-class AllItemsReadEvent : public Event {
+class AllItemsReadEvent : public Event
+{
     bool m_value;
 
 public:
@@ -114,21 +121,16 @@ public:
     }
 };
 
-class QuitEvent : public Event {
-public:
-    EventType getType() const override {
-        return QUIT_EVENT;
-    }
-};
-
-class ItemsAddedEvent : public Event {
+class ItemsAddedEvent : public Event
+{
 public:
     EventType getType() const override {
         return ITEMS_ADDED_EVENT;
     }
 };
 
-class ItemsSortedEvent : public Event {
+class ItemsSortedEvent : public Event
+{
     std::string m_query;
 
 public:
@@ -136,7 +138,7 @@ public:
         m_query = query;
     }
 
-    const std::string& getQuery() {
+    const std::string &getQuery() {
         return m_query;
     }
 
@@ -145,7 +147,8 @@ public:
     }
 };
 
-class ResizeEvent : public Event {
+class ResizeEvent : public Event
+{
     int m_width;
     int m_height;
 
@@ -168,9 +171,47 @@ public:
     }
 };
 
-class ItemsRequestEvent : public Event {
+class ItemsRequestEvent : public Event
+{
     EventType getType() const override {
         return ITEMS_REQUEST_EVENT;
+    }
+};
+
+class PreviewReadEvent : public Event
+{
+    ItemPreviewContent m_content;
+
+public:
+    PreviewReadEvent(ItemPreviewContent content) {
+        m_content = content;
+    }
+
+    EventType getType() const override {
+        return PREVIEW_READ_EVENT;
+    }
+
+    ItemPreviewContent getContent() const {
+        return m_content;
+    }
+
+};
+
+class SelectedItemChangeEvent : public Event
+{
+    std::string m_item;
+
+public:
+    SelectedItemChangeEvent(std::string item) {
+        m_item = item;
+    }
+
+    EventType getType() const override {
+        return SELECTED_ITEM_CHANGE_EVENT;
+    }
+
+    std::string getItem() const {
+        return m_item;
     }
 };
 

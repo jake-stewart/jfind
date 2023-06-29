@@ -1,7 +1,7 @@
 #include "../include/utf8_string.hpp"
 
-#include <locale>
 #include <codecvt>
+#include <locale>
 
 static std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
 
@@ -18,7 +18,7 @@ void Utf8StringCursor::insert(char ch) {
     m_charIdx += 1;
 }
 
-void Utf8StringCursor::insert(std::string& str) {
+void Utf8StringCursor::insert(std::string &str) {
     for (int i = 0; i < str.size(); i++) {
         unsigned char ch = str[i];
         if (32 <= ch && ch < 127) {
@@ -46,20 +46,23 @@ void Utf8StringCursor::insert(std::string& str) {
             try {
                 ws = converter.from_bytes(widechar);
             }
-            catch (const std::range_error&) {
+            catch (const std::range_error &) {
                 continue;
             }
 
             for (int j = 0; j < widecharIdx; j++) {
-                m_str->bytes.insert(m_str->bytes.begin() + m_byteIdx,
-                        widechar[j]);
+                m_str->bytes.insert(
+                    m_str->bytes.begin() + m_byteIdx, widechar[j]
+                );
                 m_byteIdx++;
             }
             int width = wcswidth(ws.c_str(), ws.size());
-            m_str->cellWidths.insert(m_str->cellWidths.begin() + m_charIdx,
-                    width);
-            m_str->byteWidths.insert(m_str->byteWidths.begin() + m_charIdx,
-                    widecharIdx);
+            m_str->cellWidths.insert(
+                m_str->cellWidths.begin() + m_charIdx, width
+            );
+            m_str->byteWidths.insert(
+                m_str->byteWidths.begin() + m_charIdx, widecharIdx
+            );
             m_cellIdx += width;
             m_charIdx += 1;
         }
@@ -88,9 +91,10 @@ bool Utf8StringCursor::backspace() {
     if (m_charIdx <= 0) {
         return false;
     }
-    m_str->bytes.erase(m_str->bytes.begin() + m_byteIdx
-            - m_str->byteWidths[m_charIdx - 1],
-            m_str->bytes.begin() + m_byteIdx);
+    m_str->bytes.erase(
+        m_str->bytes.begin() + m_byteIdx - m_str->byteWidths[m_charIdx - 1],
+        m_str->bytes.begin() + m_byteIdx
+    );
     m_byteIdx -= m_str->byteWidths[m_charIdx - 1];
     m_cellIdx -= m_str->cellWidths[m_charIdx - 1];
     m_str->byteWidths.erase(m_str->byteWidths.begin() + m_charIdx - 1);
@@ -103,8 +107,10 @@ bool Utf8StringCursor::del() {
     if (m_charIdx >= m_str->byteWidths.size()) {
         return false;
     }
-    m_str->bytes.erase(m_str->bytes.begin() + m_byteIdx,
-            m_str->bytes.begin() + m_byteIdx + m_str->byteWidths[m_charIdx]);
+    m_str->bytes.erase(
+        m_str->bytes.begin() + m_byteIdx,
+        m_str->bytes.begin() + m_byteIdx + m_str->byteWidths[m_charIdx]
+    );
     m_str->byteWidths.erase(m_str->byteWidths.begin() + m_charIdx);
     m_str->cellWidths.erase(m_str->cellWidths.begin() + m_charIdx);
     return true;
@@ -121,8 +127,8 @@ int Utf8StringCursor::getBytesForCols(int cols) {
     int bytes = 0;
     int idx = m_charIdx;
 
-    while (idx < m_str->cellWidths.size() && w + m_str->cellWidths[idx] < cols)
-    {
+    while (idx < m_str->cellWidths.size() && w + m_str->cellWidths[idx] < cols
+    ) {
         w += m_str->cellWidths[idx];
         bytes += m_str->byteWidths[idx];
         idx++;
@@ -143,6 +149,6 @@ int Utf8StringCursor::getCol() const {
     return m_cellIdx;
 }
 
-const char* Utf8StringCursor::getPointer() const {
+const char *Utf8StringCursor::getPointer() const {
     return m_str->bytes.c_str() + m_byteIdx;
 }

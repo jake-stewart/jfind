@@ -5,7 +5,6 @@
 #include <condition_variable>
 #include <mutex>
 #include <thread>
-#include "logger.hpp"
 
 class IntervalThread
 {
@@ -20,7 +19,6 @@ public:
 private:
     void threadFunc();
 
-    Logger m_logger = Logger("IntervalThread");
     std::chrono::time_point<std::chrono::system_clock> m_start;
     std::chrono::milliseconds m_interval;
     bool m_active = false;

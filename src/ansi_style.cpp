@@ -1,7 +1,12 @@
 #include "../include/ansi_style.hpp"
 #include <sstream>
 
-AnsiStyle& AnsiStyle::fg(int color) {
+AnsiStyle &AnsiStyle::blend() {
+    m_blend = true;
+    return *this;
+}
+
+AnsiStyle &AnsiStyle::fg(int color) {
     if (color < BRIGHT_BLACK) {
         m_fgType = COLOR_8;
         m_fg16 = (Color16)color;
@@ -13,7 +18,7 @@ AnsiStyle& AnsiStyle::fg(int color) {
     return *this;
 }
 
-AnsiStyle& AnsiStyle::bg(int color) {
+AnsiStyle &AnsiStyle::bg(int color) {
     if (color < BRIGHT_BLACK) {
         m_bgType = COLOR_8;
         m_bg16 = (Color16)color;
@@ -25,54 +30,54 @@ AnsiStyle& AnsiStyle::bg(int color) {
     return *this;
 }
 
-AnsiStyle& AnsiStyle::fg(ColorRGB color) {
+AnsiStyle &AnsiStyle::fg(ColorRGB color) {
     m_fgType = COLOR_RGB;
     m_fgRgb = color;
     return *this;
 }
 
-AnsiStyle& AnsiStyle::bg(ColorRGB color) {
+AnsiStyle &AnsiStyle::bg(ColorRGB color) {
     m_bgType = COLOR_RGB;
     m_bgRgb = color;
     return *this;
 }
 
-AnsiStyle& AnsiStyle::bold() {
+AnsiStyle &AnsiStyle::bold() {
     m_bold = true;
     return *this;
 }
 
-AnsiStyle& AnsiStyle::italic() {
+AnsiStyle &AnsiStyle::italic() {
     m_italic = true;
     return *this;
 }
 
-AnsiStyle& AnsiStyle::underline() {
+AnsiStyle &AnsiStyle::underline() {
     m_underlineType = LINE;
     return *this;
 }
 
-AnsiStyle& AnsiStyle::blink() {
+AnsiStyle &AnsiStyle::blink() {
     m_blink = true;
     return *this;
 }
 
-AnsiStyle& AnsiStyle::standout() {
+AnsiStyle &AnsiStyle::standout() {
     m_standout = true;
     return *this;
 }
 
-AnsiStyle& AnsiStyle::strikethrough() {
+AnsiStyle &AnsiStyle::strikethrough() {
     m_strikethrough = true;
     return *this;
 }
 
-AnsiStyle& AnsiStyle::dim() {
+AnsiStyle &AnsiStyle::dim() {
     m_dim = true;
     return *this;
 }
 
-AnsiStyle& AnsiStyle::underline(UnderlineType type) {
+AnsiStyle &AnsiStyle::underline(UnderlineType type) {
     m_underlineType = type;
     return *this;
 }
@@ -90,9 +95,9 @@ std::string AnsiStyle::build() const {
             break;
         case COLOR_RGB:
             ss << ";38;2;"
-                << (int)m_fgRgb.r << ";"
-                << (int)m_fgRgb.g << ";"
-                << (int)m_fgRgb.b;
+               << (int)m_fgRgb.r << ";"
+               << (int)m_fgRgb.g << ";"
+               << (int)m_fgRgb.b;
             break;
         case NO_COLOR:
             break;
@@ -107,20 +112,32 @@ std::string AnsiStyle::build() const {
             break;
         case COLOR_RGB:
             ss << ";48;2;"
-                << (int)m_bgRgb.r << ";"
-                << (int)m_bgRgb.g << ";"
-                << (int)m_bgRgb.b;
+               << (int)m_bgRgb.r << ";"
+               << (int)m_bgRgb.g << ";"
+               << (int)m_bgRgb.b;
             break;
         case NO_COLOR:
             break;
     }
 
-    if (m_bold) ss << ";1";
-    if (m_dim) ss << ";2";
-    if (m_italic) ss << ";3";
-    if (m_blink) ss << ";5";
-    if (m_standout) ss << ";7";
-    if (m_strikethrough) ss << ";9";
+    if (m_bold) {
+        ss << ";1";
+    }
+    if (m_dim) {
+        ss << ";2";
+    }
+    if (m_italic) {
+        ss << ";3";
+    }
+    if (m_blink) {
+        ss << ";5";
+    }
+    if (m_standout) {
+        ss << ";7";
+    }
+    if (m_strikethrough) {
+        ss << ";9";
+    }
 
     if (m_underlineType) {
         ss << ";4";
@@ -143,5 +160,12 @@ std::string AnsiStyle::build() const {
     }
 
     ss << "m";
-    return ss.str();
+    std::string escSeq = ss.str();
+    if (m_blend) {
+        escSeq.erase(escSeq.begin() + 2, escSeq.begin() + 4);
+        if (escSeq == "\x1b[") {
+            return "";
+        }
+    }
+    return escSeq;
 }

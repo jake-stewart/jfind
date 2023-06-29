@@ -1,11 +1,15 @@
 #include "../include/ansi_wrapper.hpp"
 
 extern "C" {
-#include <sys/stat.h>
 #include <fcntl.h>
+#include <sys/stat.h>
 }
 
 #define ANSI_ESC "\x1b["
+
+// output buffer so that we can flush when done drawing
+// without output buffer, cursor may jump around causing slight flicker
+static char outputBuffer[50000];
 
 AnsiWrapper::AnsiWrapper() {
     m_inAlternateBuffer = false;
@@ -14,7 +18,7 @@ AnsiWrapper::AnsiWrapper() {
     m_inputFileNo = STDIN_FILENO;
 };
 
-AnsiWrapper& AnsiWrapper::instance() {
+AnsiWrapper &AnsiWrapper::instance() {
     static AnsiWrapper singleton;
     return singleton;
 }
@@ -59,25 +63,37 @@ void AnsiWrapper::moveLeft(unsigned int amount) const {
     fprintf(m_outputFile, ANSI_ESC "%uD", amount);
 }
 
-void AnsiWrapper::moveUpOrScroll() const {
-    fprintf(m_outputFile, "\x1bM");
+void AnsiWrapper::scrollUp() const {
+    fprintf(m_outputFile, ANSI_ESC "S");
 }
 
-void AnsiWrapper::moveDownOrScroll() const {
-    fprintf(m_outputFile, "\n");
+void AnsiWrapper::scrollDown() const {
+    fprintf(m_outputFile, ANSI_ESC "T");
+}
+
+void AnsiWrapper::scrollLeft() const {
+    fprintf(m_outputFile, ANSI_ESC "@");
+}
+
+void AnsiWrapper::scrollRight() const {
+    fprintf(m_outputFile, ANSI_ESC "A");
 }
 
 void AnsiWrapper::enableMouse() {
     if (!m_mouseEnabled) {
         m_mouseEnabled = true;
-        fprintf(m_outputFile, ANSI_ESC "?1002h" ANSI_ESC "?1015h" ANSI_ESC "?1006h");
+        fprintf(
+            m_outputFile, ANSI_ESC "?1002h" ANSI_ESC "?1015h" ANSI_ESC "?1006h"
+        );
     }
 }
 
 void AnsiWrapper::disableMouse() {
     if (m_mouseEnabled) {
         m_mouseEnabled = false;
-        fprintf(m_outputFile, ANSI_ESC "?1002l" ANSI_ESC "?1015l" ANSI_ESC "?1006l");
+        fprintf(
+            m_outputFile, ANSI_ESC "?1002l" ANSI_ESC "?1015l" ANSI_ESC "?1006l"
+        );
     }
 }
 
@@ -118,11 +134,19 @@ void AnsiWrapper::setOutputFile(FILE *file) {
 }
 
 void AnsiWrapper::saveCursor() const {
-    fprintf(m_outputFile, "\x1b" "7");
+    fprintf(
+        m_outputFile,
+        "\x1b"
+        "7"
+    );
 }
 
 void AnsiWrapper::restoreCursor() const {
-    fprintf(m_outputFile, "\x1b" "8");
+    fprintf(
+        m_outputFile,
+        "\x1b"
+        "8"
+    );
 }
 
 void AnsiWrapper::restoreTerm(void) {
@@ -131,6 +155,7 @@ void AnsiWrapper::restoreTerm(void) {
     fprintf(m_outputFile, "\x1b[0m");
     clearTerm();
     setCursor(true);
+    resetScrollRegion();
     setAlternateBuffer(false);
     fflush(m_outputFile);
     tcsetattr(m_inputFileNo, TCSANOW, &m_origTermios);
@@ -139,31 +164,36 @@ void AnsiWrapper::restoreTerm(void) {
     signal(SIGQUIT, SIG_DFL);
 }
 
-static char outputBuffer[50000];
-
 void AnsiWrapper::initTerm(void) {
     setvbuf(m_outputFile, outputBuffer, _IOFBF, sizeof(outputBuffer));
-    // setvbuf(m_outputFile, nullptr, _IOFBF, BUFSIZ);
-    // setvbuf(m_outputFile, NULL, _IONBF, 0);
+    // setvbuf(m_outputFile, nullptr, _IOFBF, 0);
 
     tcgetattr(m_inputFileNo, &m_origTermios);
     termios term = m_origTermios;
 
-    term.c_iflag &= ~(ICRNL);  // differentiate newline and linefeed
-    term.c_iflag &= ~IXON; // allow ctrl+s ctrl+q keys
-    term.c_lflag &= ISIG;  // generate exit signals
-    term.c_lflag &= ~(ECHO | ICANON);  // disable echo and cannonical mode
+    term.c_lflag &= ECHOCTL; // stops newline when <c-c> before eof
+    term.c_iflag &= ~ICRNL;  // differentiate newline and linefeed
+    term.c_iflag &= ~IXON;   // allow ctrl+s ctrl+q keys
+    term.c_lflag &= ISIG;    // generate exit signals
+    term.c_lflag &= ~ECHO;   // disable echoing keys back to user
+    term.c_lflag &= ~ICANON; // disable cannonical mode
 
     tcsetattr(m_inputFileNo, TCSANOW, &term);
 
     setAlternateBuffer(true);
     clearTerm();
     moveHome();
-    // fflush(m_outputFile);
 }
 
-void AnsiWrapper::closeStdin() {
-    int fd = open("/dev/null", O_RDONLY);
-    dup2(fd, 0);
-    close(fd);
+void AnsiWrapper::setScrollRegion(unsigned int minRow, unsigned int maxRow) {
+    m_scrollRegionEnabled = true;
+    fprintf(m_outputFile, ANSI_ESC "%d;%dr", minRow + 1, maxRow + 1);
+}
+
+void AnsiWrapper::resetScrollRegion() {
+    if (!m_scrollRegionEnabled) {
+        return;
+    }
+    m_scrollRegionEnabled = false;
+    fprintf(m_outputFile, ANSI_ESC "r");
 }

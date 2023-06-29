@@ -15,7 +15,7 @@ void ItemCache::refresh() {
     m_cache.refresh();
 }
 
-Item* ItemCache::get(int i) {
+Item *ItemCache::get(int i) {
     return m_cache.get(i);
 }
 

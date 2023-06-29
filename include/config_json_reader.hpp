@@ -6,19 +6,16 @@
 
 #include <fstream>
 
-class ConfigJsonReader {
-    public:
-        bool read(std::ifstream &ifs);
-        const JsonError getError() const;
-        ConfigJsonReader(StyleManager *styleManager);
+class ConfigJsonReader
+{
+public:
+    bool read(std::ifstream &ifs);
+    const JsonError getError() const;
 
-    private:
-        JsonError m_error;
-        StyleManager *m_styleManager;
-
-        std::map<std::string, JsonReaderStrategy*> createOptions();
-        bool readJsonFile(JsonParser &parser, std::ifstream &ifs);
+private:
+    JsonError m_error;
+    std::map<std::string, JsonReaderStrategy *> createOptions();
+    bool readJsonFile(JsonParser &parser, std::ifstream &ifs);
 };
-
 
 #endif

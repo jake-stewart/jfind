@@ -2,18 +2,17 @@
 #define CANCELLABLE_READER_HPP
 
 #include <cstdio>
-#include "logger.hpp"
 
 extern "C" {
-#include <sys/select.h>
 #include <poll.h>
+#include <sys/select.h>
 }
 
-class CancellableReader {
+class CancellableReader
+{
     FILE *m_file;
     int m_fd;
 
-    Logger m_logger = Logger("CancellableReader");
     int m_pipe[2];
     fd_set m_fd_set;
     int m_maxFd;

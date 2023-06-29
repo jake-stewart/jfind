@@ -1,23 +1,22 @@
 #include "../include/file_item_reader.hpp"
-#include <cstring>
-#include <cstdlib>
+#include "../include/logger.hpp"
 #include <chrono>
+#include <cstdlib>
+#include <cstring>
 #include <thread>
 
 extern "C" {
-#include <unistd.h>
 #include <fcntl.h>
+#include <unistd.h>
 }
 
 using namespace std::chrono_literals;
-using std::chrono::time_point;
 using std::chrono::system_clock;
+using std::chrono::time_point;
 
-FileItemReader::FileItemReader(FILE *file) {
-    m_file = file;
-    m_interval.setInterval(50ms);
-    m_itemReader.setFile(file);
-    m_dispatch.subscribe(this, QUIT_EVENT);
+FileItemReader::FileItemReader(int fd) {
+    m_interval.setInterval(10ms);
+    m_itemReader.setFd(fd);
     m_dispatch.subscribe(this, ITEMS_ADDED_EVENT);
 }
 
@@ -31,12 +30,8 @@ bool FileItemReader::read() {
 }
 
 void FileItemReader::onEvent(std::shared_ptr<Event> event) {
-    m_logger.log("received %s", getEventNames()[event->getType()]);
+    LOG("received %s", getEventNames()[event->getType()]);
     switch (event->getType()) {
-        case QUIT_EVENT: {
-            m_interval.end();
-            break;
-        }
         case ITEMS_ADDED_EVENT:
             m_itemsRead = true;
             break;
@@ -51,12 +46,13 @@ void FileItemReader::dispatchItems() {
     }
     m_itemsRead = false;
     m_items.swap();
-    m_dispatch.dispatch(std::make_shared<NewItemsEvent>(&m_items.getSecondary()));
+    m_dispatch.dispatch(std::make_shared<NewItemsEvent>(&m_items.getSecondary())
+    );
     m_items.getPrimary().clear();
 }
 
 void FileItemReader::onStart() {
-    m_logger.log("started");
+    LOG("started");
     m_itemsRead = true;
 
     bool success = readFirstBatch();
@@ -70,23 +66,14 @@ void FileItemReader::onStart() {
     }
 }
 
-void FileItemReader::preOnEvent(EventType eventType) {
-    if (eventType == QUIT_EVENT) {
-        close(fileno(m_file));
-        m_itemReader.cancel();
-    }
-}
-
 bool FileItemReader::readFirstBatch() {
     time_point start = system_clock::now();
-    for (int i = 0; i < 128; i++) {
-
+    for (int i = 0; i < 1; i++) {
         bool success = read();
         if (!success) {
             return false;
         }
-
-        if (system_clock::now() - start > 50ms) {
+        if (system_clock::now() - start > 10ms) {
             break;
         }
     }

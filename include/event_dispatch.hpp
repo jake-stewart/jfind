@@ -3,22 +3,23 @@
 
 #include "event.hpp"
 #include "event_listener.hpp"
-#include <vector>
-#include <queue>
-#include <map>
-#include <mutex>
 #include <condition_variable>
+#include <map>
 #include <memory>
+#include <mutex>
+#include <queue>
+#include <vector>
 
-class EventDispatch {
+class EventDispatch
+{
 public:
     void dispatch(std::shared_ptr<Event> event);
     void subscribe(EventListener *listener, EventType type);
-    static EventDispatch& instance();
+    static EventDispatch &instance();
 
 private:
-    EventDispatch() {};
-    std::map<EventType, std::vector<EventListener*>> m_listeners;
+    EventDispatch(){};
+    std::map<EventType, std::vector<EventListener *>> m_listeners;
 };
 
 #endif

@@ -3,12 +3,13 @@
 
 #include <string>
 
-struct ColorRGB {
+struct ColorRGB
+{
     unsigned char r = 0;
     unsigned char g = 0;
     unsigned char b = 0;
 };
 
-bool parseHexColor(std::string& hex, ColorRGB *rgb);
+bool parseHexColor(std::string &hex, ColorRGB *rgb);
 
 #endif
