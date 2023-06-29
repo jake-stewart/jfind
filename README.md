@@ -39,7 +39,10 @@ or
 {
     "selector": "",
     "active_selector": "",
-    "history_limit": 0,
+    "history_limit": 20,
+    "matcher": "fuzzy",
+    "case_mode": "insensitive",
+    "window_style": "merged",
     "style": {
         "active_item": {
             "fg": "bright_white",
@@ -49,7 +52,13 @@ or
         "hint": {
             "fg": 240
         },
+        "border": {
+            "fg": 236
+        },
         "active_row": {
+            "bg": 233
+        },
+        "preview_line": {
             "bg": 233
         },
         "active_selector": {
