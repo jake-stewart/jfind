@@ -1,5 +1,6 @@
 #include "../include/process.hpp"
 #include "../include/logger.hpp"
+#include <cstdlib>
 #include <csignal>
 
 #define READ 0
