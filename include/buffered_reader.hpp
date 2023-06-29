@@ -1,6 +1,8 @@
 #ifndef BUFFERED_READER_HPP
 #define BUFFERED_READER_HPP
 
+#include <cstdio>
+#include <cstdlib>
 #include <vector>
 
 /* getline() is slow because it rellacs for the buffer size
