@@ -30,6 +30,8 @@ std::map<std::string, JsonReaderStrategy *> ConfigJsonReader::createOptions() {
     options["border_chars"]
         = (new JsonStringArrayReaderStrategy(&config.borderChars))
             ->min(11)->max(11);
+    options["wrap_item_list"]
+        = (new JsonBoolReaderStrategy(&config.wrapItemList));
 
     options["window_style"] = new JsonEnumReaderStrategy(
         &config.windowStyle, {

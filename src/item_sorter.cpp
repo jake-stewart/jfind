@@ -141,8 +141,8 @@ void ItemSorter::calcHeuristics(bool newItems, int start, int end) {
 }
 
 int ItemSorter::copyItems(Item *buffer, int idx, int n) {
-    std::unique_lock items_lock(m_items_mut);
     if (idx + n < 256) {
+        std::unique_lock items_lock(m_firstItemsMut);
         if (idx + n > m_firstItemsSize) {
             n = m_firstItemsSize - idx;
         }
@@ -152,6 +152,7 @@ int ItemSorter::copyItems(Item *buffer, int idx, int n) {
         return n;
     }
 
+    std::unique_lock items_lock(m_itemsMut);
     if (idx + n > m_items.size()) {
         n = m_items.size() - idx;
     }
@@ -168,13 +169,13 @@ int ItemSorter::copyItems(Item *buffer, int idx, int n) {
 }
 
 void ItemSorter::sorterThread() {
-    std::unique_lock items_lock(m_items_mut);
+    std::unique_lock items_lock(m_itemsMut);
     while (m_sorterThreadActive) {
         {
-            std::unique_lock lock(m_sorter_mut);
+            std::unique_lock lock(m_sorterMut);
             items_lock.unlock();
             while (m_sorterThreadActive && !m_queryChanged && !m_hasNewItems) {
-                m_sorter_cv.wait(lock);
+                m_sorterCv.wait(lock);
             }
             items_lock.lock();
         }
@@ -203,19 +204,19 @@ void ItemSorter::onEvent(std::shared_ptr<Event> event) {
         case QUERY_CHANGE_EVENT: {
             QueryChangeEvent *queryChangeEvent = (QueryChangeEvent *)event.get(
             );
-            std::unique_lock lock(m_sorter_mut);
+            std::unique_lock lock(m_sorterMut);
             m_newQuery = queryChangeEvent->getQuery();
             m_queryChanged = true;
-            m_sorter_cv.notify_one();
+            m_sorterCv.notify_one();
             break;
         }
 
         case NEW_ITEMS_EVENT: {
             NewItemsEvent *newItemsEvent = (NewItemsEvent *)event.get();
-            std::unique_lock lock(m_sorter_mut);
+            std::unique_lock lock(m_sorterMut);
             m_newItems = newItemsEvent->getItems();
             m_hasNewItems = true;
-            m_sorter_cv.notify_one();
+            m_sorterCv.notify_one();
             break;
         }
 
@@ -229,17 +230,17 @@ void ItemSorter::endSorterThread() {
         return;
     }
     {
-        std::unique_lock lock(m_sorter_mut);
+        std::unique_lock lock(m_sorterMut);
         m_queryChanged = true;
         m_sorterThreadActive = false;
     }
-    m_sorter_cv.notify_one();
+    m_sorterCv.notify_one();
     m_sorterThread->join();
     delete m_sorterThread;
 }
 
 void ItemSorter::addNewItems() {
-    std::unique_lock sorter_lock(m_sorter_mut);
+    std::unique_lock sorterLock(m_sorterMut);
     if (!m_hasNewItems) {
         return;
     }
@@ -256,7 +257,7 @@ void ItemSorter::addNewItems() {
 void ItemSorter::sortItems() {
     bool queryChanged;
     {
-        std::unique_lock lock(m_sorter_mut);
+        std::unique_lock lock(m_sorterMut);
         queryChanged = m_queryChanged;
         if (queryChanged) {
             setQuery();
@@ -268,6 +269,7 @@ void ItemSorter::sortItems() {
     calcHeuristics(queryChanged);
 
     if (!m_queryChanged) {
+        std::unique_lock lock(m_firstItemsMut);
         // sort the first few items on the sorter thread. this is to remove the
         // delay on the main thread, which the user could notice
         m_firstItemsSize = m_items.size() < 256 ? m_items.size() : 256;

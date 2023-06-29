@@ -39,10 +39,11 @@ private:
 
     EventDispatch &m_dispatch = EventDispatch::instance();
 
-    std::mutex m_sorter_mut;
-    std::condition_variable m_sorter_cv;
+    std::mutex m_sorterMut;
+    std::condition_variable m_sorterCv;
 
-    std::mutex m_items_mut;
+    std::mutex m_itemsMut;
+    std::mutex m_firstItemsMut;
 
     bool m_hasNewItems = false;
     std::vector<Item> *m_newItems;

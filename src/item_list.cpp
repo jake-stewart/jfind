@@ -221,7 +221,13 @@ bool ItemList::scrollDown() {
 bool ItemList::moveCursorUp() {
     Item *item = m_itemCache->get(m_cursor + 1);
     if (item == nullptr || item->heuristic == BAD_HEURISTIC) {
-        return false;
+        if (!Config::instance().wrapItemList) {
+            return false;
+        }
+        m_cursor = 0;
+        m_offset = 0;
+        drawItems();
+        return true;
     }
 
     m_cursor += 1;
@@ -254,7 +260,19 @@ bool ItemList::moveCursorUp() {
 
 bool ItemList::moveCursorDown() {
     if (m_cursor <= 0) {
-        return false;
+        if (!m_allowScrolling) {
+            return false;
+        }
+        if (!Config::instance().wrapItemList) {
+            return false;
+        }
+        m_cursor = m_itemCache->size() - 1;
+        m_offset = m_itemCache->size() - m_height;
+        if (m_offset < 0) {
+            m_offset = 0;
+        }
+        drawItems();
+        return true;
     }
     m_cursor -= 1;
     if (m_cursor - m_offset < 0) {

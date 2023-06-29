@@ -77,6 +77,8 @@ struct Config
     std::vector<std::string> borderChars{"─", "│", "┌", "┐", "┘", "└",
                                          "┬", "┤", "┴", "├", "┼"};
 
+    bool wrapItemList = false;
+
     float percentPreview = 0.5f;
     Placement previewPlacement = Placement::Top;
     VerticalPlacement queryPlacement = VerticalPlacement::Bottom;
