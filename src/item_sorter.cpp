@@ -141,6 +141,7 @@ void ItemSorter::calcHeuristics(bool newItems, int start, int end) {
 }
 
 int ItemSorter::copyItems(Item *buffer, int idx, int n) {
+    std::unique_lock items_lock(m_items_mut);
     if (idx + n < 256) {
         if (idx + n > m_firstItemsSize) {
             n = m_firstItemsSize - idx;
@@ -151,7 +152,6 @@ int ItemSorter::copyItems(Item *buffer, int idx, int n) {
         return n;
     }
 
-    std::unique_lock items_lock(m_items_mut);
     if (idx + n > m_items.size()) {
         n = m_items.size() - idx;
     }
