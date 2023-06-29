@@ -77,7 +77,7 @@ struct Config
     std::vector<std::string> borderChars{"─", "│", "┌", "┐", "┘", "└",
                                          "┬", "┤", "┴", "├", "┼"};
 
-    float previewPercent = 0.5f;
+    float percentPreview = 0.5f;
     Placement previewPlacement = Placement::Top;
     VerticalPlacement queryPlacement = VerticalPlacement::Bottom;
     int tabstop = 8;

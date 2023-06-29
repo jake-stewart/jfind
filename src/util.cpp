@@ -112,6 +112,7 @@ void displayHelp(const char *name) {
     printf("                                  display the results in a preview window\n");
     printf("    --preview-position=POSITION   Preview window appears at POSITION\n");
     printf("                                  (top, bottom, left, right)\n");
+    printf("    --preview-percent=FLOAT       Percentage of screen dedicated to preview\n");
     printf("\n");
     printf("CONFIG (~/.config/jfind/config.json):\n");
     printf("    selector: STRING              The selector of an unselected item\n");

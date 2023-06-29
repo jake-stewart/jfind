@@ -28,7 +28,7 @@ bool ConfigOptionReader::read(int argc, const char **argv) {
              }
          ),
          (new FloatOption(
-             "preview-height", &config.previewPercent
+             "percent-preview", &config.percentPreview
          ))->min(0)->max(1),
          new EnumOption(
              "query-position", &config.queryPlacement, {

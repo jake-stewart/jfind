@@ -262,7 +262,7 @@ void UserInterface::onResize(int w, int h) {
     }
 
     bool small = h < minHeight || w < minWidth;
-    float p = small ? 0.0f : Config::instance().previewPercent;
+    float p = small ? 0.0f : Config::instance().percentPreview;
     previewBorder &= !small;
     itemsBorder &= !small;
     queryBorder &= !small;
