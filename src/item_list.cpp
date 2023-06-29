@@ -221,7 +221,7 @@ bool ItemList::scrollDown() {
 bool ItemList::moveCursorUp() {
     Item *item = m_itemCache->get(m_cursor + 1);
     if (item == nullptr || item->heuristic == BAD_HEURISTIC) {
-        if (!Config::instance().wrapItemList) {
+        if (!m_allowWrapping) {
             return false;
         }
         m_cursor = 0;
@@ -263,7 +263,7 @@ bool ItemList::moveCursorDown() {
         if (!m_allowScrolling) {
             return false;
         }
-        if (!Config::instance().wrapItemList) {
+        if (!m_allowWrapping) {
             return false;
         }
         m_cursor = m_itemCache->size() - 1;
@@ -404,6 +404,10 @@ Item *ItemList::get(int y) const {
 
 void ItemList::allowScrolling(bool value) {
     m_allowScrolling = value;
+}
+
+void ItemList::allowWrapping(bool value) {
+    m_allowWrapping = value;
 }
 
 void ItemList::refresh(bool resetCursor) {

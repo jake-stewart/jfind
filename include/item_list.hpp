@@ -24,6 +24,7 @@ class ItemList
     int m_hintWidth = 0;
 
     bool m_allowScrolling = true;
+    bool m_allowWrapping = false;
 
     FILE *m_outputFile;
 
@@ -41,6 +42,7 @@ public:
     ItemList(ItemCache *itemCache);
     void canOptimizeAnsi(bool value);
     void allowScrolling(bool value);
+    void allowWrapping(bool value);
     bool setSelected(int y);
     Item *getSelected() const;
     Item *get(int y) const;

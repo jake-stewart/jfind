@@ -151,6 +151,7 @@ void UserInterface::onStart() {
     LOG("started");
     m_lastUpdateTime = std::chrono::system_clock::now();
     m_itemList->allowScrolling(m_threadsafeReading);
+    m_itemList->allowWrapping(m_config.wrapItemList && !m_config.command.size());
 }
 
 void UserInterface::drawPrompt() {
