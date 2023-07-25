@@ -90,6 +90,7 @@ void displayHelp(const char *name) {
     printf("    --hints                       Read hints from stdin (every second line)\n");
     printf("    --select-hint                 Print the hint to stdout\n");
     printf("    --accept-non-match            Accept the user's query if nothing matches\n");
+    printf("    --select-all                  Print all results to stdout\n");
     printf("    --matcher=MATCHER             Override matching algorithm to MATCHER\n");
     printf("                                  (fuzzy or regex)\n");
     printf("    --case-mode=SENSITIVITY       Override case sensitivity to SENSITIVITY\n");
