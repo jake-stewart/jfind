@@ -36,7 +36,7 @@ private:
 
     // payload for events which require more than just
     // the Key enum value
-    char m_widechar[4];
+    char m_widechar[5];
     std::vector<MouseEvent> m_mouseEvents;
 
     std::chrono::time_point<std::chrono::system_clock> m_lastClickTime;

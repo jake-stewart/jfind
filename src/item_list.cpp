@@ -1,5 +1,6 @@
 #include "../include/item_list.hpp"
 #include "../include/logger.hpp"
+#include "../include/utf8_string.hpp"
 #include <cstring>
 
 ItemList::ItemList(ItemCache *itemCache) {
@@ -47,15 +48,21 @@ void ItemList::drawItems() const {
 void ItemList::drawName(int i) const {
     std::string name = std::string(m_itemCache->get(i)->text);
     replace(name, '\t', ' ');
-    for (int i = 0; i < name.size(); i++) {
-        if (name[i] < 32) {
-            name[i] = '?';
-        }
-    }
+    // for (int i = 0; i < name.size(); i++) {
+    //     if (name[i] < 32) {
+    //         name[i] = '?';
+    //     }
+    // }
+    Utf8String string;
+    Utf8StringCursor cursor;
+    cursor.setString(&string);
+    cursor.insert(name);
+    cursor.reset();
+    int bytes = cursor.getBytesForCols(m_itemWidth - 1);
 
-    if (name.size() > m_itemWidth) {
-        name = name.substr(0, m_itemWidth - 1) + "…";
-    }
+    // if (name.size() > m_itemWidth) {
+    //     name = name.substr(0, m_itemWidth - 1) + "…";
+    // }
 
     if (Config::instance().queryPlacement == VerticalPlacement::Top) {
         ansi.move(m_x, m_y + i - m_offset);
@@ -78,7 +85,8 @@ void ItemList::drawName(int i) const {
         StyleManager::instance().set(m_config.itemStyle);
     }
 
-    fprintf(stderr, "%s", name.c_str());
+    // fprintf(stderr, "%s", name.c_str());
+    fprintf(stderr, "%.*s", bytes, name.c_str());
 
     StyleManager::instance().set(
         i == m_cursor ? m_config.activeRowStyle : m_config.rowStyle
