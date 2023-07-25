@@ -64,6 +64,9 @@ bool ConfigOptionReader::read(int argc, const char **argv) {
         delete option;
     }
 
+    if (config.selectAll) {
+        config.preview = "";
+    }
     config.historyFile = historyFile;
 
     return success;
