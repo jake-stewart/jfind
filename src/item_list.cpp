@@ -70,7 +70,7 @@ void ItemList::drawName(int i) const {
     else {
         ansi.move(m_x, m_y + m_height - i - 1 + m_offset);
     }
-    if (i == m_cursor) {
+    if (i == m_cursor && m_showCursor) {
         if (m_config.activeSelector.size()) {
             StyleManager::instance().set(m_config.activeSelectorStyle);
             fprintf(stderr, "%s", m_config.activeSelector.c_str());
@@ -89,7 +89,8 @@ void ItemList::drawName(int i) const {
     fprintf(stderr, "%.*s", bytes, name.c_str());
 
     StyleManager::instance().set(
-        i == m_cursor ? m_config.activeRowStyle : m_config.rowStyle
+        (i == m_cursor && m_showCursor) ? m_config.activeRowStyle
+                                        : m_config.rowStyle
     );
     if (m_optimizeAnsi) {
         ansi.clearTilEOL();
@@ -112,7 +113,8 @@ void ItemList::drawHint(int i) const {
     }
 
     StyleManager::instance().set(
-        i == m_cursor ? m_config.activeHintStyle : m_config.hintStyle
+        (i == m_cursor && m_showCursor) ? m_config.activeHintStyle
+                                        : m_config.hintStyle
     );
 
     if (hint.size() > m_hintWidth) {
@@ -154,6 +156,10 @@ void ItemList::drawHint(int i) const {
         }
         fprintf(stderr, "%s", hint.data());
     }
+}
+
+void ItemList::showCursor(bool value) {
+    m_showCursor = value;
 }
 
 bool ItemList::scrollUp() {
@@ -227,6 +233,9 @@ bool ItemList::scrollDown() {
 }
 
 bool ItemList::moveCursorUp() {
+    if (!m_showCursor) {
+        return scrollUp();
+    }
     Item *item = m_itemCache->get(m_cursor + 1);
     if (item == nullptr || item->heuristic == BAD_HEURISTIC) {
         if (!m_allowWrapping) {
@@ -267,6 +276,9 @@ bool ItemList::moveCursorUp() {
 }
 
 bool ItemList::moveCursorDown() {
+    if (!m_showCursor) {
+        return scrollDown();
+    }
     if (m_cursor <= 0) {
         if (!m_allowScrolling) {
             return false;

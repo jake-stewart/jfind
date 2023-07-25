@@ -45,6 +45,11 @@ void FuzzyFindStrategy::start() {
     m_itemReaderThread = new std::thread(&FileItemReader::start, &m_itemReader);
 }
 
+const std::vector<Item>& FuzzyFindStrategy::getItems() {
+    return m_itemSorter.getItems();
+}
+
+
 InteractiveCommandStrategy::InteractiveCommandStrategy(ItemCache &itemCache) :
     JfindStrategy(itemCache),
     m_itemReader(Config::instance().command, Config::instance().query) {}
@@ -68,3 +73,6 @@ void InteractiveCommandStrategy::start() {
     m_itemReaderThread = new std::thread(&ProcessItemReader::start, &m_itemReader);
 }
 
+const std::vector<Item>& InteractiveCommandStrategy::getItems() {
+    return m_itemReader.getItems();
+}

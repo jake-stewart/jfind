@@ -37,6 +37,7 @@ static ItemCache itemCache;
 static ItemList itemList(&itemCache);
 static Utf8LineEditor editor(stderr);
 static UserInterface userInterface(&itemList, &editor);
+static JfindStrategy *jfindStrategy = nullptr;
 
 void printResult(Key key, Item *selected, const char *input) {
     if (config.showKey && (selected || config.acceptNonMatch)) {
@@ -70,9 +71,26 @@ void finish() {
     if (selected) {
         HistoryManager::instance().writeHistory(editor.getText());
     }
-    printResult(
-        userInterface.getSelectedKey(), selected, editor.getText().c_str()
-    );
+    if (config.selectAll && jfindStrategy) {
+        if (config.showKey) {
+            printf("%d\n", userInterface.getSelectedKey());
+        }
+        for (const Item &item : jfindStrategy->getItems()) {
+            if (item.heuristic == BAD_HEURISTIC) {
+                continue;
+            }
+            const char *result = item.text;
+            if (config.selectHint) {
+                result += strlen(result) + 1;
+            }
+            printf("%s\n", result);
+        }
+    }
+    else {
+        printResult(
+            userInterface.getSelectedKey(), selected, editor.getText().c_str()
+        );
+    }
     LOG("done");
     Logger::instance().close();
     exit(0);
@@ -117,6 +135,8 @@ int main(int argc, const char **argv) {
     StyleManager::instance().setOutputFile(stderr);
     createStyles();
 
+    itemList.showCursor(!config.selectAll);
+
     editor.input(config.query);
 
     int fd = open("/dev/tty", O_RDONLY);
@@ -138,7 +158,7 @@ int main(int argc, const char **argv) {
     winsize ws = getWinsize();
     userInterface.onEvent(std::make_shared<ResizeEvent>(ws.ws_col, ws.ws_row));
 
-    JfindStrategy *jfindStrategy = config.command.size()
+    jfindStrategy = config.command.size()
         ? (JfindStrategy *)new InteractiveCommandStrategy(itemCache)
         : (JfindStrategy *)new FuzzyFindStrategy(itemCache);
 

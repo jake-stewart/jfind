@@ -10,6 +10,7 @@
 class ItemList
 {
     bool m_optimizeAnsi = false;
+    bool m_showCursor = true;
 
     int m_x = 0;
     int m_y = 0;
@@ -42,6 +43,7 @@ public:
     ItemList(ItemCache *itemCache);
     void canOptimizeAnsi(bool value);
     void allowScrolling(bool value);
+    void showCursor(bool value);
     void allowWrapping(bool value);
     bool setSelected(int y);
     Item *getSelected() const;

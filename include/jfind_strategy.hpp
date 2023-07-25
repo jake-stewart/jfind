@@ -17,6 +17,7 @@ public:
     JfindStrategy(ItemCache &itemCache);
     virtual void start() = 0;
     virtual bool isThreadsafeReading() = 0;
+    virtual const std::vector<Item>& getItems() = 0;
 };
 
 class FuzzyFindStrategy : public JfindStrategy
@@ -30,6 +31,7 @@ public:
     FuzzyFindStrategy(ItemCache &itemCache);
     void start() override;
     bool isThreadsafeReading() override;
+    const std::vector<Item>& getItems() override;
 };
 
 class InteractiveCommandStrategy : public JfindStrategy
@@ -41,6 +43,7 @@ public:
     InteractiveCommandStrategy(ItemCache &itemCache);
     void start() override;
     bool isThreadsafeReading() override;
+    const std::vector<Item>& getItems() override;
 };
 
 #endif

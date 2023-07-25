@@ -201,3 +201,7 @@ int ProcessItemReader::size() {
     std::unique_lock lock(m_mut);
     return m_items.getPrimary().size();
 }
+
+const std::vector<Item> &ProcessItemReader::getItems() {
+    return m_items.getPrimary();
+}

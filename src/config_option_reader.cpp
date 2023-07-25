@@ -10,6 +10,7 @@ bool ConfigOptionReader::read(int argc, const char **argv) {
         {new BooleanOption("help", &config.showHelp),
          new BooleanOption("hints", &config.showHints),
          new BooleanOption("select-hint", &config.selectHint),
+         new BooleanOption("select-all", &config.selectAll),
          new BooleanOption("accept-non-match", &config.acceptNonMatch),
          new StringOption("prompt", &config.prompt),
          new StringOption("query", &config.query),

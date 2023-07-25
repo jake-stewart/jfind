@@ -19,6 +19,7 @@ public:
 
     int copyItems(Item *buffer, int idx, int n);
     int size();
+    const std::vector<Item> &getItems();
 
 private:
     std::mutex m_mut;

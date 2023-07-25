@@ -20,6 +20,7 @@ public:
     void onEvent(std::shared_ptr<Event> event) override;
     void onLoop() override;
     void onStart() override;
+    const std::vector<Item> &getItems();
 
 private:
     ItemMatcher *m_matcher;

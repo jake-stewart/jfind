@@ -87,6 +87,7 @@ struct Config
     bool showHelp = false;
     bool showHints = false;
     bool selectHint = false;
+    bool selectAll = false;
     bool showSpinner = true;
     bool acceptNonMatch = false;
 

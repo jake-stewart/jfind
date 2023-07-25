@@ -280,3 +280,7 @@ void ItemSorter::sortItems() {
         m_dispatch.dispatch(std::make_shared<ItemsSortedEvent>(m_query));
     }
 }
+
+const std::vector<Item> &ItemSorter::getItems() {
+    return m_items;
+}
