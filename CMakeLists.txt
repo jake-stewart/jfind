@@ -5,8 +5,9 @@ project(jfind)
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
-set(CMAKE_INSTALL_PREFIX "/usr/local/bin")
-
+if(NOT CMAKE_INSTALL_PREFIX)
+    set(CMAKE_INSTALL_PREFIX "/usr/local")
+endif()
 option(ENABLE_UBSAN "Enable undefined behavior sanitizer" OFF)
 option(ENABLE_ASAN "Enable address sanitizer" OFF)
 option(ENABLE_TSAN "Enable thread sanitizer" OFF)
@@ -36,8 +37,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 add_executable(jfind ${SOURCES})
 
-install(TARGETS jfind DESTINATION ${CMAKE_INSTALL_PREFIX})
-
+install(TARGETS jfind DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 add_custom_target("uninstall" COMMENT "Uninstall installed files")
 add_custom_command(
     TARGET "uninstall"
