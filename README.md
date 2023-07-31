@@ -21,18 +21,15 @@ You can use jfind as a neovim plugin. You can find the repo [here](https://githu
 
 ### Install Instructions
 
+#### brew
+
+    brew install technicalpickles/technicalpickles
+
+#### build from source
+
     cmake -S . -B build
     cd build
     sudo make install
-
-### Uninstall Instructions
-
-    sudo make uninstall
-
-or
-
-    sudo rm /usr/local/bin/jfind
-
 
 ## Example config (`~/.config/jfind/config.json`)
 ```json
