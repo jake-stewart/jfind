@@ -23,7 +23,7 @@ You can use jfind as a neovim plugin. You can find the repo [here](https://githu
 
 #### brew
 
-    brew install technicalpickles/technicalpickles
+    brew install technicalpickles/technicalpickles/jfind
 
 #### build from source
 
