@@ -81,6 +81,7 @@ struct Config
 
     float percentPreview = 0.5f;
     Placement previewPlacement = Placement::Top;
+    int previewMinWidth = 40;
     VerticalPlacement queryPlacement = VerticalPlacement::Bottom;
     int tabstop = 8;
 

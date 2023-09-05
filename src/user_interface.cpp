@@ -187,10 +187,8 @@ void UserInterface::updateSpinner() {
     }
 }
 
-void UserInterface::layoutWindows(float p) {
-    Placement place = Config::instance().previewPlacement;
-    bool vertical = place == Placement::Top || place == Placement::Bottom;
-    bool backwards = place == Placement::Top || place == Placement::Left;
+void UserInterface::layoutWindows(float p, Placement placement, bool vertical) {
+    bool backwards = placement == Placement::Top || placement == Placement::Left;
 
     int totalSize = vertical ? m_pane.h : m_pane.w;
     int offset = vertical ? m_pane.y : m_pane.x;
@@ -248,29 +246,38 @@ void UserInterface::onResize(int w, int h) {
 
     int minWidth = 10 + queryBorder + itemsBorder * 2 +
         m_config.externalBorder * 2;
-    if (m_config.preview.size() &&
-        (m_config.previewPlacement == Placement::Left ||
-         m_config.previewPlacement == Placement::Right)) {
-        minWidth += 2 + previewBorder;
-    }
 
     int minHeight = 5 + queryBorder + itemsBorder * 2 +
         m_config.externalBorder * 2;
-    if (m_config.preview.size() &&
-        (m_config.previewPlacement == Placement::Top ||
-         m_config.previewPlacement == Placement::Bottom)) {
-        minHeight += 2 + previewBorder;
-    }
 
     bool small = h < minHeight || w < minWidth;
     float p = small ? 0.0f : Config::instance().percentPreview;
+
     previewBorder &= !small;
     itemsBorder &= !small;
     queryBorder &= !small;
     queryWindow &= !small;
 
-    bool vertical = m_config.previewPlacement == Placement::Top ||
-        m_config.previewPlacement == Placement::Bottom;
+    Placement placement = m_config.previewPlacement;
+    bool vertical = placement == Placement::Top || placement == Placement::Bottom;
+    if (!vertical && Config::instance().previewMinWidth > 0
+            && Config::instance().previewMinWidth > m_pane.w * p) {
+        placement = placement == Placement::Right ? Placement::Bottom : Placement::Top;
+        vertical = true;
+    }
+
+    if (m_config.preview.size() &&
+        (placement == Placement::Left ||
+         placement == Placement::Right)) {
+        minWidth += 2 + previewBorder;
+    }
+
+    if (m_config.preview.size() &&
+        (placement == Placement::Top ||
+         placement == Placement::Bottom)) {
+        minHeight += 2 + previewBorder;
+    }
+
     bool optimizeAnsi = (vertical || !Config::instance().preview.size());
 
     if (m_config.externalBorder) {
@@ -279,7 +286,7 @@ void UserInterface::onResize(int w, int h) {
     }
 
     if (Config::instance().preview.size()) {
-        layoutWindows(p);
+        layoutWindows(p, placement, vertical);
     }
     else {
         m_itemListPane = m_pane;
@@ -299,7 +306,7 @@ void UserInterface::onResize(int w, int h) {
         itemsBorder &&
             (queryWindow && !queryBorder)) {
         if (Config::instance().preview.size()) {
-            switch (m_config.previewPlacement) {
+            switch (placement) {
                 case Placement::Top:
                     m_previewPane.h -= 1;
                     if (m_previewPane.h > 0) {
@@ -372,14 +379,12 @@ void UserInterface::onResize(int w, int h) {
                 border(m_itemListPane);
             }
             bool connectLeft = m_config.externalBorder ||
-                (!previewBorder &&
-                 m_config.previewPlacement == Placement::Left);
+                (!previewBorder && placement == Placement::Left);
             bool connectRight = m_config.externalBorder ||
-                (!previewBorder &&
-                 m_config.previewPlacement == Placement::Right);
+                (!previewBorder && placement == Placement::Right);
 
             if (m_config.preview.size() && previewBorder &&
-                !itemsBorder && !vertical) {
+                    !itemsBorder && !vertical) {
                 connectRight = false;
                 connectLeft = false;
             }
@@ -452,16 +457,16 @@ void UserInterface::onResize(int w, int h) {
 
     LOG("optimizeAnsi=%d", optimizeAnsi);
 
+    m_itemPreview->canOptimizeAnsi(optimizeAnsi && !previewBorder);
     m_itemPreview->resize(
         m_previewPane.x, m_previewPane.y, m_previewPane.w, m_previewPane.h
     );
-    m_itemPreview->canOptimizeAnsi(optimizeAnsi && !previewBorder);
 
+    m_itemList->canOptimizeAnsi(optimizeAnsi && !itemsBorder);
     m_itemList->resize(
         m_itemListPane.x, m_itemListPane.y, m_itemListPane.w,
         m_itemListPane.h
     );
-    m_itemList->canOptimizeAnsi(optimizeAnsi && !itemsBorder);
 
     int promptSize = m_config.prompt.size() + m_config.promptGap;
     int spinnerReservation = m_config.prompt.size() == 1 ? 0 : 2;
