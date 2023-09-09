@@ -280,14 +280,16 @@ bool ItemList::moveCursorDown() {
         return scrollDown();
     }
     if (m_cursor <= 0) {
-        if (!m_allowScrolling) {
+        if (!m_allowScrolling || !m_allowWrapping || m_nVisibleItems == 0) {
             return false;
         }
-        if (!m_allowWrapping) {
-            return false;
+        for (m_cursor = 0; m_cursor < m_itemCache->size(); m_cursor++) {
+            if (m_itemCache->get(m_cursor)->heuristic == BAD_HEURISTIC) {
+                break;
+            }
         }
-        m_cursor = m_itemCache->size() - 1;
-        m_offset = m_itemCache->size() - m_height;
+        m_cursor--;
+        m_offset = m_cursor - m_height + 1;
         if (m_offset < 0) {
             m_offset = 0;
         }
