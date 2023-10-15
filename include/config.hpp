@@ -3,6 +3,7 @@
 
 #include "ansi_style.hpp"
 #include "case_sensitivity.hpp"
+#include "length_preference.hpp"
 #include "item_matcher.hpp"
 #include "style_manager.hpp"
 #include <filesystem>
@@ -64,6 +65,7 @@ struct Config
 
     MatcherType matcher = FUZZY_MATCHER;
     CaseSensitivity caseSensitivity = CASE_SENSITIVE;
+    LengthPreference lengthPreference = SHORT;
 
     std::string prompt = ">";
     int promptGap = 1;

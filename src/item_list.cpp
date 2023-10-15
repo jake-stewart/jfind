@@ -86,6 +86,7 @@ void ItemList::drawName(int i) const {
     }
 
     // fprintf(stderr, "%s", name.c_str());
+    // fprintf(stderr, "%d %s", m_itemCache->get(i)->heuristic, name.c_str());
     fprintf(stderr, "%.*s", bytes, name.c_str());
 
     StyleManager::instance().set(

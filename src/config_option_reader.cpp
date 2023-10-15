@@ -44,6 +44,13 @@ bool ConfigOptionReader::read(int argc, const char **argv) {
          (new BooleanOption("show-key", &config.showKey)),
          (new IntegerOption("history-limit", &config.historyLimit))->min(0),
          new EnumOption(
+             "length-preference", &config.lengthPreference, {
+                 {"short", SHORT},
+                 {"long", LONG},
+                 {"none", NONE}
+             }
+         ),
+         new EnumOption(
              "matcher", &config.matcher, {
                  {"fuzzy", FUZZY_MATCHER},
                  {"regex", REGEX_MATCHER},
@@ -65,9 +72,6 @@ bool ConfigOptionReader::read(int argc, const char **argv) {
         delete option;
     }
 
-    if (config.selectAll) {
-        config.preview = "";
-    }
     config.historyFile = historyFile;
 
     return success;

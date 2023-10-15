@@ -9,6 +9,9 @@ bool ItemRegexMatcher::requiresFullRescore() {
 }
 bool ItemRegexMatcher::setQuery(std::string query) {
     bool caseSensitive;
+
+    m_lengthPreference = Config::instance().lengthPreference;
+
     switch (Config::instance().caseSensitivity) {
         case CASE_SENSITIVE:
             caseSensitive = true;
@@ -43,7 +46,14 @@ bool ItemRegexMatcher::setQuery(std::string query) {
 
 int ItemRegexMatcher::calculateScore(Item *item) {
     if (std::regex_search(item->text, m_pattern)) {
-        return INT_MAX - item->index;
+        switch (m_lengthPreference) {
+            case SHORT:
+                return -strlen(item->text);
+            case LONG:
+                return strlen(item->text);
+            case NONE:
+                return 0;
+        }
     }
     return BAD_HEURISTIC;
 }

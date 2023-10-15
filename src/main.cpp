@@ -75,8 +75,15 @@ void finish() {
         if (config.showKey) {
             printf("%d\n", userInterface.getSelectedKey());
         }
+        if (selected) {
+            const char *result = selected->text;
+            if (config.selectHint) {
+                result += strlen(result) + 1;
+            }
+            printf("%s\n", result);
+        }
         for (const Item &item : jfindStrategy->getItems()) {
-            if (item.heuristic == BAD_HEURISTIC) {
+            if (item.heuristic == BAD_HEURISTIC || item.index == selected->index) {
                 continue;
             }
             const char *result = item.text;
@@ -135,7 +142,7 @@ int main(int argc, const char **argv) {
     StyleManager::instance().setOutputFile(stderr);
     createStyles();
 
-    itemList.showCursor(!config.selectAll);
+    itemList.showCursor(true);
 
     editor.input(config.query);
 
