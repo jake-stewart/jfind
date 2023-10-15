@@ -2,7 +2,7 @@
 #include "../include/config.hpp"
 #include "../include/item.hpp"
 #include <climits>
-#include <string>
+#include <cstring>
 #include <regex>
 
 bool ItemRegexMatcher::requiresFullRescore() {
