@@ -647,18 +647,32 @@ void UserInterface::handleInput(KeyEvent *event) {
             break;
 
         case K_PAGE_UP:
-        case K_ALT_U:
-        case K_ALT_u:
+        case K_ALT_B:
+        case K_ALT_b:
             if (m_itemPreview) {
                 m_itemPreview->scrollUp(m_previewPane.h);
             }
             break;
 
         case K_PAGE_DOWN:
+        case K_ALT_F:
+        case K_ALT_f:
+            if (m_itemPreview) {
+                m_itemPreview->scrollDown(m_previewPane.h);
+            }
+            break;
+
+        case K_ALT_U:
+        case K_ALT_u:
+            if (m_itemPreview) {
+                m_itemPreview->scrollUp(10);
+            }
+            break;
+
         case K_ALT_D:
         case K_ALT_d:
             if (m_itemPreview) {
-                m_itemPreview->scrollDown(m_previewPane.h);
+                m_itemPreview->scrollDown(10);
             }
             break;
 
