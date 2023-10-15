@@ -42,7 +42,7 @@ bool ItemPreview::scrollDown(int lines) {
         return true;
     }
     else if (!m_optimizeAnsi || lines >= m_height) {
-        m_offset = std::min((int)m_content.lines.size() - m_height, m_offset + lines);
+        m_offset = std::max(std::min(m_offset + lines, (int)m_content.lines.size() - m_height), 0);
         redraw();
         return true;
     }
