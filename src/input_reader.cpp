@@ -47,6 +47,8 @@ static std::map<std::string, Key> createKeyLookup() {
     lookup["[1;5C"] = K_CTRL_RIGHT;
     lookup["[1;5D"] = K_CTRL_LEFT;
     lookup["[1;5I"] = K_CTRL_TAB;
+    lookup["[5~"] = K_PAGE_UP;
+    lookup["[6~"] = K_PAGE_DOWN;
     lookup["[1;6I"] = K_CTRL_SHIFT_TAB;
     lookup["\x1b[Z"] = K_ALT_SHIFT_TAB;
     lookup["OP"] = K_F1;

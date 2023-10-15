@@ -646,6 +646,7 @@ void UserInterface::handleInput(KeyEvent *event) {
             }
             break;
 
+        case K_PAGE_UP:
         case K_ALT_U:
         case K_ALT_u:
             if (m_itemPreview) {
@@ -653,6 +654,7 @@ void UserInterface::handleInput(KeyEvent *event) {
             }
             break;
 
+        case K_PAGE_DOWN:
         case K_ALT_D:
         case K_ALT_d:
             if (m_itemPreview) {
