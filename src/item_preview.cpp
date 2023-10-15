@@ -10,16 +10,21 @@ void ItemPreview::canOptimizeAnsi(bool value) {
 }
 
 bool ItemPreview::scrollUp(int lines) {
-    for (int i = 0; i < lines; i++) {
+    if (lines >= m_offset) {
         if (m_offset == 0) {
             return false;
         }
-        m_offset -= 1;
-        if (!m_optimizeAnsi) {
-            redraw();
-            continue;
-        }
-
+        m_offset = 0;
+        redraw();
+        return true;
+    }
+    else if (!m_optimizeAnsi || lines >= m_height) {
+        m_offset -= lines;
+        redraw();
+        return true;
+    }
+    for (int i = 0; i < lines; i++) {
+        m_offset--;
         AnsiWrapper::instance().setScrollRegion(m_y, m_y + m_height - 1);
         AnsiWrapper::instance().scrollDown();
         printLine(m_y);
@@ -28,16 +33,21 @@ bool ItemPreview::scrollUp(int lines) {
 }
 
 bool ItemPreview::scrollDown(int lines) {
-    for (int i = 0; i < lines; i++) {
+    if (m_content.lines.size() - m_offset + lines <= m_height) {
         if (m_content.lines.size() - m_offset <= m_height) {
             return false;
         }
-        m_offset += 1;
-        if (!m_optimizeAnsi) {
-            redraw();
-            continue;
-        }
-
+        m_offset = std::max((int)m_content.lines.size() - m_height, 0);
+        redraw();
+        return true;
+    }
+    else if (!m_optimizeAnsi || lines >= m_height) {
+        m_offset = std::min((int)m_content.lines.size() - m_height, m_offset + lines);
+        redraw();
+        return true;
+    }
+    for (int i = 0; i < lines; i++) {
+        m_offset++;
         AnsiWrapper::instance().setScrollRegion(m_y, m_y + m_height - 1);
         AnsiWrapper::instance().scrollUp();
         printLine(m_height - 1);
