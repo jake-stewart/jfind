@@ -274,6 +274,9 @@ enum Key {
     K_F11,
     K_F12,
 
+    K_PAGE_UP,
+    K_PAGE_DOWN,
+
     K_UTF8,
     K_MOUSE,
     K_UNKNOWN,
