@@ -75,19 +75,11 @@ bool ItemFuzzyMatcher::requiresFullRescore() {
 }
 
 int ItemFuzzyMatcher::calculateScore(Item *item) {
-    int total;
-    switch (Config::instance().lengthPreference) {
-        case SHORT:
-            total = -strlen(item->text);
-            break;
-        case LONG:
-            total = strlen(item->text);
-            break;
-        case NONE:
-            total = 0;
-            break;
+    if (!*item->text) {
+        return BAD_HEURISTIC;
     }
 
+    int total = 0;
     for (const std::string &query : m_queries) {
         int score = matchStart(item->text, query.c_str());
         if (score == BAD_HEURISTIC) {
@@ -95,7 +87,14 @@ int ItemFuzzyMatcher::calculateScore(Item *item) {
         }
         total += score;
     }
-    return total;
+    switch (Config::instance().lengthPreference) {
+        case SHORT:
+            return total - strlen(item->text);
+        case LONG:
+            return total + strlen(item->text);
+        case NONE:
+            return total;
+    }
 }
 
 int ItemFuzzyMatcher::matchStart(const char *tp, const char *qp) {
