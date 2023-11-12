@@ -43,6 +43,9 @@ void printResult(Key key, Item *selected, const char *input) {
     if (config.showKey && (selected || config.acceptNonMatch)) {
         printf("%d\n", key);
     }
+    if (config.showQuery) {
+        printf("%s\n", editor.getText().c_str());
+    }
     if (selected) {
         const char *result = selected->text;
         if (config.selectHint) {

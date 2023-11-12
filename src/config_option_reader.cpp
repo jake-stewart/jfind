@@ -42,6 +42,7 @@ bool ConfigOptionReader::read(int argc, const char **argv) {
              ->min(K_NULL)
              ->max(K_ERROR),
          (new BooleanOption("show-key", &config.showKey)),
+         (new BooleanOption("show-query", &config.showQuery)),
          (new IntegerOption("history-limit", &config.historyLimit))->min(0),
          new EnumOption(
              "length-preference", &config.lengthPreference, {

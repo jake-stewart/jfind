@@ -104,6 +104,7 @@ struct Config
 
     std::vector<int> additionalKeys;
     bool showKey = false;
+    bool showQuery = false;
 
     static Config &instance() {
         static Config singleton;
