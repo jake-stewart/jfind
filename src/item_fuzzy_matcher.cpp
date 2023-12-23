@@ -18,6 +18,7 @@ static const int SEPARATED_WORD_BONUS = 102;      // separated/(w)ord
 static const int START_LINE_BONUS = 103;          // (s)tart of line
 
 static const int CONSECUTIVE_BONUS = 200;
+static const int COUNT_BONUS = 1;
 static const int DISTANCE_PENALTY = -50;
 
 static inline int boundaryScore(const char *c) {
@@ -75,13 +76,19 @@ bool ItemFuzzyMatcher::requiresFullRescore() {
 }
 
 int ItemFuzzyMatcher::calculateScore(Item *item) {
-    if (!*item->text) {
-        return BAD_HEURISTIC;
+    for (const std::string &query : m_queries) {
+        for (const char &c : query) {
+            if (!strchr(item->text, c)) {
+                if (!strchr(item->text, toupper(c))) {
+                    return BAD_HEURISTIC;
+                }
+            }
+        }
     }
 
     int total = 0;
     for (const std::string &query : m_queries) {
-        int score = matchStart(item->text, query.c_str());
+        int score = matchStart(item->text, query.c_str(), query.size());
         if (score == BAD_HEURISTIC) {
             return BAD_HEURISTIC;
         }
@@ -97,17 +104,20 @@ int ItemFuzzyMatcher::calculateScore(Item *item) {
     }
 }
 
-int ItemFuzzyMatcher::matchStart(const char *tp, const char *qp) {
+int ItemFuzzyMatcher::matchStart(const char *tp, const char *qp, size_t qs) {
     int maxScore = BAD_HEURISTIC;
+    int maxTally = 0;
+    int maxBoundary = 0;
     int depth = 0;
     if (tolower(*tp) == *qp) {
         int score = 0;
         if (*(qp + 1)) {
             score = match(tp + 1, qp + 1, 1, true, &depth);
             if (score == BAD_HEURISTIC) {
-                return maxScore;
+                return BAD_HEURISTIC;
             }
         }
+        maxBoundary = START_LINE_BONUS;
         maxScore = score + MATCH_BONUS + START_LINE_BONUS;
     }
     tp++;
@@ -118,15 +128,22 @@ int ItemFuzzyMatcher::matchStart(const char *tp, const char *qp) {
             if (*(qp + 1)) {
                 score = match(tp + 1, qp + 1, 1, boundary > 0, &depth);
                 if (score == BAD_HEURISTIC) {
-                    return maxScore;
+                    return maxScore + maxTally * qs * COUNT_BONUS;
                 }
             }
             score += MATCH_BONUS + boundary;
-            maxScore = std::max(score, maxScore);
+            if (score > maxScore) {
+                maxTally = 0;
+                maxBoundary = boundary;
+                maxScore = score;
+            }
+            else if (boundary && score - boundary == maxScore - maxBoundary) {
+                maxTally++;
+            }
         }
         tp++;
     }
-    return maxScore;
+    return maxScore + maxTally * qs * COUNT_BONUS;
 }
 
 int ItemFuzzyMatcher::match(

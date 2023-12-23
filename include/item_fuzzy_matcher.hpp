@@ -15,7 +15,7 @@ public:
     int calculateScore(Item *item) override;
 
 private:
-    int matchStart(const char *tp, const char *qp);
+    int matchStart(const char *tp, const char *qp, size_t qs);
     int match(
         const char *tp, const char *qp, int distance, bool consecutive,
         int *depth
