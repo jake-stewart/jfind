@@ -84,16 +84,16 @@ void finish() {
                 result += strlen(result) + 1;
             }
             printf("%s\n", result);
-        }
-        for (const Item &item : jfindStrategy->getItems()) {
-            if (item.heuristic == BAD_HEURISTIC || item.index == selected->index) {
-                continue;
+            for (const Item &item : jfindStrategy->getItems()) {
+                if (item.heuristic == BAD_HEURISTIC || item.index == selected->index) {
+                    continue;
+                }
+                const char *result = item.text;
+                if (config.selectHint) {
+                    result += strlen(result) + 1;
+                }
+                printf("%s\n", result);
             }
-            const char *result = item.text;
-            if (config.selectHint) {
-                result += strlen(result) + 1;
-            }
-            printf("%s\n", result);
         }
     }
     else {
