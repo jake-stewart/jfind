@@ -525,7 +525,7 @@ void UserInterface::handleMouse(MouseEvent event) {
                     m_itemList->get(event.y) == m_itemList->getSelected()) {
                     m_selected = true;
                     m_selectedKey = K_MOUSE;
-                    raise(SIGTERM);
+                    raise(SIGUSR1);
                 }
                 else {
                     m_itemList->setSelected(event.y);
@@ -581,7 +581,7 @@ void UserInterface::handleInput(KeyEvent *event) {
                 }
                 m_selectedKey = event->getKey();
                 m_selected = true;
-                raise(SIGTERM);
+                raise(SIGUSR1);
                 return;
             }
         }
@@ -590,7 +590,7 @@ void UserInterface::handleInput(KeyEvent *event) {
     switch (event->getKey()) {
         case K_ESCAPE:
         case K_CTRL_C:
-            raise(SIGTERM);
+            raise(SIGUSR1);
             break;
 
         case 32 ... 126:
@@ -700,7 +700,7 @@ void UserInterface::handleInput(KeyEvent *event) {
             }
             m_selected = true;
             m_selectedKey = event->getKey();
-            raise(SIGTERM);
+            raise(SIGUSR1);
             break;
         }
 

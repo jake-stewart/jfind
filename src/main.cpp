@@ -108,6 +108,7 @@ void finish() {
 
 void signalHandler(int sig) {
     switch (sig) {
+        case SIGUSR1:
         case SIGTERM:
             finish();
             break;
@@ -159,6 +160,7 @@ int main(int argc, const char **argv) {
     ansi.setOutputFile(stderr);
 
     signal(SIGWINCH, signalHandler);
+    signal(SIGUSR1, signalHandler);
     signal(SIGTERM, signalHandler);
     signal(SIGINT, signalHandler);
 
