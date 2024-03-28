@@ -203,5 +203,13 @@ int ProcessItemReader::size() {
 }
 
 const std::vector<Item> &ProcessItemReader::getItems() {
-    return m_items.getPrimary();
+    switch (m_process.getState()) {
+        case ProcessState::Suspended:
+            m_process.resume();
+        case ProcessState::Active:
+            m_readMax = UINT_MAX;
+            while (readItem());
+        default:
+            return m_items.getPrimary();
+    }
 }
