@@ -13,9 +13,9 @@
 
 static const int MATCH_BONUS = 1;
 static const int INNER_WORD_BOUNDARY_BONUS = 100; // inner(W)ord
-static const int NEW_WORD_BONUS = 101;            // new-(w)ord
-static const int SEPARATED_WORD_BONUS = 102;      // separated/(w)ord
-static const int START_LINE_BONUS = 103;          // (s)tart of line
+static const int NEW_WORD_BONUS = 105;            // new-(w)ord
+static const int SEPARATED_WORD_BONUS = 110;      // separated/(w)ord
+static const int START_LINE_BONUS = 115;          // (s)tart of line
 
 static const int CONSECUTIVE_BONUS = 200;
 static const int COUNT_BONUS = 1;
